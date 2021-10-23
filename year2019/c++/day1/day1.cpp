@@ -11,7 +11,7 @@ int get_fuel(int mass) {
 int main()
 {
     ifstream infile;
-    infile.open("day1_data.txt");
+    infile.open("../../data/day1_data.txt");
 
     set<int> mp;
     int val;

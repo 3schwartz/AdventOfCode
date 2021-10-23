@@ -1,4 +1,4 @@
-lines = open('day2_data.txt').read().split(',')
+lines = open('../../data/day2_data.txt').read().split(',')
 lines = [int(line) for line in lines]
 
 

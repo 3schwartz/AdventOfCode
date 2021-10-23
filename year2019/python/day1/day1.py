@@ -1,6 +1,6 @@
 from day1_func import get_fuel
 
-lines = open('day1_data.txt').read().strip().split('\n')
+lines = open('../../data/day1_data.txt').read().strip().split('\n')
 
 fuels = [get_fuel(int(line)) for line in lines]
 
