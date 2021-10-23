@@ -4,6 +4,7 @@
 #include <string>
 #include <algorithm>
 #include <sstream>
+#include <chrono>
 
 using namespace std;
 
@@ -53,7 +54,14 @@ int main() {
 	vector<int> input = readInput();
 
 	partOne(input);
+
+	auto start = chrono::high_resolution_clock::now();
+
 	partTwo(input);
+
+	auto stop = chrono::high_resolution_clock::now();
+	auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start);
+	cout << "Part 2 took: " << duration.count() << " milliseconds" << endl;
 
 	return 0;
 }
@@ -67,8 +75,6 @@ vector<int> readInput() {
 	ifs.close();
 
 	replace(line.begin(), line.end(), ',', ' ');
-
-	cout << line;
 
 	istringstream ss(line);
 

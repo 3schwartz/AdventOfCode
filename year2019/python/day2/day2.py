@@ -1,3 +1,5 @@
+import time
+
 lines = open('../../data/day2_data.txt').read().split(',')
 lines = [int(line) for line in lines]
 
@@ -24,6 +26,8 @@ linesCopy[2] = 2
 
 print(f"Part 1: {int_code_program(linesCopy)}")
 
+start = time.time()
+
 found = False
 for i in range(100):
     for j in range(100):
@@ -43,3 +47,6 @@ for i in range(100):
         break
 
 print(f"Part 2: {100 * i + j}")
+
+end = time.time()
+print(f"Part 2 took: {round((end - start)*1000, 2)} milliseconds")
