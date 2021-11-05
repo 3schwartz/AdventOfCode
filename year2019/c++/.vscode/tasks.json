@@ -11,7 +11,8 @@
 				"/nologo",
 				"/Fe:",
 				"${fileDirname}\\${fileBasenameNoExtension}.exe",
-				"${file}"
+				"${fileDirname}\\**.cpp",
+				"..\\include\\**.cpp",
 			],
 			"options": {
 				"cwd": "${fileDirname}"

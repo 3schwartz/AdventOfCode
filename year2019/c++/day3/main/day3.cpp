@@ -4,7 +4,7 @@
 #include <sstream>
 #include <map>
 #include <vector>
-#include "day3_func.h"
+#include "../include/day3_func.h"
 
 using namespace std;
 
@@ -24,7 +24,7 @@ vector<string> createVectorFromLine(string line) {
 
 map<int, vector<string>> readInput() {
 
-	ifstream ifs("../../data/day3_data.txt");
+	ifstream ifs("../../../data/day3_data.txt");
 	string line;
 	vector<string> lines;
 	while (ifs >> line) {

@@ -1,14 +1,27 @@
-#include "day3_func.h"
+#ifndef DAY_THREE_FUNC_H
+#define DAY_THREE_FUNC_H
 
-// #include <algorithm>
-// #include <map>
-// #include <set>
-// #include <tuple>
-// #include <cmath>
-// #include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <map>
+#include <set>
+#include <tuple>
+#include <cmath>
+#include <iostream>
 
 // using namespace std;
 
+void addSteps(std::map<char, int> &coordinates, char coord, int multiplier, int value, std::map<std::tuple<int, int>, int> &places, int steps);
+
+std::map<std::tuple<int, int>, int> getCoordinates(std::vector<std::string> wire);
+
+template <class T, class U>
+std::set<T> getSetFromKeys(std::map<T,U> mapWithKeys);
+
+int getMinimumDistance(std::vector<std::string> wireOneInput, std::vector<std::string> wireTwoInput);
+
+int getMinimumSteps(std::vector<std::string> wireOneInput, std::vector<std::string> wireTwoInput);
 // void addSteps(map<char, int> &coordinates, char coord, int multiplier, int value, map<tuple<int, int>, int> &places, int steps) {
 // 	int position_before = coordinates[coord];
 // 	int position_after = position_before + multiplier * value;
@@ -136,3 +149,6 @@
 
 // 	return minimalSteps;
 // }
+
+
+#endif

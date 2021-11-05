@@ -1,14 +1,11 @@
-#ifndef DAY_THREE_FUNC_H
-#define DAY_THREE_FUNC_H
+#include "day3_func.h"
 
-#include <vector>
-#include <string>
-#include <algorithm>
-#include <map>
-#include <set>
-#include <tuple>
-#include <cmath>
-#include <iostream>
+// #include <algorithm>
+// #include <map>
+// #include <set>
+// #include <tuple>
+// #include <cmath>
+// #include <iostream>
 
 using namespace std;
 
@@ -139,6 +136,3 @@ int getMinimumSteps(std::vector<std::string> wireOneInput, std::vector<std::stri
 
 	return minimalSteps;
 }
-
-
-#endif

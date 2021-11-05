@@ -1,6 +1,6 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "doctest.h"
-#include "../day3/day3_func.h"
+#include "../../doctest.h"
+#include "../include/day3_func.h"
 
 TEST_CASE("Correct distance min") {
     // Arrange

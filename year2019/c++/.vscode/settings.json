@@ -1,5 +1,9 @@
 {
     "files.associations": {
-        "vector": "cpp"
+        "vector": "cpp",
+        "map": "cpp",
+        "tuple": "cpp",
+        "xstring": "cpp",
+        "set": "cpp"
     }
 }
