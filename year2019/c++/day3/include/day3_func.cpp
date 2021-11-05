@@ -1,12 +1,5 @@
 #include "day3_func.h"
 
-// #include <algorithm>
-// #include <map>
-// #include <set>
-// #include <tuple>
-// #include <cmath>
-// #include <iostream>
-
 using namespace std;
 
 void addSteps(map<char, int> &coordinates, char coord, int multiplier, int value, map<tuple<int, int>, int> &places, int steps) {
