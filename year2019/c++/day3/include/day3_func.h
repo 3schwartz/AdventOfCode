@@ -10,6 +10,19 @@
 #include <cmath>
 #include <iostream>
 
+class Move {
+    public:
+        Move(std::string move);
+        std::string direction;
+        int steps;
+};
+
+class Wire {
+    public:
+        Wire(std::vector<std::string> moves);
+        std::vector<Move> moves;
+};
+
 void addSteps(std::map<char, int> &coordinates, char coord, int multiplier, int value, std::map<std::tuple<int, int>, int> &places, int steps);
 
 std::map<std::tuple<int, int>, int> getCoordinates(std::vector<std::string> wire);

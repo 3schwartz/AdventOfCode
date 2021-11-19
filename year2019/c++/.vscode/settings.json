@@ -4,6 +4,7 @@
         "map": "cpp",
         "tuple": "cpp",
         "xstring": "cpp",
-        "set": "cpp"
+        "set": "cpp",
+        "algorithm": "cpp"
     }
 }

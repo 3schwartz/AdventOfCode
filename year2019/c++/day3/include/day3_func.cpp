@@ -2,6 +2,21 @@
 
 using namespace std;
 
+Move::Move(string move) {
+	direction = move.substr(0, 1);
+	steps = stoi(move.substr(1, move.size()));
+}
+
+Wire::Wire(vector<string> directions) {
+	for(auto &direction : directions) {
+		Move *move = new Move(direction);
+		
+		moves.push_back(*move);
+		
+		delete move;
+	}
+}
+
 void addSteps(map<char, int> &coordinates, char coord, int multiplier, int value, map<tuple<int, int>, int> &places, int steps) {
 	int position_before = coordinates[coord];
 	int position_after = position_before + multiplier * value;

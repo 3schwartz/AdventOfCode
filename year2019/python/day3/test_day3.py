@@ -5,6 +5,28 @@ from year2019.python.day3.day3_func import *
 
 class TestDay3(unittest.TestCase):
 
+    def test_wire_init_correct(self):
+        # Arrange
+        wires = ["R87", "I9"]
+
+        # Act
+        wire_aggregator = Wire(wires)
+
+        # Assert
+        self.assertEqual(2, len(wire_aggregator.moves))
+
+
+    def test_move_init_correct(self):
+        # Arrange
+        direction = "R75"
+
+        # Act
+        wire = Move(direction)
+
+        # Assert
+        self.assertEqual("R", wire.direction)
+        self.assertEqual(75, wire.steps)
+
     def test_correct_distance_min(self):
         # Arrange
         first = ['R75', 'D30', 'R83', 'U83', 'L12', 'D49', 'R71', 'U7', 'L72']
@@ -12,7 +34,7 @@ class TestDay3(unittest.TestCase):
         expected = 159
 
         # Act
-        actual = get_minimum_distance(first, second)
+        actual = MinimumCalculator(first, second).get_minimum_distance()
 
         # Assert
         self.assertEqual(expected, actual)
@@ -24,7 +46,7 @@ class TestDay3(unittest.TestCase):
         expected = 6
 
         # Act
-        actual = get_minimum_distance(first, second)
+        actual = MinimumCalculator(first, second).get_minimum_distance()
 
         # Assert
         self.assertEqual(expected, actual)
@@ -36,7 +58,7 @@ class TestDay3(unittest.TestCase):
         expected = 30
 
         # Act
-        actual = get_minimum_steps(first, second)
+        actual = MinimumCalculator(first, second).get_minimum_steps()
 
         # Assert
         self.assertEqual(expected, actual)
