@@ -12,10 +12,13 @@ Wire::Wire(vector<string> directions) {
 		Move *move = new Move(direction);
 		
 		moves.push_back(*move);
-		
-		delete move;
 	}
 }
+
+Wire::~Wire() { 
+	moves.clear();
+	moves.shrink_to_fit();
+ }
 
 void addSteps(map<char, int> &coordinates, char coord, int multiplier, int value, map<tuple<int, int>, int> &places, int steps) {
 	int position_before = coordinates[coord];

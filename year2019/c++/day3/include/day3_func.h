@@ -20,6 +20,8 @@ class Move {
 class Wire {
     public:
         Wire(std::vector<std::string> moves);
+        ~Wire();
+
         std::vector<Move> moves;
 };
 
