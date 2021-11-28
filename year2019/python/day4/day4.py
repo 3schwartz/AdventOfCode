@@ -1,11 +1,21 @@
 from day4_func import *
 
-bounds = (272091,815432)
+passwordFinder = PasswordFinder(272091, 815432)
+passwords = passwordFinder.getPasswords()
 
-passed=sum([sequence_pass_rules(s, get_rules()[:2]) for s in range(bounds[0], bounds[1]+1)])
+validator = PasswordValidator()
+validations = [TwoSequentuallyEqual(), IncreasingValidation()]
 
-print(f"Part 1: {passed}")
+validator.validations = validations
 
-passedSecond=sum([sequence_pass_rules(s, get_rules()) for s in range(bounds[0], bounds[1]+1)])
+numberValidPasswords = validator.numberValidPassword(passwords)
 
-print(f"Part 2: {passedSecond}")
+print(f"Part 1: {numberValidPasswords}")
+
+validations.append(TwoEqual())
+
+validator.validations = validations
+
+numberValidPasswordsWithTwoEqual = validator.numberValidPassword(passwords)
+
+print(f"Part 2: {numberValidPasswordsWithTwoEqual}")
