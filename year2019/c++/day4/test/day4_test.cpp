@@ -23,19 +23,17 @@ class PasswordFinder
 class Validation
 {
     public:
-        virtual bool Validate(int password) = 0;
+        virtual bool Validate(std::string password) = 0;
 };
 
 class IncreasingValidation : public Validation
 {
     public:
-        bool Validate(int password) {
-            
-            string passwordString = to_string(password);
+        bool Validate(std::string password) {
 
             bool less = false;
-            for(int i = 0; i < passwordString.size() - 1; i++) {
-                less = passwordString[i] <= passwordString[i+1];
+            for(int i = 0; i < password.size() - 1; i++) {
+                less = password[i] <= password[i+1];
                 if (less == false) {
                     break;
                 }
@@ -47,13 +45,11 @@ class IncreasingValidation : public Validation
 class TwoSequentuallyEqual : public Validation
 {
     public:
-        bool Validate(int password) {
-            
-            string passwordString = to_string(password);
+        bool Validate(std::string password) {
 
             bool equal = false;
-            for(int i = 0; i < passwordString.size() - 1; i++) {
-                equal = passwordString[i] == passwordString[i+1];
+            for(int i = 0; i < password.size() - 1; i++) {
+                equal = password[i] == password[i+1];
                 if (equal) {
                     break;
                 }
@@ -63,10 +59,108 @@ class TwoSequentuallyEqual : public Validation
         };
 };
 
+class PasswordValidator
+{
+    private:
+        std::vector<Validation*> validations;
+    
+    public:
+        ~PasswordValidator()
+        {
+            this->validations.clear();
+        }
+
+        void setPasswordValidations(std::vector<Validation*> validations) {
+            this->validations = validations;
+        }
+
+        bool validatePassword(int password){
+
+            string passwordString = to_string(password);
+
+            bool validPassword = false;
+            for(int i = 0; i < validations.size(); i++) {
+                validPassword = validations[i]->Validate(passwordString);
+                if(!validPassword) {
+                    break;
+                }
+            }
+
+            return validPassword;
+        };
+
+        int numberValidPassword(std::vector<int> passwords) {
+            int numberValid = 0;
+
+            std::for_each(std::begin(passwords), std::end(passwords),
+             [this, &numberValid](int password){
+                 numberValid += this->validatePassword(password) ? 1 : 0;
+             });
+
+             return numberValid;
+        }
+};
+
+TEST_CASE("Password Validator") {
+    SUBCASE ("When given range then return correct count") {
+        // Arrange
+        std::vector<int> passwords{12344, 12345};
+
+        PasswordValidator* validator = new PasswordValidator;
+        std::vector<Validation*> validations;
+
+        validations.push_back(new TwoSequentuallyEqual);
+        validations.push_back(new IncreasingValidation);
+
+        validator->setPasswordValidations(validations);
+
+        int numberValidPassword = validator->numberValidPassword(passwords);
+
+        CHECK(numberValidPassword == 1);
+    }
+
+    SUBCASE ("Wrong password validated to false") {
+        // Arrange
+        int password = 1234;
+        PasswordValidator* validator = new PasswordValidator;
+        std::vector<Validation*> validations;
+
+        validations.push_back(new TwoSequentuallyEqual);
+        validations.push_back(new IncreasingValidation);
+
+        validator->setPasswordValidations(validations);
+
+        // Act
+        bool passwordValid = validator->validatePassword(password);
+
+        // Assert
+        CHECK(passwordValid == false);
+    }
+
+    SUBCASE("Correct password validated to true") {
+        // Arrange
+        int password = 1233;
+        PasswordValidator* validator = new PasswordValidator;
+        std::vector<Validation*> validations;
+
+        validations.push_back(new TwoSequentuallyEqual);
+        validations.push_back(new IncreasingValidation);
+
+        validator->setPasswordValidations(validations);
+
+        // Act
+        bool passwordValid = validator->validatePassword(password);
+
+        // Assert
+        CHECK(passwordValid);
+    }
+}
+
+
 TEST_CASE("Two sequentially equal") {
     SUBCASE("When one place two sequentially equal then true"){
         // Arrange
-        int password = 1123;
+        std::string password = "1123";
 
         // Act
         Validation* twoSequentuallyEqual = new TwoSequentuallyEqual;
@@ -79,7 +173,7 @@ TEST_CASE("Two sequentially equal") {
 
     SUBCASE("When no sequantially equal then false"){
         // Arrange
-        int password = 1234;
+        std::string password = "1234";
 
         // Act
         Validation* twoSequentuallyEqual = new TwoSequentuallyEqual;
@@ -94,7 +188,7 @@ TEST_CASE("Two sequentially equal") {
 TEST_CASE("Increase rule ") {
     SUBCASE("Decreasing number in middle should result in false") {
         // Arrange
-        int passwordInt = 1213;
+        std::string passwordInt = "1213";
 
         // Act
         IncreasingValidation increaseValidation;
@@ -106,7 +200,7 @@ TEST_CASE("Increase rule ") {
 
     SUBCASE("Decreasing number should result in false") {
         // Arrange
-        int passwordInt = 4321;
+        std::string passwordInt = "4321";
 
         // Act
         IncreasingValidation increaseValidation;
@@ -118,7 +212,7 @@ TEST_CASE("Increase rule ") {
 
     SUBCASE("Increasing number should result in true") {
         // Arrange
-        int passwordInt = 1234;
+        std::string passwordInt = "1234";
 
         // Act
         IncreasingValidation increaseValidation;
