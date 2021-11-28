@@ -1,105 +1,36 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "../../doctest.h"
+#include "../include/day4_func.h"
 
 using namespace std;
 
-class PasswordFinder
-{
-    private:
-        int from;
-        int to;
+TEST_CASE("Two equal") {
+    SUBCASE("When two equal then true"){
+        // Arrange
+        std::string password = "1123";
 
-    public:
-        PasswordFinder(int from, int to) : from(from), to(to) {}
-        std::vector<int> getPasswords(){
-            std::vector<int> passwords;
-            for(int i = from; i <= to; i++) {
-                passwords.push_back(i);
-            }
-            return passwords;
-        };
-};
+        // Act
+        Validation* twoEqual = new TwoEqual;
+        bool validationTwoEqual = twoEqual->Validate(password);
 
-class Validation
-{
-    public:
-        virtual bool Validate(std::string password) = 0;
-};
+        // Arrange
+        CHECK(validationTwoEqual);
+        delete twoEqual;
+    }
 
-class IncreasingValidation : public Validation
-{
-    public:
-        bool Validate(std::string password) {
+    SUBCASE("When no equal then false"){
+        // Arrange
+        std::string password = "1234";
 
-            bool less = false;
-            for(int i = 0; i < password.size() - 1; i++) {
-                less = password[i] <= password[i+1];
-                if (less == false) {
-                    break;
-                }
-            }
-            return less;
-        };
-};
+        // Act
+        Validation* twoEqual = new TwoEqual;
+        bool validationTwoEqual = twoEqual->Validate(password);
 
-class TwoSequentuallyEqual : public Validation
-{
-    public:
-        bool Validate(std::string password) {
-
-            bool equal = false;
-            for(int i = 0; i < password.size() - 1; i++) {
-                equal = password[i] == password[i+1];
-                if (equal) {
-                    break;
-                }
-            }
-
-            return equal;
-        };
-};
-
-class PasswordValidator
-{
-    private:
-        std::vector<Validation*> validations;
-    
-    public:
-        ~PasswordValidator()
-        {
-            this->validations.clear();
-        }
-
-        void setPasswordValidations(std::vector<Validation*> validations) {
-            this->validations = validations;
-        }
-
-        bool validatePassword(int password){
-
-            string passwordString = to_string(password);
-
-            bool validPassword = false;
-            for(int i = 0; i < validations.size(); i++) {
-                validPassword = validations[i]->Validate(passwordString);
-                if(!validPassword) {
-                    break;
-                }
-            }
-
-            return validPassword;
-        };
-
-        int numberValidPassword(std::vector<int> passwords) {
-            int numberValid = 0;
-
-            std::for_each(std::begin(passwords), std::end(passwords),
-             [this, &numberValid](int password){
-                 numberValid += this->validatePassword(password) ? 1 : 0;
-             });
-
-             return numberValid;
-        }
-};
+        // Arrange
+        CHECK(validationTwoEqual == false);
+        delete twoEqual;
+    }
+}
 
 TEST_CASE("Password Validator") {
     SUBCASE ("When given range then return correct count") {
