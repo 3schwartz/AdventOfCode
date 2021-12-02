@@ -1,5 +1,5 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "../../doctest.h"
+#include "../../../../external/doctest/doctest.h"
 #include "../include/day3_func.h"
 
 TEST_CASE("Correct wire init") {
