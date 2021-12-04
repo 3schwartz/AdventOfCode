@@ -16,3 +16,42 @@ std::vector<std::string> Move::GetSplit(std::string move){
         strings.push_back(item);
     };
     return strings;
+}
+
+int RouteCalculator::GetPosition(vector<Move> moves){
+    int position = 0;
+    int debt = 0;
+
+    for(Move &move : moves) {
+        if(move.direction == "forward"){
+            position += move.step;
+        }
+        if(move.direction == "down"){
+            debt += move.step;
+        }
+        if(move.direction == "up"){
+            debt -= move.step;
+        }                                
+    }
+    return debt * position;
+};
+
+int AimCalculator::GetPosition(vector<Move> moves){
+    int position = 0;
+    int debt = 0;
+    int aim = 0;
+
+    for(Move &move : moves) {
+        if(move.direction == "forward"){
+            position += move.step;
+            debt += aim * move.step;
+        }
+        if(move.direction == "down"){
+            aim += move.step;
+        }
+        if(move.direction == "up"){
+            aim -= move.step;
+        }                                
+    }
+    return debt * position;
+};

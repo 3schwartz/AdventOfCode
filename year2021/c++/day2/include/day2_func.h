@@ -4,6 +4,8 @@
 #include <vector>
 #include <string>
 
+using namespace std;
+
 class Move {
     private:
         std::vector<std::string> GetSplit(std::string move);
@@ -13,6 +15,24 @@ class Move {
         int step;
 
         Move(std::string move);
+};
+
+class Validator
+{
+    public:
+        virtual int GetPosition(vector<Move> moves) = 0;
+};
+
+class RouteCalculator : public Validator
+{
+    public:
+        int GetPosition(vector<Move> moves);
+};
+
+class AimCalculator : public Validator
+{
+    public:
+        int GetPosition(vector<Move> moves);
 };
 
 #endif
