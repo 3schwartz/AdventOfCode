@@ -10,7 +10,7 @@ class RateFinder:
         co2Binary = self.BinrayToDecimal(co2)
         oxygenBinary = self.BinrayToDecimal(oxygen)
 
-        return co2Binary*oxygenBinary
+        return co2Binary * oxygenBinary
 
     def Consumption(self, report: List[List[int]]) -> int:
         gamma = self.GammaRateFinder(report)
@@ -19,59 +19,36 @@ class RateFinder:
         gammaBinary = self.BinrayToDecimal(gamma)
         epsilonBinary = self.BinrayToDecimal(epsilon)
 
-        return gammaBinary*epsilonBinary
+        return gammaBinary * epsilonBinary
 
     def CO2Finder(self, report: List[List[int]]) -> str:
-
-        remaining = report.copy()
-        idx = 0
-        while(True):
-
-            within = list()
-
-            bit = 1 if sum(list(zip(*remaining))[idx]) < len(remaining) / 2 else 0
-            for report in remaining:
-                if report[idx] == bit:
-                    within.append(report)
-
-            if len(within) == 2:
-                if within[0][idx+1] == 0:
-                    remaining = within[0]
-                else:
-                    remaining = within[1]
-                break
-            elif len(within) == 1:
-                remaining = within[0]
-                break
-            else:
-                remaining = within
-
-            idx += 1
-
-        return "".join(str(bit) for bit in remaining)
+        return self.ComplexFinder(report, lambda remaining, idx: sum(list(zip(*remaining))[idx]) < len(remaining) / 2, 0)
 
     def OxygenFinder(self, report: List[List[int]]) -> str:
 
+        return self.ComplexFinder(report, lambda remaining, idx: sum(list(zip(*remaining))[idx]) > len(remaining) / 2, 1)
+
+    def ComplexFinder(self, report: List[List[int]], condition, default: int):
         remaining = report.copy()
         idx = 0
-        while(True):
 
+        while True:
             within = list()
 
-            bit = 1 if sum(list(zip(*remaining))[idx]) > len(remaining)  / 2 else 0
+            bit = 1 if condition(remaining, idx) else 0
             for report in remaining:
                 if report[idx] == bit:
                     within.append(report)
 
             if len(within) == 2:
-                if within[0][idx+1] == 1:
+                if within[0][idx + 1] == default:
                     remaining = within[0]
                 else:
                     remaining = within[1]
-                break;
+                break
             elif len(within) == 1:
                 remaining = within[0]
-                break;
+                break
             else:
                 remaining = within
 
@@ -79,18 +56,18 @@ class RateFinder:
 
         return "".join(str(bit) for bit in remaining)
 
-
     def GammaRateFinder(self, report: List[List[int]]) -> str:
-        gammaRate = []
-        for report in zip(*report):
-            gammaRate.append("1" if sum(report) > len(report) / 2 else "0")
-        return "".join(gammaRate)
+        return self.SimpleFinder(report, lambda rep: sum(rep) > len(rep) / 2)
 
     def EpsilonRateFinder(self, report: List[List[int]]) -> str:
-        epsilonRate = []
+
+        return self.SimpleFinder(report, lambda rep: sum(report) < len(report) / 2)
+
+    def SimpleFinder(self, report: List[List[int]], condition):
+        rate = []
         for report in zip(*report):
-            epsilonRate.append("1" if sum(report) < len(report) / 2 else "0")
-        return "".join(epsilonRate)
+            rate.append("1" if condition(report) else "0")
+        return "".join(rate)
 
     def BinrayToDecimal(self, binrayString: str) -> int:
         return int(binrayString, 2)
