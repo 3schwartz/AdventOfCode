@@ -1,6 +1,6 @@
 from year2021.python.day5.day5_func import *
 
-lines = [Line(line.strip()) for line in open('../../data/day5_data.txt')]
+lines = [LineFactory.getLine(line.strip()) for line in open('../../data/day5_data.txt')]
 finder = IntersectFinder()
 
 pointsOverlap = finder.findStraigtIntersectCount(lines)
