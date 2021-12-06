@@ -17,14 +17,12 @@ class LineFactory:
 
         raise Exception("Unknown type of line")
 
-    @staticmethod
     def getTubleFromStr(line: str):
         strFrom, strTo = line.split(" -> ")
         fromPoint = (int(strFrom.split(',')[0]), int(strFrom.split(',')[1]))
         toPoint = (int(strTo.split(',')[0]), int(strTo.split(',')[1]))
         return (fromPoint, toPoint)
 
-    @staticmethod
     def isVerticalOrHorizontal(fromPoint: tuple, toPoint: tuple):
         if fromPoint[0] == toPoint[0]:
             return True
@@ -32,7 +30,6 @@ class LineFactory:
             return True
         return False
 
-    @staticmethod
     def isDiagonal(fromPoint: tuple, toPoint: tuple):
         return abs(fromPoint[0] - toPoint[0]) == abs(fromPoint[1] - toPoint[1])
 
