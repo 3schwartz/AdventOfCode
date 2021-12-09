@@ -1,89 +1,51 @@
-from typing import List
+from typing import List, Dict
 import numpy as np
-from functools import reduce
+from functools import reduce, partial
+
+
+class HeightCreator:
+
+    @staticmethod
+    def createHeightMap(inputMatrix: List[str]):
+        heights = {(i, j): int(height) for i, l in enumerate(inputMatrix)
+                   for j, height in enumerate(l.strip())}
+        return heights
 
 
 class HeightAnalyzer:
 
-    def __init__(self, inputLines: List[str]):
-        heights = [list(line.strip()) for line in inputLines]
-        self.heights = np.array(heights, dtype=int)
+    def getNeighbours(self, row: int, col: int, heights: Dict[tuple, int]) -> List[tuple]:
+        neighboursPositions = [(row, col - 1), (row, col + 1), (row - 1, col), (row + 1, col)]
+        neighbours = [position for position in neighboursPositions if position in heights]
+        return neighbours
 
-    def getBiggestBasinSize(self):
-        allIsTrue = self.getLowest()
-        idx = np.where(allIsTrue == 1)
+    def isLow(self, position: tuple, heights: Dict[tuple, int]) -> bool:
+        lowerNeighbours = [heights[position] < heights[neighbour]
+                           for neighbour in self.getNeighbours(*position, heights)]
+        return all(lowerNeighbours)
 
-        basinSizes = [self.getBasinSize(id) for id in zip(idx[0], idx[1])]
-        basinSizes.sort(reverse=True)
+    def getLowest(self, heights: Dict[tuple, int]):
+        lowPosition = [position for position in heights if self.isLow(position, heights)]
+        return lowPosition
 
-        basinMaxSize = reduce(lambda a, b: a * b, basinSizes[:3])
+    def getRisk(self, heights: Dict[tuple, int]) -> int:
+        lowPositions = self.getLowest(heights)
+        return sum(heights[position] + 1 for position in lowPositions)
 
+    def getBasinSize(self, position: tuple, heights: Dict[tuple, int]) -> int:
+        if position not in heights: return 0
+        if heights[position] == 9: return 0
+        del heights[position]
+        nextBasin = partial(self.getBasinSize, heights=heights)
+        basinCount = 1 + sum(map(nextBasin,
+                                 self.getNeighbours(*position, heights)))
+        return basinCount
+
+    def getBasinMax(self, heights: Dict[tuple, int]) -> int:
+        lowPositions = self.getLowest(heights)
+        basinSizes = [self.getBasinSize(position, heights.copy())
+                      for position in lowPositions]
+        basinMaxSize = reduce(lambda a, b: a * b,
+                              sorted(basinSizes, reverse=True)[:3])
         return basinMaxSize
 
-    def getBasinSize(self, id: tuple) -> int:
-        sizeBasin = 0
-        reamining = [id]
-        lookedUpon = 0
-        while len(reamining) != lookedUpon:
-
-            current = reamining[lookedUpon]
-
-            lowerNeighbors = []
-
-            for i in (-1, 0, 1):
-                for j in (-1, 0, 1):
-                    if abs(i + j) == 2 or i + j == 0:
-                        continue
-                    idxRow = current[0] + i
-                    idxColumn = current[1] + j
-
-                    if idxRow < 0 or idxRow >= self.heights.shape[0]:
-                        continue
-                    if idxColumn < 0 or idxColumn >= self.heights.shape[1]:
-                        continue
-                    if self.heights[current[0], current[1]] < self.heights[idxRow, idxColumn]:
-                        lowerNeighbors.append((idxRow, idxColumn))
-
-            if len(lowerNeighbors) > 0:
-                sizeBasin += 1
-            for lowerNeighbor in lowerNeighbors:
-                if lowerNeighbor not in reamining:
-                    reamining.append(lowerNeighbor)
-            lookedUpon += 1
-
-        return sizeBasin
-
-    def getRisk(self) -> int:
-        allIsTrue = self.getLowest()
-        return int((self.heights * allIsTrue + allIsTrue).sum())
-
-    def getLowest(self) -> np.array:
-        below = self.belowRule()
-        above = self.aboveRule()
-        right = self.rightRule()
-        left = self.leftRule()
-        allIsTrue = np.floor((above.astype(int) + below + right + left) / 4)
-        return allIsTrue
-
-    def belowRule(self) -> np.array:
-        below = self.getAllTrue()
-        below[:-1, :] = self.heights[:-1, :] < self.heights[1:, :]
-        return below
-
-    def aboveRule(self) -> np.array:
-        above = self.getAllTrue()
-        above[1:, :] = self.heights[:-1, :] > self.heights[1:, :]
-        return above
-
-    def rightRule(self) -> np.array:
-        right = self.getAllTrue()
-        right[:, :-1] = self.heights[:, :-1] < self.heights[:, 1:]
-        return right
-
-    def leftRule(self) -> np.array:
-        left = self.getAllTrue()
-        left[:, 1:] = self.heights[:, :-1] > self.heights[:, 1:]
-        return left
-
-    def getAllTrue(self):
-        return np.ones(shape=self.heights.shape, dtype=bool)

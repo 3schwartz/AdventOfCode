@@ -1,12 +1,14 @@
 from year2021.python.day9.day9_func import *
 
-inputLines = open('../../data/day9_data.txt').readlines()
-analyzer = HeightAnalyzer(inputLines)
+inputLines = open('../../data/day9_data.txt')
 
-risk = analyzer.getRisk()
+heights = HeightCreator.createHeightMap(inputLines)
+analyzer = HeightAnalyzer()
+
+risk = analyzer.getRisk(heights)
 
 print(f"Part 1: {risk}")
 
-maxBasinSize = analyzer.getBiggestBasinSize()
+maxBasinSize = analyzer.getBasinMax(heights)
 
 print(f"Part 2: {maxBasinSize}")
