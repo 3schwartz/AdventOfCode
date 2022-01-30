@@ -1,6 +1,5 @@
-from typing import List, Dict
-import numpy as np
 from functools import reduce, partial
+from typing import List, Dict
 
 
 class HeightCreator:
