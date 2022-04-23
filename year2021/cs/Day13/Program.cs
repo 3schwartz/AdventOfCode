@@ -1,8 +1,8 @@
 ﻿using Day1;
 
 // For test data
-//var v = File.ReadAllText("./day13_data_test.txt");
-var v = File.ReadAllText("./day13_data.txt");
+//var v = File.ReadAllText("../../../../../data/day13_data_test.txt");
+var v = File.ReadAllText("../../../../../data/day13_data.txt");
 var vs = v.Split("\r\n\r\n");
 
 
