@@ -1,13 +1,7 @@
 ﻿namespace Day14
 {
     public class PolymerInserter
-    {
-
-        internal string[] GetData(string path)
-        {
-            return File.ReadAllLines(path);
-        }
-
+    {    
         internal IList<Rule> CreateRules(string[] lineRules)
         {
             var rules = new List<Rule>(lineRules.Length);
@@ -59,7 +53,7 @@
             return counts.Values.Max() - counts.Values.Min();
         }
 
-        internal Span<char> ApplyFoundRules(ReadOnlySpan<char> template, SortedDictionary<int, char> rulesToApply)
+        internal Span<char> ApplyFoundRules(ReadOnlySpan<char> template, IList<RulesToApply> rulesToApply)
         {
             Span<char> result = new char[rulesToApply.Count + template.Length];
             var inserted = 0;
@@ -67,11 +61,11 @@
             var lastKey = 0;
             foreach (var pair in rulesToApply)
             {
-                var key = pair.Key + inserted;
-                template[lastKey..pair.Key].CopyTo(result[nextIndex..key]);
-                result[key] = pair.Value;
+                var key = pair.Index + inserted;
+                template[lastKey..pair.Index].CopyTo(result[nextIndex..key]);
+                result[key] = pair.Insert;
 
-                lastKey = pair.Key;
+                lastKey = pair.Index;
                 nextIndex = key + 1;
                 inserted++;
             }
@@ -81,41 +75,42 @@
             return result;
         }
 
-        internal SortedDictionary<int, char> FindRulesToApply(ReadOnlySpan<char> template, IList<Rule> rules)
+        internal IList<RulesToApply> FindRulesToApply(ReadOnlySpan<char> template, IList<Rule> rules)
         {
-            var rulesToApply = new SortedDictionary<int, char>();
+            var rulesToApply = new List<RulesToApply>();
             for (int i = 0; i < template.Length - 1; i++)
             {
                 foreach (var rule in rules)
                 {
                     if (template[i] == rule.First && template[i + 1] == rule.Second)
                     {
-                        rulesToApply[i + 1] = rule.Insert;
+                        rulesToApply.Add(new RulesToApply(i + 1, rule.Insert));
                     }
                 }
             }
+            rulesToApply.Sort();
 
             return rulesToApply;
         }
 
-        internal struct Apply : IEquatable<Apply>, IComparable<Apply>
+        internal struct RulesToApply : IEquatable<RulesToApply>, IComparable<RulesToApply>
         {
             public int Index { get; private set; }
             public char Insert { get; private set; }
 
-            public Apply(int index, char insert)
+            public RulesToApply(int index, char insert)
             {
                 Index = index;
                 Insert = insert;
             }
 
-            public int CompareTo(Apply other)
+            public int CompareTo(RulesToApply other)
             {
-                return other.Index > Index ? 1 :
-                    other.Index == Index ? 0 : -1;
+                return other.Index > Index ? -1 :
+                    other.Index == Index ? 0 : 1;
             }
 
-            public bool Equals(Apply other)
+            public bool Equals(RulesToApply other)
             {
                 return other.Insert == Insert && other.Index == Index;
             }

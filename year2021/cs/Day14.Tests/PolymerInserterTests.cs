@@ -5,22 +5,21 @@ using static Day14.PolymerInserter;
 
 namespace Day14.Tests;
 
-public class Day14Tests
+public class PolymerInserterTests
 {
     private readonly PolymerInserter polymerInserter;
 
-    public Day14Tests()
+    public PolymerInserterTests()
     {
         polymerInserter = new PolymerInserter();
     }
 
     [Theory]
     [InlineData(10, 1588)]
-    [InlineData(40, 2188189693529)]
     public void WhenUsingTestData_ThenCorrect(int insertions, long expected)
     {
         // Arrange
-        var data = polymerInserter.GetData("../../../../../data/day14_data_test.txt");
+        var data = DataLoader.GetData("../../../../../data/day14_data_test.txt");
 
         // Act
         var polymerTemplate = polymerInserter.DoInsertion(data, insertions);
@@ -38,7 +37,7 @@ public class Day14Tests
     public void WhenDoingInsertion_ThenReturnUpdatedTemplate(string expected, int iterations)
     {
         // Arrange
-        var data = polymerInserter.GetData("../../../../../data/day14_data_test.txt");
+        var data = DataLoader.GetData("../../../../../data/day14_data_test.txt");
 
         // Act
         var polymerTemplate = polymerInserter.DoInsertion(data, iterations);
@@ -84,7 +83,9 @@ public class Day14Tests
         // Arrange
         Span<char> template = new char[5] { 'N', 'H', 'H', 'C', 'F' };
         var rules = new List<Rule> { new Rule('H', 'H', 'F'), new Rule('N', 'H', 'Q') };
-        var expected = new SortedDictionary<int, char> { { 1, 'Q' }, { 2, 'F' } };
+        var expected = new List<RulesToApply>{ 
+            new RulesToApply(1, 'Q'), new RulesToApply(2, 'F') 
+        };
 
         // Act
         var actual = polymerInserter.FindRulesToApply(template, rules);
@@ -99,7 +100,9 @@ public class Day14Tests
         // Arrange
         var expected = new char[7] { 'N', 'Q', 'H', 'F', 'H', 'C', 'F' };
         Span<char> template = new char[5] { 'N', 'H', 'H', 'C', 'F' };
-        var foundRules = new SortedDictionary<int, char> { { 1, 'Q' }, { 2, 'F' } };
+        var foundRules = new List<RulesToApply>{
+            new RulesToApply(1, 'Q'), new RulesToApply(2, 'F')
+        };
 
         // Act
         Span<char> actual = polymerInserter.ApplyFoundRules(template, foundRules);
