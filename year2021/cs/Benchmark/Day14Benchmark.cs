@@ -11,13 +11,13 @@ namespace Benchmark
         private PolymerInserter polymerInserter;
         private PolymerPair polymerPair;
 
-        [Params(1,5,10,15)]
+        [Params(1,5,10,15,20,25)]
         public int Insertions { get; set; }
 
         [GlobalSetup]
         public void GlobalSetup()
         {
-            data = DataLoader.GetData("../../../../../data/day14_data.txt");
+            data = DataLoader.GetData("../../../../../../../../../data/day14_data.txt");
         }
 
         [IterationSetup(Target = nameof(PolymerInserter))]
