@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
+using Common;
 using Day14;
 
 namespace Benchmark
@@ -18,12 +19,8 @@ namespace Benchmark
         public void GlobalSetup()
         {
             data = DataLoader.GetData("../../../../../../../../../data/day14_data.txt");
-        }
-
-        [IterationSetup(Target = nameof(PolymerInserter))]
-        public void SetupPolymerInserter()
-        {
             polymerInserter = new PolymerInserter();
+            polymerPair = new PolymerPair();
         }
 
         [Benchmark]
@@ -31,12 +28,6 @@ namespace Benchmark
         {
             var polymerTemplate = polymerInserter.DoInsertion(data, Insertions);
             _ = polymerInserter.GetMostCommonMinusLeastCommon(polymerTemplate);
-        }
-
-        [IterationSetup(Target = nameof(PolymerPair))]
-        public void SetupPolymerPair()
-        {
-            polymerPair = new PolymerPair();
         }
 
         [Benchmark]

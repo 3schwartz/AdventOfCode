@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Common;
+using System.Collections.Generic;
 using Xunit;
 using static Day14.PolymerPair;
 

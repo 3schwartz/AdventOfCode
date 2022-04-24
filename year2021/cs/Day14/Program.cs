@@ -1,4 +1,5 @@
-﻿using Day14;
+﻿using Common;
+using Day14;
 
 var polymerInserter = new PolymerInserter();
 

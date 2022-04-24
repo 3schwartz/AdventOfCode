@@ -1,6 +1,6 @@
 ﻿namespace Day14
 {
-    public class PolymerInserter
+    internal class PolymerInserter
     {    
         internal IList<Rule> CreateRules(string[] lineRules)
         {
