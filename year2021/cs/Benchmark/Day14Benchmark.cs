@@ -11,7 +11,7 @@ namespace Benchmark
         private PolymerInserter polymerInserter;
         private PolymerPair polymerPair;
 
-        [Params(1,5,10,15,20,25)]
+        [Params(1,5,10,15,20)]
         public int Insertions { get; set; }
 
         [GlobalSetup]
