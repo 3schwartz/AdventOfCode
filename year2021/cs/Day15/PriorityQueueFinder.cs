@@ -1,6 +1,6 @@
 ﻿namespace Day15
 {
-    internal class DijkstraFinder
+    internal class PriorityQueueFinder
     {
         internal Node[][] CreateNodes(string[] data, int numberOfTiles)
         {
@@ -53,22 +53,25 @@
                 return (cost - 1) % 9 + 1;
             }
 
-            internal void FindNodeCost(Node previous, Queue<Node> queue)
+            internal void FindNodeCost(Node previous, PriorityQueue<Node, int> queue)
             {
+                if (OverallCost != int.MaxValue) return;
+
                 var updatedCost = Cost + previous.OverallCost;
                 if (updatedCost < OverallCost)
                 {
                     OverallCost = updatedCost;
                     PreviousNode = previous;
-                    queue.Enqueue(this);
                 }
+
+                queue.Enqueue(this, OverallCost);
             }
         }
 
         internal int FindShortest(Node[][] nodes)
         {
-            var queue = new Queue<Node>();
-            queue.Enqueue(nodes[0][0]);
+            var queue = new PriorityQueue<Node, int>();
+            queue.Enqueue(nodes[0][0], 0);
 
             var nRow = nodes.Length;
             var nCol = nodes[0].Length;
