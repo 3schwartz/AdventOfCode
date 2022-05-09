@@ -22,7 +22,7 @@ namespace Day18.Tests
         [InlineData("[[[[[9,8],1],2],3],4]", "[[[[0,9],2],3],4]")]
         [InlineData("[7,[6,[5,[4,[3,2]]]]]", "[7,[6,[5,[7,0]]]]")]
         [InlineData("[[6,[5,[4,[3,2]]]],1]", "[[6,[5,[7,0]]],3]")]
-        [InlineData("[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]", "[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]")]
+        [InlineData("[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]", "[[3,[2,[8,0]]],[9,[5,[7,0]]]]")]
         [InlineData("[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]", "[[3,[2,[8,0]]],[9,[5,[7,0]]]]")]
         public void WhenExplode_ThenCorrectPairsAfter(
             string input, string expectedString)
@@ -80,6 +80,26 @@ namespace Day18.Tests
 
             // Assert
             Assert.Equal(expected, pair);
+        }
+
+        [Theory]
+        [InlineData("[[9,1],[1,9]]", 129)]
+        [InlineData("[[1,2],[[3,4],5]]", 143)]
+        [InlineData("[[[[1,1],[2,2]],[3,3]],[4,4]]", 445)]
+        [InlineData("[[[[3,0],[5,3]],[4,4]],[5,5]]", 791)]
+        [InlineData("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]", 1384)]
+        [InlineData("[[[[5,0],[7,4]],[5,5]],[6,6]]", 1137)]
+        [InlineData("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]", 3488)]
+        public void WhenCalculateMagnitude_ThenCorrect(string input, int magnitude)
+        {
+            // Arrange
+            var pair = new Pair(input);
+
+            // Act
+            var actual = pair.CalculateMagnitude();
+
+            // Assert
+            Assert.Equal(magnitude, actual);
         }
     }
 }
