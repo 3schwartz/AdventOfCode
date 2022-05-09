@@ -17,7 +17,7 @@ namespace Day18.Tests
         public int? RightNumber { get; set; }
         public Pair? AbovePair { get; set; }
         public int Debt { get; set; }
-        public Position PairPosition { get; }
+        public Position PairPosition { get; set; }
 
         internal Pair(string input)
         {
@@ -25,6 +25,47 @@ namespace Day18.Tests
             Debt = 0;
             PairPosition = Position.Left;
             FindNext(span);
+        }
+
+        internal Pair(int debt, Position type, Pair above, ReadOnlySpan<char> span)
+        {
+            Debt = debt;
+            PairPosition = type;
+            AbovePair = above;
+            FindNext(span);
+        }
+
+        internal Pair(int debt, Position type, Pair above, int rightNumber, int leftNumber)
+        {
+            Debt = debt;
+            PairPosition = type;
+            AbovePair = above;
+            RightNumber = rightNumber;
+            LeftNumber = leftNumber;
+        }
+
+        public Pair(Pair leftPair, Pair rightPair)
+        {
+            LeftPair = leftPair;
+            RightPair = rightPair;
+            Debt = 0;
+        }
+
+        internal Pair Add(Pair pair)
+        {
+            PairPosition = Position.Left;
+            pair.PairPosition = Position.Right;
+            IncreaseDebt();
+            pair.IncreaseDebt();
+            return new Pair(this, pair);
+
+        }
+
+        private void IncreaseDebt()
+        {
+            Debt += 1;
+            LeftPair?.IncreaseDebt();
+            RightPair?.IncreaseDebt();
         }
 
         internal void Reduce()
@@ -43,6 +84,16 @@ namespace Day18.Tests
                 Explode();
                 return true;
             }
+            if(LeftNumber > 9)
+            {
+                Split(Position.Left, LeftNumber);
+                return true;
+            }
+            if (RightNumber > 9)
+            {
+                Split(Position.Right, RightNumber);
+                return true;
+            }
             if (LeftPair != null && LeftPair.ReduceCurrent())
             {
                 return true;
@@ -52,6 +103,26 @@ namespace Day18.Tests
                 return true;
             }
             return false;
+        }
+
+        private void Split(Position position, int? number)
+        {
+            var leftNumber = (int)Math.Floor((double)number / 2);
+            var rightNumber = (int)Math.Ceiling((double)number / 2);
+
+            var newPair = new Pair(Debt + 1, position, this, rightNumber, leftNumber);
+
+            switch (position)
+            {
+                case Position.Left:
+                    LeftNumber = null;
+                    LeftPair = newPair;
+                    break;
+                case Position.Right:
+                    RightNumber = null;
+                    RightPair = newPair;
+                    break;
+            }
         }
 
         private void Explode()
@@ -141,14 +212,6 @@ namespace Day18.Tests
             }
 
             return equals;
-        }
-
-        internal Pair(int debt, Position type, Pair above, ReadOnlySpan<char> span)
-        {
-            Debt = debt;
-            PairPosition = type;
-            AbovePair = above;
-            FindNext(span);
         }
 
         private void FindNext(ReadOnlySpan<char> span)

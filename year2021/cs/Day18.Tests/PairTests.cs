@@ -35,7 +35,51 @@ namespace Day18.Tests
             pair.Reduce();
 
             // Assert
-            Assert.Equal(pair, expected);
+            Assert.Equal(expected, pair);
+        }
+
+        [Fact]
+        public void WhenSplit_ThenCorrect()
+        {
+            // Arrange
+            var pair = new Pair("[[[[0,7],4],[15,[0,13]]],[1,1]]");
+            var expected = new Pair("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]");
+
+            // Act
+            pair.Reduce();
+
+            // Assert
+            Assert.Equal(expected, pair);
+        }
+
+        [Fact]
+        public void WhenReduce_ThenCorrect()
+        {
+            // Arrange
+            var pair = new Pair("[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]");
+            var expected = new Pair("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]");
+
+            // Act
+            pair.Reduce();
+
+            // Assert
+            Assert.Equal(expected, pair);
+        }
+
+        [Fact]
+        public void WhenAdd_ThenCorrect()
+        {
+            // Arrange
+            var firstPair = new Pair("[[[[4,3],4],4],[7,[[8,4],9]]]");
+            var secondPair = new Pair("[1,1]");
+            var pair = firstPair.Add(secondPair);
+            var expected = new Pair("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]");
+
+            // Act
+            pair.Reduce();
+
+            // Assert
+            Assert.Equal(expected, pair);
         }
     }
 }
