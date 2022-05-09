@@ -47,6 +47,8 @@ namespace Day18.Tests
         {
             LeftPair = leftPair;
             RightPair = rightPair;
+            LeftPair.AbovePair = this;
+            RightPair.AbovePair = this;
             Debt = 0;
         }
 
@@ -57,7 +59,6 @@ namespace Day18.Tests
             IncreaseDebt();
             pair.IncreaseDebt();
             return new Pair(this, pair);
-
         }
 
         internal void Reduce()
@@ -151,36 +152,6 @@ namespace Day18.Tests
 
         private void AddAboveRight(Position position, int? rightNumber)
         {
-            //switch (position)
-            //{
-            //    case Position.Left:
-            //        if (LeftPair != null)
-            //        {
-            //            LeftPair.AddAboveRight(PairPosition, rightNumber);
-            //            break;
-            //        }
-            //        if (LeftNumber != null)
-            //        {
-            //            LeftNumber += rightNumber;
-            //            break;
-            //        }
-            //        RightNumber += rightNumber;
-            //        break;
-            //    case Position.Right:
-            //        if (RightNumber != null)
-            //        {
-            //            RightNumber += rightNumber;
-            //            break;
-            //        }
-            //        if (PairPosition == Position.Left)
-            //        {
-            //            RightPair.AddAboveRight(position, rightNumber);
-            //            break;
-            //        }
-            //        AbovePair.AddAboveRight(position, rightNumber);
-            //        break;
-            //}
-
             if (RightNumber != null)
             {
                 RightNumber += rightNumber;
@@ -281,6 +252,8 @@ namespace Day18.Tests
             var number = (Pair)obj;
 
             bool equals = LeftNumber == number?.LeftNumber && this?.RightNumber == number?.RightNumber;
+
+            equals &= (AbovePair == null) == (number?.AbovePair == null);
 
             equals &= PairPosition == number?.PairPosition;
 
