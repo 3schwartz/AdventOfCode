@@ -27,6 +27,122 @@ namespace Day18.Tests
             FindNext(span);
         }
 
+        internal void Reduce()
+        {
+            bool reduced;
+            do
+            {
+                reduced = ReduceCurrent();
+            } while (reduced);
+        }
+
+        internal bool ReduceCurrent()
+        {
+            if (Debt > 3 )
+            {
+                Explode();
+                return true;
+            }
+            if (LeftPair != null && LeftPair.ReduceCurrent())
+            {
+                return true;
+            }
+            if (RightPair != null && RightPair.ReduceCurrent())
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private void Explode()
+        {
+            AbovePair?.AddAboveLeft(PairPosition, LeftNumber);
+            if(AbovePair.LeftNumber == null)
+            {
+                AbovePair.LeftNumber = 0;
+            }
+            AbovePair.LeftPair = null;
+
+            AbovePair?.AddAboveRight(PairPosition, RightNumber);
+            if (AbovePair.RightNumber == null)
+            {
+                AbovePair.RightNumber = 0;
+            }
+            AbovePair.RightPair = null;
+        }
+
+        private void AddAboveRight(Position position, int? rightNumber)
+        {
+            if (RightNumber != null)
+            {
+                RightNumber += rightNumber;
+                return;
+            }
+            if(position == Position.Left && RightPair != null)
+            {
+                RightPair.AddBelowLeft(rightNumber);
+                return;
+            }
+
+            AbovePair?.AddAboveRight(PairPosition, rightNumber);
+        }
+
+        private void AddAboveLeft(Position position, int? leftNumber)
+        {
+            if (LeftNumber != null)
+            {
+                LeftNumber += leftNumber;
+                return;
+            }
+
+            if(position == Position.Right && LeftPair != null)
+            {
+                LeftPair.AddBelowRight(leftNumber);
+            }
+
+            AbovePair?.AddAboveLeft(PairPosition, leftNumber);
+        }
+
+        private void AddBelowLeft(int? rightNumber)
+        {
+            if(LeftNumber != null)
+            {
+                LeftNumber += rightNumber;
+            }
+            LeftPair?.AddBelowLeft(rightNumber);
+        }
+
+        private void AddBelowRight(int? leftNumber)
+        {
+            if (RightNumber != null)
+            {
+                RightNumber += leftNumber;
+            }
+            RightPair?.AddBelowRight(leftNumber);
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if (typeof(object).Equals(typeof(Pair))) return false;
+            var number = (Pair)obj;
+
+            bool equals = LeftNumber == number?.LeftNumber && this?.RightNumber == number?.RightNumber;
+
+            equals &= PairPosition == number?.PairPosition;
+
+            if(LeftPair != null)
+            {
+                equals &= LeftPair.Equals(number?.LeftPair);
+            }
+
+            if (RightPair != null)
+            {
+                equals &= RightPair.Equals(number?.RightPair);
+            }
+
+            return equals;
+        }
+
         internal Pair(int debt, Position type, Pair above, ReadOnlySpan<char> span)
         {
             Debt = debt;
