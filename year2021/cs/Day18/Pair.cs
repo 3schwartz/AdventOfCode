@@ -90,6 +90,25 @@ namespace Day18
             return number.CalculateMagnitude();
         }
 
+        public static int CalculateMaxMagnitude(string[] numbers)
+        {
+            var magnitudes = new List<int>((numbers.Length-1)^2);
+
+            for (var i = 0; i < numbers.Length; i++)
+            {
+                for (var j = 0; j < numbers.Length; j++)
+                {
+                    if(i == j) continue;
+
+                    var pair = new Pair(numbers[i]).Add(new Pair(numbers[j]));
+                    pair.Reduce();
+                    magnitudes.Add(pair.CalculateMagnitude());
+                }
+            }
+
+            return magnitudes.Max();
+        }
+
         internal Pair Add(Pair pair)
         {
             PairPosition = Position.Left;
@@ -101,14 +120,9 @@ namespace Day18
 
         internal void Reduce()
         {
-            //bool reduced;
-            //do
-            //{
-            //    reduced = ReduceCurrent();
-            //} while (reduced);
             do
             {
-                if (ReduceCurrentUpdate())
+                if (ReduceCurrent())
                 {
                     continue;
                 }
@@ -117,7 +131,7 @@ namespace Day18
             } while (true);
         }
 
-        internal bool ReduceCurrentUpdate()
+        internal bool ReduceCurrent()
         {
             if (ExplodeCurrent())
             {
@@ -175,35 +189,6 @@ namespace Day18
                 return true;
             }
             if (RightPair != null && RightPair.SplitCurrent())
-            {
-                return true;
-            }
-            return false;
-        }
-
-        [Obsolete]
-        internal bool ReduceCurrent()
-        {
-            if (Debt > 3  && LeftNumber != null && RightNumber != null)
-            {
-                Explode();
-                return true;
-            }
-            if(LeftNumber > 9)
-            {
-                Split(Position.Left, LeftNumber);
-                return true;
-            }
-            if (RightNumber > 9)
-            {
-                Split(Position.Right, RightNumber);
-                return true;
-            }
-            if (LeftPair != null && LeftPair.ReduceCurrent())
-            {
-                return true;
-            }
-            if (RightPair != null && RightPair.ReduceCurrent())
             {
                 return true;
             }
@@ -333,7 +318,6 @@ namespace Day18
                     {
                         AbovePair?.FindNext(span[1..]);
                     }
-                    //AbovePair?.FindNext(span[1..]);
                     break;
                 case Comma:
                     FindNext(span[1..]);
