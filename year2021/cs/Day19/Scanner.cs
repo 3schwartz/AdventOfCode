@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace Day19.Tests
+﻿namespace Day19
 {
     internal class Scanner
     {
@@ -56,19 +52,17 @@ namespace Day19.Tests
             return rotations;
         }
 
-        internal static int GetLargestManhattenDistance(ISet<(int, int, int)> beacons)
-        {
-            var beaconsList = beacons.ToList();
-            
+        internal static int GetLargestManhattenDistance(IList<(int, int, int)> scanners)
+        {           
             var max = int.MinValue;
-            for (int i = 0; i < beaconsList.Count; i++)
+            for (int i = 0; i < scanners.Count; i++)
             {
-                for (int j = 0; j < beaconsList.Count; j++)
+                for (int j = 0; j < scanners.Count; j++)
                 {
                     if (i == j) continue;
 
-                    var first = beaconsList[i];
-                    var second = beaconsList[j];
+                    var first = scanners[i];
+                    var second = scanners[j];
                     var distance = first.Item1 - second.Item1 +
                         first.Item2 - second.Item2 +
                         first.Item3 - second.Item3;
@@ -88,32 +82,45 @@ namespace Day19.Tests
                 .ToList();
         }
 
-        public static ISet<(int,int,int)> FindBeacons(IList<Scanner> scanners)
+        public static BeaconResult FindBeacons(IList<Scanner> scanners)
         {
             var beaconsIntersected = scanners[0].Beacons;
 
-            var queue = new Queue<int>(Enumerable.Range(1, scanners.Count-1));
+            var queue = new Queue<int>(Enumerable.Range(1, scanners.Count - 1));
+            var scannerPositions = new List<(int, int, int)>(scanners.Count)
+            {
+                (0,0,0)
+            };
 
-            while(queue.Count > 0)
+            while (queue.Count > 0)
             {
                 var idx = queue.Dequeue();
 
                 var intersect = scanners[idx].GetIntersections(beaconsIntersected);
-                if (intersect.Insersected)
+                switch (intersect)
                 {
-                    beaconsIntersected.UnionWith(intersect.Intersections);
-                    Console.WriteLine($"Found scanner: {idx}, beacons count: {beaconsIntersected.Count}");
-                    continue;
+                    case IntersectResultSuccess success:
+                        beaconsIntersected.UnionWith(success.Intersections);
+                        scannerPositions.Add(success.ScannerPosition);
+                        Console.WriteLine($"Found scanner: {idx}, beacons count: {beaconsIntersected.Count}");
+                        break;
+                    case IntersectResultFailure failure:
+                        queue.Enqueue(idx);
+                        Console.WriteLine($"Tried scanner: {idx}");
+                        break;
                 }
-                queue.Enqueue(idx);
-                Console.WriteLine($"Tried scanner: {idx}");
             }
-            return beaconsIntersected;
+            return new BeaconResult(beaconsIntersected, scannerPositions);
         }
 
-        private record struct IntersectResult(bool Insersected, ISet<(int,int,int)> Intersections);
+        internal record struct BeaconResult(ISet<(int,int,int)> Beacons, IList<(int,int,int)> ScannerPositions);
 
-        private IntersectResult GetIntersections(ISet<(int, int, int)> beaconsIntersected)
+        private interface IIntersectResult { }
+        internal record struct IntersectResultSuccess(bool Insersected, ISet<(int, int, int)> Intersections, (int,int,int) ScannerPosition) 
+            : IIntersectResult;
+        internal record struct IntersectResultFailure(bool Insersected) : IIntersectResult;
+
+        private IIntersectResult GetIntersections(ISet<(int, int, int)> beaconsIntersected)
         {
             foreach(var rotation in Rotations)
             {
@@ -132,13 +139,13 @@ namespace Day19.Tests
 
                         if (intersect.Count() >= 12)
                         {
-                            return new IntersectResult(true, intersections);
+                            return new IntersectResultSuccess(true, intersections, offset);
                         }
                     }
                 }
             }
 
-            return new IntersectResult(false, new HashSet<(int,int,int)>());
+            return new IntersectResultFailure(false);
         }
 
         private static (int, int, int) Shift((int, int, int) shift, (int, int, int) beacon)

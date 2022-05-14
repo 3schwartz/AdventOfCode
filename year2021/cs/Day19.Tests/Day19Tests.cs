@@ -49,7 +49,7 @@ public class Day19Tests
         var beacons = Scanner.FindBeacons(scanners);
 
         // Assert
-        Assert.Equal(expected, beacons.Count);
+        Assert.Equal(expected, beacons.Beacons.Count);
     }
 
     [Fact]
@@ -61,7 +61,7 @@ public class Day19Tests
         var beacons = Scanner.FindBeacons(scanners);
 
         // Act
-        int distance = Scanner.GetLargestManhattenDistance(beacons);
+        int distance = Scanner.GetLargestManhattenDistance(beacons.ScannerPositions);
 
         // Assert
         Assert.Equal(3621, distance);
