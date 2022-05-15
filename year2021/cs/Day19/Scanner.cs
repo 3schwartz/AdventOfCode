@@ -63,9 +63,10 @@
 
                     var first = scanners[i];
                     var second = scanners[j];
-                    var distance = first.Item1 - second.Item1 +
-                        first.Item2 - second.Item2 +
-                        first.Item3 - second.Item3;
+                    
+                    var distance =  Math.Abs(first.Item1 - second.Item1) +
+                        Math.Abs(first.Item2 - second.Item2) +
+                        Math.Abs(first.Item3 - second.Item3);
                     if(distance > max)
                     {
                         max = distance;
