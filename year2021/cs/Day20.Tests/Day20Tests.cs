@@ -6,7 +6,7 @@ using Xunit;
 
 namespace Day20.Tests;
 
-public partial class Day20Tests
+public class Day20Tests
 {
     [Fact]
     public async Task Test1Async()
@@ -24,26 +24,9 @@ public partial class Day20Tests
         {
             if (ints[^(i + 1)] == 1)
             {
-                value += Power(2,i);
+                value += Image.Power(2,i);
             }
         }
-    }
-
-    private static int Power(int value, int power)
-    {
-        if (power == 0)
-        {
-            return 1;
-        }
-
-        var final = 1;
-        while (power > 0)
-        {
-            final *= value;
-            power--;
-        }
-
-        return final;
     }
 
 }

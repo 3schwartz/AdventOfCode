@@ -19,9 +19,26 @@ internal class Image
         Span<int> binaries = stackalloc int[9];
         foreach(var (key,value) in image)
         {
-            image.
+            //image.
         }
 
+    }
+
+    internal static int Power(int value, int power)
+    {
+        if (power == 0)
+        {
+            return 1;
+        }
+
+        var final = 1;
+        while (power > 0)
+        {
+            final *= value;
+            power--;
+        }
+
+        return final;
     }
 
     internal class DefaultDict : IEnumerable<((int,int), int)>
@@ -102,7 +119,7 @@ internal class Image
 
     private record struct SignResult(bool Found, int Sign);
 
-    internal static IList<int> CreateImageEnchancementAlgorithm(string line)
+    internal static IList<int> CreateImageEnhancementAlgorithm(string line)
     {
         var algorithm = new List<int>(line.Length);
         foreach (var element in line)

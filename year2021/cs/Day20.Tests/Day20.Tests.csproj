@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\Day20\Day20.csproj" />
   </ItemGroup>
 
 </Project>
