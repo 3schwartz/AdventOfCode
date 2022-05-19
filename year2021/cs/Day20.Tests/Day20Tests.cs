@@ -1,6 +1,4 @@
-using System;
 using System.IO;
-using System.Numerics;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -8,25 +6,40 @@ namespace Day20.Tests;
 
 public class Day20Tests
 {
-    [Fact]
-    public async Task Test1Async()
+    [Theory]
+    [InlineData(0, 10)]
+    [InlineData(1, 24)]
+    [InlineData(2, 35)]
+    public async Task GivenImage_WhenEnhance_ThenCorrectPixelCount(int times, int expected)
     {
+        // Arrange
         var lines = await File.ReadAllLinesAsync("../../../../../data/day20_data_test.txt");
+        var image = new Image(lines);
+
+        // Act
+        image.Enhance(times);
+        var pixelCount = image.GetPixelCount();
+
+        // Assert
+        Assert.Equal(expected, pixelCount);
     }
 
-    [Fact]
-    public void CreateBinaryFromSpan()
+    [Theory]
+    [InlineData(0, 10)]
+    [InlineData(1, 24)]
+    [InlineData(2, 35)]
+    public async Task GivenImageSet_WhenEnhance_ThenCorrectPixelCount(int times, int expected)
     {
-        Span<int> ints = stackalloc int[9] {0, 0, 0, 0, 0, 0, 0, 1, 1};
-        var value = 0;
+        // Arrange
+        var lines = await File.ReadAllLinesAsync("../../../../../data/day20_data_test.txt");
+        var image = new ImageSet(lines);
 
-        for (var i = 0; i < ints.Length; i++)
-        {
-            if (ints[^(i + 1)] == 1)
-            {
-                value += Image.Power(2,i);
-            }
-        }
+        // Act
+        image.Enhance(times);
+        var pixelCount = image.GetPixelCount();
+
+        // Assert
+        Assert.Equal(expected, pixelCount);
     }
 
 }

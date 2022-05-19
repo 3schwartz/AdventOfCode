@@ -12,7 +12,7 @@
         
         internal ImageSet(string[] lines)
         {
-            neighbors = new Lazy<IList<(int,int)>>(() => GetNeighBors());
+            neighbors = new Lazy<IList<(int,int)>>(GetNeighbors);
 
             algorithm = CreateImageEnhancementAlgorithm(lines[0]);
 
@@ -32,7 +32,7 @@
             }
         }
 
-        private static IList<(int,int)> GetNeighBors()
+        private static IList<(int,int)> GetNeighbors()
         {
             var neighbors = new List<(int,int)>(9);
             foreach(var y in Enumerable.Range(-1, 3))
@@ -45,64 +45,76 @@
             return neighbors;
         }
 
-        internal void Enchance(int times)
+        internal void Enhance(int times)
         {
-            var visited = new HashSet<(int,int)>();
-            var newImage = new HashSet<(int,int)>();
-            Span<int> binaries = stackalloc int[9];
-            foreach(var pixel in image)
+            foreach (var _ in Enumerable.Range(0, times))
             {
-                visited.Add(pixel);
-                var pixelNeighbors = FindPixelNeighbors(pixel);
-                for(var i = 0; i < 9; i++)
+                var visited = new HashSet<(int, int)>();
+                var newImage = new HashSet<(int, int)>();
+                foreach (var pixel in image)
                 {
-                    binaries[i] = image.Contains(pixelNeighbors[i]) ? 1 : 0;
+                    EvaluatePixel(visited, newImage, image, pixel);
                 }
-                var pixelLookup = CreateBinaryFromSpan(binaries);
-                if(algorithm[pixelLookup] == 1)
-                {
-                    newImage.Add(pixel);
-                }
-            }
-            
 
+                image = newImage;
+            }
         }
 
-        private static void EvaluatePixel(ISet<(int,int)> visited,
+        internal int GetPixelCount()
+        {
+            return image.Count;
+        }
+
+        private void EvaluatePixel(ISet<(int,int)> visited,
             ISet<(int,int)> newImage, ISet<(int,int)> oldImage,
             (int,int) pixel)
         {
-            visited.Add(pixel);
-            var pixelNeighbors = FindPixelNeighbors(pixel);
+            if(!visited.Add(pixel)) return;
+
+            var binaries = new int[9];
+            var pixelNeighbors = FindPixelNeighbors(pixel.Item1, pixel.Item2);
             for (var i = 0; i < 9; i++)
             {
                 binaries[i] = oldImage.Contains(pixelNeighbors[i]) ? 1 : 0;
             }
-            var pixelLookup = CreateBinaryFromSpan(binaries);
-            if (algorithm[pixelLookup] == 1)
+            
+            var binaryRecord = CreateBinaryRecord(binaries);
+            if(binaryRecord.Sum == 0) return;
+
+            if (algorithm[binaryRecord.Lookup] == 1)
             {
                 newImage.Add(pixel);
             }
+
+            foreach (var pixelNeighbor in pixelNeighbors)
+            {
+                EvaluatePixel(visited, newImage, image, pixelNeighbor);
+            }
         }
 
-        private static int CreateBinaryFromSpan(Span<int> ints)
+        private static BinaryResult CreateBinaryRecord(int[] ints)
         {
-            var value = 0;
+            var lookup = 0;
+            var sum = 0;
 
             for (var i = 0; i < ints.Length; i++)
             {
                 if (ints[^(i + 1)] == 1)
                 {
-                    value += (int)Math.Pow(2, i);
+                    lookup += (int)Math.Pow(2, i);
                 }
+
+                sum += ints[i];
             }
-            return value;
+            return new BinaryResult(sum, lookup);
         }
 
-        private IList<(int,int)> FindPixelNeighbors((int,int) pixel)
+        private record struct BinaryResult(int Sum, int Lookup);
+
+        private IList<(int,int)> FindPixelNeighbors(int y, int x)
         {
             return Neighbors
-                .Select(n => (pixel.Item1 + n.Item1, pixel.Item1 + n.Item2))
+                .Select(n => (y + n.Item1, x + n.Item2))
                 .ToList();
         }
 
