@@ -5,9 +5,14 @@ using System.Diagnostics;
 
 var lines = await File.ReadAllLinesAsync("../../../../../data/day20_data.txt");
 
-var image = new Image(lines);
+var image = new ImageSet(lines);
 
 image.Enhance(2);
 var pixelCount = image.GetPixelCount();
 
 Console.WriteLine($"Part 1 : {pixelCount}");
+
+//image.Enhance(48);
+//pixelCount = image.GetPixelCount();
+
+//Console.WriteLine($"Part 2 : {pixelCount}");

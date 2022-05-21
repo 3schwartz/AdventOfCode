@@ -1,15 +1,18 @@
-﻿namespace Day20
+﻿using System.Runtime.CompilerServices;
+
+namespace Day20
 {
     internal class ImageSet
     {
         private readonly Lazy<IList<(int, int)>> neighbors;
         private readonly IList<int> algorithm;
-        private IList<(int,int)> Neighbors
-        {
-            get { return neighbors.Value; }
-        }
+        private IList<(int,int)> Neighbors => neighbors.Value;
         private ISet<(int, int)> image;
-        
+        private int minX = -2;
+        private int minY = -2;
+        private int maxX;
+        private int maxY;
+        private int neighborInitValue = 0;
         internal ImageSet(string[] lines)
         {
             neighbors = new Lazy<IList<(int,int)>>(GetNeighbors);
@@ -17,12 +20,14 @@
             algorithm = CreateImageEnhancementAlgorithm(lines[0]);
 
             var imageLines = lines[2..];
+            maxY = imageLines.Length + 2;
+            maxX = imageLines[0].Length + 2;
 
             image = new HashSet<(int, int)>();
-            for (int i = 0; i < imageLines.Length; i++)
+            for (var i = 0; i < imageLines.Length; i++)
             {
                 var imageLine = imageLines[i];
-                for (int j = 0; j < imageLine.Length; j++)
+                for (var j = 0; j < imageLine.Length; j++)
                 {
                     if(imageLine[j] == '#')
                     {
@@ -51,10 +56,25 @@
             {
                 var visited = new HashSet<(int, int)>();
                 var newImage = new HashSet<(int, int)>();
-                foreach (var pixel in image)
+                var toVisit = image;
+                do
                 {
-                    EvaluatePixel(visited, newImage, image, pixel);
-                }
+                    var nextToVisit = new HashSet<(int, int)>();
+                    foreach (var pixel in toVisit)
+                    {
+                        EvaluatePixel(visited, newImage, image, pixel, nextToVisit);
+                    }
+                    nextToVisit.ExceptWith(visited);
+                    toVisit = nextToVisit;
+                } while (toVisit.Count > 0);
+
+                minY -= 2;
+                minX -= 2;
+                maxX += 2;
+                maxY += 2;
+
+                var initNeighborResolved = GetInitNeighborResolved();
+                neighborInitValue = algorithm[initNeighborResolved];
 
                 image = newImage;
             }
@@ -65,21 +85,63 @@
             return image.Count;
         }
 
+        private int GetInitNeighborResolved()
+        {
+            Span<int> initNeighborBinary = stackalloc int[9];
+
+            for (var i = 0; i < initNeighborBinary.Length; i++)
+            {
+                initNeighborBinary[i] = neighborInitValue;
+            }
+
+            var value = 0;
+
+            for (var i = 0; i < initNeighborBinary.Length; i++)
+            {
+                if (initNeighborBinary[^(i + 1)] == 1)
+                {
+                    value += Image.Power(2, i);
+                }
+            }
+
+            return value;
+        }
+
+        private bool IsOuterNeighbor((int,int) pixel)
+        {
+            return pixel.Item1 > maxY || pixel.Item1 < minY ||
+                   pixel.Item2 > maxX || pixel.Item2 < minX;
+        }
+
+        private int GetBinaryValue(ISet<(int,int)> oldImage, IList<(int,int)> pixelNeighbors, int i)
+        {
+            if (oldImage.Contains(pixelNeighbors[i]))
+            {
+                return 1;
+            }
+
+            if (IsOuterNeighbor(pixelNeighbors[i]))
+            {
+                return neighborInitValue;
+            }
+
+            return 0;
+        }
+
         private void EvaluatePixel(ISet<(int,int)> visited,
             ISet<(int,int)> newImage, ISet<(int,int)> oldImage,
-            (int,int) pixel)
+            (int,int) pixel, ISet<(int,int)> nextToVisit)
         {
-            if(!visited.Add(pixel)) return;
-
-            var binaries = new int[9];
-            var pixelNeighbors = FindPixelNeighbors(pixel.Item1, pixel.Item2);
+            visited.Add(pixel);
+            
+            Span<int> binaries = stackalloc int[9];
+            var pixelNeighbors = FindPixelNeighbors(pixel);
             for (var i = 0; i < 9; i++)
             {
-                binaries[i] = oldImage.Contains(pixelNeighbors[i]) ? 1 : 0;
+                binaries[i] = GetBinaryValue(oldImage, pixelNeighbors, i);
             }
-            
+
             var binaryRecord = CreateBinaryRecord(binaries);
-            if(binaryRecord.Sum == 0) return;
 
             if (algorithm[binaryRecord.Lookup] == 1)
             {
@@ -88,33 +150,34 @@
 
             foreach (var pixelNeighbor in pixelNeighbors)
             {
-                EvaluatePixel(visited, newImage, image, pixelNeighbor);
+                if(IsOuterNeighbor(pixelNeighbor)) continue;
+                nextToVisit.Add(pixelNeighbor);
             }
         }
 
-        private static BinaryResult CreateBinaryRecord(int[] ints)
+        private static BinaryResult CreateBinaryRecord(Span<int> binaries)
         {
             var lookup = 0;
             var sum = 0;
 
-            for (var i = 0; i < ints.Length; i++)
+            for (var i = 0; i < binaries.Length; i++)
             {
-                if (ints[^(i + 1)] == 1)
+                if (binaries[^(i + 1)] == 1)
                 {
                     lookup += (int)Math.Pow(2, i);
                 }
 
-                sum += ints[i];
+                sum += binaries[i];
             }
             return new BinaryResult(sum, lookup);
         }
 
         private record struct BinaryResult(int Sum, int Lookup);
 
-        private IList<(int,int)> FindPixelNeighbors(int y, int x)
+        private IList<(int,int)> FindPixelNeighbors((int,int) pixel)
         {
             return Neighbors
-                .Select(n => (y + n.Item1, x + n.Item2))
+                .Select(n => (pixel.Item1 + n.Item1, pixel.Item2 + n.Item2))
                 .ToList();
         }
 

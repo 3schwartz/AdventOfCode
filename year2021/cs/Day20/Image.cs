@@ -8,7 +8,7 @@ internal class Image
 
     private readonly Lazy<IList<(int, int)>> neighbors = new(GetNeighbors);
     private IList<(int,int)> Neighbors => neighbors.Value;
-
+    private int neighborInitValue = 0;
     private static IList<(int, int)> GetNeighbors()
     {
         var neighbors = new List<(int, int)>(25);
@@ -26,7 +26,7 @@ internal class Image
     private IList<(int, int)> FindNeighbors((int, int) pixel)
     {
         return Neighbors
-            .Select(n => (pixel.Item1 - n.Item1, pixel.Item2 - n.Item2))
+            .Select(n => (pixel.Item1 + n.Item1, pixel.Item2 + n.Item2))
             .ToList();
     }
 
@@ -52,9 +52,12 @@ internal class Image
                 var pixelNeighbors = FindNeighbors(valueTuple);
                 foreach (var pixelNeighbor in pixelNeighbors)
                 {
-                    image.TryAdd(pixelNeighbor, 0);
+                    image.TryAdd(pixelNeighbor, neighborInitValue);
                 }
             }
+
+            var initNeighborResolved = GetInitNeighborResolved();
+            neighborInitValue = imageEnhancementAlgorithm[initNeighborResolved];
 
             var tmpImage = new DefaultDict();
             foreach (var ((item1, item2), _) in image)
@@ -86,11 +89,25 @@ internal class Image
                     var updatePixel = imageEnhancementAlgorithm[resolvedPixel];
 
                     tmpImage.Add((item1, item2), updatePixel);
+                    continue;
                 }
+                tmpImage.Add((item1, item2), neighborInitValue);
             }
 
             image = tmpImage;
         }
+    }
+
+    private int GetInitNeighborResolved()
+    {
+        Span<int> initNeighborBinary = stackalloc int[9];
+
+        for (var i = 0; i < initNeighborBinary.Length; i++)
+        {
+            initNeighborBinary[i] = neighborInitValue;
+        }
+
+        return ResolvePixel(initNeighborBinary);
     }
 
     internal int GetPixelCount()
@@ -221,14 +238,10 @@ internal class Image
     internal static IList<int> CreateImageEnhancementAlgorithm(string line)
     {
         var algorithm = new List<int>(line.Length);
-        for (int i = line.Length-1; i >= 0; i--)
+        foreach (var element in line)
         {
-            algorithm.Add(GetSign(line[i]).Sign);
+            algorithm.Add(GetSign(element).Sign);
         }
-        //foreach (var element in line)
-        //{
-        //    algorithm.Add(GetSign(element).Sign);
-        //}
         return algorithm;
     }
 }
