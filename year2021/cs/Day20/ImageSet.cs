@@ -100,7 +100,7 @@ namespace Day20
             {
                 if (initNeighborBinary[^(i + 1)] == 1)
                 {
-                    value += Image.Power(2, i);
+                    value += (int)Math.Pow(2, i);
                 }
             }
 

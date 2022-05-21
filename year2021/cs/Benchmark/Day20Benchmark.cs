@@ -3,6 +3,7 @@ using Day20;
 
 namespace Benchmark
 {
+
     [MemoryDiagnoser]
     public class Day20BenchmarkPower
     {
@@ -18,7 +19,24 @@ namespace Benchmark
         [Benchmark]
         public void IntLoop()
         {
-            var _ = Image.Power(2, Power);
+            var _ = PowerInt(2, Power);
+        }
+
+        internal static int PowerInt(int value, int power)
+        {
+            if (power == 0)
+            {
+                return 1;
+            }
+
+            var final = 1;
+            while (power > 0)
+            {
+                final *= value;
+                power--;
+            }
+
+            return final;
         }
     }
 

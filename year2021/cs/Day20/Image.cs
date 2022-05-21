@@ -5,9 +5,10 @@ namespace Day20;
 
 internal class Image
 {
-
     private readonly Lazy<IList<(int, int)>> neighbors = new(GetNeighbors);
+    private readonly IList<int> imageEnhancementAlgorithm;
     private IList<(int,int)> Neighbors => neighbors.Value;
+    private IDictionary<(int, int), int> image;
     private int neighborInitValue = 0;
     private static IList<(int, int)> GetNeighbors()
     {
@@ -30,16 +31,19 @@ internal class Image
             .ToList();
     }
 
-
-
-    private DefaultDict image;
-    private readonly IList<int> imageEnhancementAlgorithm;
-
     internal Image(string[] lines)
     {
         imageEnhancementAlgorithm = CreateImageEnhancementAlgorithm(lines[0]);
         var imageLines = lines[2..];
-        image = new DefaultDict(imageLines);
+        image = new Dictionary<(int, int), int>(imageLines.Length * imageLines[0].Length);
+        for (var i = 0; i < imageLines.Length; i++)
+        {
+            var imageLine = imageLines[i];
+            for (var j = 0; j < imageLine.Length; j++)
+            {
+                image.Add((i, j), GetSign(imageLine[j]).Sign);
+            }
+        }
     }
 
     internal void Enhance(int times)
@@ -47,19 +51,12 @@ internal class Image
         Span<int> binaries = stackalloc int[9];
         foreach (var _ in Enumerable.Range(0, times))
         {
-            foreach (var valueTuple in image.GetKeys())
-            {
-                var pixelNeighbors = FindNeighbors(valueTuple);
-                foreach (var pixelNeighbor in pixelNeighbors)
-                {
-                    image.TryAdd(pixelNeighbor, neighborInitValue);
-                }
-            }
+            AddNeighbors();
 
             var initNeighborResolved = GetInitNeighborResolved();
             neighborInitValue = imageEnhancementAlgorithm[initNeighborResolved];
 
-            var tmpImage = new DefaultDict();
+            var tmpImage = new Dictionary<(int,int),int>();
             foreach (var ((item1, item2), _) in image)
             {
                 var within = true;
@@ -68,7 +65,7 @@ internal class Image
                 {
                     for (int x = -1; x <= 1 ; x++)
                     {
-                        within &= image.TryGetValueAndAddToNew(tmpImage, (item1 + y, item2 + x), out var value);
+                        within &= TryGetValueAndAddToNew(image, tmpImage, (item1 + y, item2 + x), out var value);
                         if (within)
                         {
                             binaries[idx] = value;
@@ -86,15 +83,51 @@ internal class Image
 
                     var updatePixel = imageEnhancementAlgorithm[resolvedPixel];
 
-                    tmpImage.Add((item1, item2), updatePixel);
+                    tmpImage[(item1, item2)] = updatePixel;
                     continue;
                 }
 
-                tmpImage.Add((item1, item2), neighborInitValue);
+                tmpImage[(item1, item2)] = neighborInitValue;
             }
 
             image = tmpImage;
         }
+    }
+
+    internal int GetPixelCount()
+    {
+        var pixelCount = 0;
+        foreach (var value in image.Values)
+        {
+            pixelCount += value;
+        }
+
+        return pixelCount;
+    }
+
+    private void AddNeighbors()
+    {
+        foreach (var valueTuple in image.Keys.ToList())
+        {
+            var pixelNeighbors = FindNeighbors(valueTuple);
+            foreach (var pixelNeighbor in pixelNeighbors)
+            {
+                image.TryAdd(pixelNeighbor, neighborInitValue);
+            }
+        }
+    }
+
+    private bool TryGetValueAndAddToNew(
+        IDictionary<(int, int), int> oldDict, IDictionary<(int, int), int> newDict,
+        (int, int) key, out int value)
+    {
+        if (oldDict.TryGetValue(key, out value))
+        {
+            newDict.TryAdd(key, value);
+            return true;
+        }
+
+        return false;
     }
 
     private int GetInitNeighborResolved()
@@ -109,17 +142,6 @@ internal class Image
         return ResolvePixel(initNeighborBinary);
     }
 
-    internal int GetPixelCount()
-    {
-        var pixelCount = 0;
-        foreach (var value in image.GetValues())
-        {
-            pixelCount += value;
-        }
-
-        return pixelCount;
-    }
-
     private int ResolvePixel(Span<int> ints)
     {
         var value = 0;
@@ -128,94 +150,11 @@ internal class Image
         {
             if (ints[^(i + 1)] == 1)
             {
-                value += Image.Power(2, i);
+                value += (int)Math.Pow(2, i);
             }
         }
 
         return value;
-    }
-
-    internal static int Power(int value, int power)
-    {
-        if (power == 0)
-        {
-            return 1;
-        }
-
-        var final = 1;
-        while (power > 0)
-        {
-            final *= value;
-            power--;
-        }
-
-        return final;
-    }
-
-    internal class DefaultDict : IEnumerable<((int,int), int)>
-    {
-        private readonly Dictionary<(int, int), int> dict;
-        internal DefaultDict(string[] imageLines)
-        {
-            dict = new Dictionary<(int, int), int>(imageLines.Length * imageLines[0].Length);
-            for (var i = 0; i < imageLines.Length; i++)
-            {
-                var imageLine = imageLines[i];
-                for (var j = 0; j < imageLine.Length; j++)
-                {
-                    dict.Add((i, j), GetSign(imageLine[j]).Sign);
-                }
-            }
-        }
-
-        internal DefaultDict()
-        {
-            dict = new Dictionary<(int, int), int>();
-        }
-
-        internal Dictionary<(int, int), int>.ValueCollection GetValues()
-        {
-            return dict.Values;
-        }
-
-        public IEnumerator<((int, int), int)> GetEnumerator()
-        {
-            foreach (var (key, value) in dict)
-            {
-                yield return (key, value);
-            }
-        }
-
-        internal IList<(int, int)> GetKeys()
-        {
-            return dict.Keys.ToList();
-        }
-
-        internal void Add((int, int) key, int value)
-        {
-            dict[key] = value;
-        }
-
-        internal void TryAdd((int,int) key, int value)
-        {
-            dict.TryAdd(key, value);
-        }
-
-        internal bool TryGetValueAndAddToNew(DefaultDict newDict, (int,int) key, out int value)
-        {
-            if (dict.TryGetValue(key, out value))
-            {
-                newDict.TryAdd(key, value);
-                return true;
-            }
-
-            return false;
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
     }
 
     private static SignResult GetSign(char sign)
@@ -234,7 +173,7 @@ internal class Image
 
     private record struct SignResult(bool Found, int Sign);
 
-    internal static IList<int> CreateImageEnhancementAlgorithm(string line)
+    private static IList<int> CreateImageEnhancementAlgorithm(string line)
     {
         var algorithm = new List<int>(line.Length);
         foreach (var element in line)
