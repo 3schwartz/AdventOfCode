@@ -1,7 +1,7 @@
 ﻿using Day20;
 using System.Diagnostics;
 
-//Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
+Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
 
 var lines = await File.ReadAllLinesAsync("../../../../../data/day20_data.txt");
 
@@ -12,7 +12,7 @@ var pixelCount = image.GetPixelCount();
 
 Console.WriteLine($"Part 1 : {pixelCount}");
 
-//image.Enhance(48);
-//pixelCount = image.GetPixelCount();
+image.Enhance(48);
+pixelCount = image.GetPixelCount();
 
-//Console.WriteLine($"Part 2 : {pixelCount}");
+Console.WriteLine($"Part 2 : {pixelCount}");

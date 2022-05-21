@@ -11,7 +11,7 @@ public class Day20Tests
     [InlineData(1, 24, "../../../../../data/day20_data_test.txt")]
     [InlineData(2, 35, "../../../../../data/day20_data_test.txt")]
     [InlineData(2, 5432, "../../../../../data/day20_data.txt")]
-    //[InlineData(50, 16016, "../../../../../data/day20_data.txt")]
+    [InlineData(50, 16016, "../../../../../data/day20_data.txt")]
     public async Task GivenImage_WhenEnhance_ThenCorrectPixelCount(int times, int expected, string file)
     {
         // Arrange
@@ -31,7 +31,7 @@ public class Day20Tests
     [InlineData(1, 24, "../../../../../data/day20_data_test.txt")]
     [InlineData(2, 35, "../../../../../data/day20_data_test.txt")]
     [InlineData(2, 5432, "../../../../../data/day20_data.txt")]
-    //[InlineData(50, 16016, "../../../../../data/day20_data.txt")]
+    [InlineData(50, 16016, "../../../../../data/day20_data.txt")]
     public async Task GivenImageSet_WhenEnhance_ThenCorrectPixelCount(int times, int expected, string file)
     {
         // Arrange

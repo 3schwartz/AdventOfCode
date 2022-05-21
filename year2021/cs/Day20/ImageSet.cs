@@ -8,8 +8,8 @@ namespace Day20
         private readonly IList<int> algorithm;
         private IList<(int,int)> Neighbors => neighbors.Value;
         private ISet<(int, int)> image;
-        private int minX = -2;
-        private int minY = -2;
+        private int minX = 0;
+        private int minY = 0;
         private int maxX;
         private int maxY;
         private int neighborInitValue = 0;
@@ -20,8 +20,8 @@ namespace Day20
             algorithm = CreateImageEnhancementAlgorithm(lines[0]);
 
             var imageLines = lines[2..];
-            maxY = imageLines.Length + 2;
-            maxX = imageLines[0].Length + 2;
+            maxY = imageLines.Length - 1;
+            maxX = imageLines[0].Length - 1;
 
             image = new HashSet<(int, int)>();
             for (var i = 0; i < imageLines.Length; i++)
@@ -68,10 +68,10 @@ namespace Day20
                     toVisit = nextToVisit;
                 } while (toVisit.Count > 0);
 
-                minY -= 2;
-                minX -= 2;
-                maxX += 2;
-                maxY += 2;
+                minY --;
+                minX --;
+                maxX ++;
+                maxY ++;
 
                 var initNeighborResolved = GetInitNeighborResolved();
                 neighborInitValue = algorithm[initNeighborResolved];
@@ -94,23 +94,19 @@ namespace Day20
                 initNeighborBinary[i] = neighborInitValue;
             }
 
-            var value = 0;
-
-            for (var i = 0; i < initNeighborBinary.Length; i++)
-            {
-                if (initNeighborBinary[^(i + 1)] == 1)
-                {
-                    value += (int)Math.Pow(2, i);
-                }
-            }
-
-            return value;
+            return GetBinaryLookup(initNeighborBinary);
         }
 
         private bool IsOuterNeighbor((int,int) pixel)
         {
             return pixel.Item1 > maxY || pixel.Item1 < minY ||
                    pixel.Item2 > maxX || pixel.Item2 < minX;
+        }
+
+        private bool IsOuterNeirestNeighbor((int, int) pixel)
+        {
+            return pixel.Item1 > maxY  + 1 || pixel.Item1 < minY - 1 ||
+                   pixel.Item2 > maxX + 1 || pixel.Item2 < minX - 1;
         }
 
         private int GetBinaryValue(ISet<(int,int)> oldImage, IList<(int,int)> pixelNeighbors, int i)
@@ -141,24 +137,23 @@ namespace Day20
                 binaries[i] = GetBinaryValue(oldImage, pixelNeighbors, i);
             }
 
-            var binaryRecord = CreateBinaryRecord(binaries);
+            var lookup = GetBinaryLookup(binaries);
 
-            if (algorithm[binaryRecord.Lookup] == 1)
+            if (algorithm[lookup] == 1)
             {
                 newImage.Add(pixel);
             }
 
             foreach (var pixelNeighbor in pixelNeighbors)
             {
-                if(IsOuterNeighbor(pixelNeighbor)) continue;
+                if(IsOuterNeirestNeighbor(pixelNeighbor)) continue;
                 nextToVisit.Add(pixelNeighbor);
             }
         }
 
-        private static BinaryResult CreateBinaryRecord(Span<int> binaries)
+        private static int GetBinaryLookup(Span<int> binaries)
         {
             var lookup = 0;
-            var sum = 0;
 
             for (var i = 0; i < binaries.Length; i++)
             {
@@ -166,13 +161,9 @@ namespace Day20
                 {
                     lookup += (int)Math.Pow(2, i);
                 }
-
-                sum += binaries[i];
             }
-            return new BinaryResult(sum, lookup);
+            return lookup;
         }
-
-        private record struct BinaryResult(int Sum, int Lookup);
 
         private IList<(int,int)> FindPixelNeighbors((int,int) pixel)
         {
