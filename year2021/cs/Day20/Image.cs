@@ -62,27 +62,25 @@ internal class Image
             var tmpImage = new DefaultDict();
             foreach (var ((item1, item2), _) in image)
             {
-                if (
-                    image.TryGetValueAndAddToNew(tmpImage, (item1 - 1, item2 - 1), out var zero) &&
-                    image.TryGetValueAndAddToNew(tmpImage, (item1 - 1, item2), out var one) &&
-                    image.TryGetValueAndAddToNew(tmpImage, (item1 - 1, item2 + 1), out var second) &&
-                    image.TryGetValueAndAddToNew(tmpImage, (item1, item2 - 1), out var third) &&
-                    image.TryGetValueAndAddToNew(tmpImage, (item1, item2), out var fourth) &&
-                    image.TryGetValueAndAddToNew(tmpImage, (item1, item2 + 1), out var fifth) &&
-                    image.TryGetValueAndAddToNew(tmpImage, (item1 + 1, item2 - 1), out var six) &&
-                    image.TryGetValueAndAddToNew(tmpImage, (item1 + 1, item2), out var seven) &&
-                    image.TryGetValueAndAddToNew(tmpImage, (item1 + 1, item2 + 1), out var eight)
-                )
+                var within = true;
+                var idx = 0;
+                for (int y = -1; y <= 1; y++)
                 {
-                    binaries[0] = zero;
-                    binaries[1] = one;
-                    binaries[2] = second;
-                    binaries[3] = third;
-                    binaries[4] = fourth;
-                    binaries[5] = fifth;
-                    binaries[6] = six;
-                    binaries[7] = seven;
-                    binaries[8] = eight;
+                    for (int x = -1; x <= 1 ; x++)
+                    {
+                        within &= image.TryGetValueAndAddToNew(tmpImage, (item1 + y, item2 + x), out var value);
+                        if (within)
+                        {
+                            binaries[idx] = value;
+                            idx++;
+                            continue;
+                        }
+                        break;
+                    }
+
+                }
+                if (within)
+                {
 
                     var resolvedPixel = ResolvePixel(binaries);
 
@@ -91,6 +89,7 @@ internal class Image
                     tmpImage.Add((item1, item2), updatePixel);
                     continue;
                 }
+
                 tmpImage.Add((item1, item2), neighborInitValue);
             }
 
