@@ -2,14 +2,14 @@
 
 internal class Player
 {
-    internal string Id { get; init; }
+    internal int Id { get; init; }
     internal int Position { get; private set; }
     internal int Score { get; private set; } = 0;
 
     public Player(string input)
     {
         var splitted = input.Split(" ");
-        Id = splitted[1];
+        Id = int.Parse(splitted[1]);
         Position = int.Parse(splitted[4]);
     }
 
