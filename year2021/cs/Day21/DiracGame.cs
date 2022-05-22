@@ -3,7 +3,7 @@ namespace Day21
 {
     internal class DiracGame
     {
-        private readonly HashSet<(int, int, int, int)> visited;
+        private readonly IDictionary<(int, int, int, int), (long,long)> visited;
         private readonly IList<int> diceSums;
         private Player player1;
         private Player player2;
@@ -13,7 +13,7 @@ namespace Day21
             player1 = p1;
             player2 = p2;
             diceSums = GetDiceSums();
-            visited = new HashSet<(int, int, int, int)> ();
+            visited = new Dictionary<(int, int, int, int),(long,long)> ();
         }
 
         private static IList<int> GetDiceSums()
@@ -32,22 +32,22 @@ namespace Day21
             return sums;
         }
 
-        internal (int,int) Start()
+        internal (long,long) Start()
         {
-            (int, int) totalWins = (0, 0);
+            (long, long) totalWins = (0, 0);
             foreach (var dice in diceSums)
             {
-                var wins = Roll(1, dice,
+                var (p1Wins, p2Wins) = Roll(dice,
                     player1.Position, player2.Position,
                     player1.Score, player2.Score);
-                totalWins.Item1 += wins.Item1;
-                totalWins.Item2 += wins.Item2;
+                totalWins.Item1 += p1Wins;
+                totalWins.Item2 += p2Wins;
             }
 
             return totalWins;
         }
 
-        private (int,int) Roll(int currentPlayer, int move,
+        private (long,long) Roll(int move,
             int playerTurnPosition, int playerOtherPosition,
             int playerTurnScore, int playerOtherScore)
         {
@@ -55,64 +55,27 @@ namespace Day21
             playerTurnScore += playerTurnPosition;
             if (playerTurnScore >= 21)
             {
-                return currentPlayer == 1 ? (1, 0) : (0, 1);
+                return (1, 0);
             }
 
-            (int, int, int, int) visitedWins;
-            var isVisited = currentPlayer switch
-            {
-                1 => visited.TryGetValue(
-                    (playerTurnPosition, playerOtherPosition,
-                        playerTurnScore, playerOtherScore), out visitedWins),
-                2 => visited.TryGetValue(
-                    (playerOtherPosition, playerTurnPosition,
-                        playerOtherScore, playerTurnScore), out visitedWins)
-            };
-            if (isVisited)
-            {
-                return (visitedWins.Item3, visitedWins.Item4);
+            if(visited.TryGetValue((
+                playerTurnPosition, playerOtherPosition,
+                playerTurnScore, playerOtherScore), out var visitedWins)){
+                return visitedWins;
             }
 
-            switch (currentPlayer)
-            {
-                case 1:
-                    visited.Add((playerTurnPosition, playerOtherPosition,
-                        playerTurnScore, playerOtherScore));
-                    break;
-                case 2:
-                    visited.Add((playerOtherPosition, playerTurnPosition,
-                        playerOtherScore, playerTurnScore));
-                    break;
-            }
-
-            if (visited.TryGetValue(
-                (playerTurnPosition, playerOtherPosition,
-                playerTurnScore, playerOtherScore), out var winsVisited))
-            {
-                return (winsVisited.Item3, winsVisited.Item4);
-            }
-
-            var totalWins = (0, 0);
+            (long,long) totalWins = (0, 0);
             foreach (var dice in diceSums)
             {
-                var wins = Roll(currentPlayer % 2 + 1, dice,
+                var (pOtherWin, pCurrentWin) = Roll(dice,
                     playerOtherPosition, playerTurnPosition,
                     playerOtherScore, playerTurnScore);
-                totalWins.Item1 += wins.Item1;
-                totalWins.Item2 += wins.Item2;
+                totalWins.Item1 += pCurrentWin;
+                totalWins.Item2 += pOtherWin;
             }
-
-            switch (currentPlayer)
-            {
-                case 1:
-                    visited.Add((playerTurnPosition, playerOtherPosition,
-                        playerTurnScore, playerOtherScore));
-                    break;
-                case 2:
-                    visited.Add((playerOtherPosition, playerTurnPosition,
-                        playerOtherScore, playerTurnScore));
-                    break;
-            }
+            visited.Add((
+                playerTurnPosition, playerOtherPosition,
+                playerTurnScore, playerOtherScore), totalWins);
 
             return totalWins;
         }
