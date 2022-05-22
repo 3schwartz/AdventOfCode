@@ -19,17 +19,17 @@ namespace Day21
         private static IList<int> GetDiceSums()
         {
             var sums = new List<int>(27);
-            for (int i = 1; i <= 3; i++)
+            for (var i = 1; i <= 3; i++)
             {
-                for (int j = 1; j <= 3; j++)
+                for (var j = 1; j <= 3; j++)
                 {
-                    for (int z = 1; z <= 3; z++)
+                    for (var z = 1; z <= 3; z++)
                     {
                         sums.Add(i + j + z);
                     }
                 }
             }
-            return GetDiceSums();
+            return sums;
         }
 
         internal (int,int) Start()
@@ -37,9 +37,11 @@ namespace Day21
             (int, int) totalWins = (0, 0);
             foreach (var dice in diceSums)
             {
-                Roll(1, dice,
+                var wins = Roll(1, dice,
                     player1.Position, player2.Position,
                     player1.Score, player2.Score);
+                totalWins.Item1 += wins.Item1;
+                totalWins.Item2 += wins.Item2;
             }
 
             return totalWins;
@@ -53,24 +55,44 @@ namespace Day21
             playerTurnScore += playerTurnPosition;
             if (playerTurnScore >= 21)
             {
-                if (currentPlayer == 1)
-                {
-                    return (1, 0);
-                }
-                else
-                {
-                    return (0, 1);
-                }
+                return currentPlayer == 1 ? (1, 0) : (0, 1);
             }
 
-            if(visited.TryGetValue(
+            (int, int, int, int) visitedWins;
+            var isVisited = currentPlayer switch
+            {
+                1 => visited.TryGetValue(
+                    (playerTurnPosition, playerOtherPosition,
+                        playerTurnScore, playerOtherScore), out visitedWins),
+                2 => visited.TryGetValue(
+                    (playerOtherPosition, playerTurnPosition,
+                        playerOtherScore, playerTurnScore), out visitedWins)
+            };
+            if (isVisited)
+            {
+                return (visitedWins.Item3, visitedWins.Item4);
+            }
+
+            switch (currentPlayer)
+            {
+                case 1:
+                    visited.Add((playerTurnPosition, playerOtherPosition,
+                        playerTurnScore, playerOtherScore));
+                    break;
+                case 2:
+                    visited.Add((playerOtherPosition, playerTurnPosition,
+                        playerOtherScore, playerTurnScore));
+                    break;
+            }
+
+            if (visited.TryGetValue(
                 (playerTurnPosition, playerOtherPosition,
                 playerTurnScore, playerOtherScore), out var winsVisited))
             {
                 return (winsVisited.Item3, winsVisited.Item4);
             }
 
-            (int, int) totalWins = (0, 0);
+            var totalWins = (0, 0);
             foreach (var dice in diceSums)
             {
                 var wins = Roll(currentPlayer % 2 + 1, dice,
@@ -80,8 +102,17 @@ namespace Day21
                 totalWins.Item2 += wins.Item2;
             }
 
-            visited.Add((playerTurnPosition, playerOtherPosition,
-                playerTurnScore, playerOtherScore));
+            switch (currentPlayer)
+            {
+                case 1:
+                    visited.Add((playerTurnPosition, playerOtherPosition,
+                        playerTurnScore, playerOtherScore));
+                    break;
+                case 2:
+                    visited.Add((playerOtherPosition, playerTurnPosition,
+                        playerOtherScore, playerTurnScore));
+                    break;
+            }
 
             return totalWins;
         }
