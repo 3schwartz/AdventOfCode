@@ -2,7 +2,16 @@
 {
     internal class LightSwitcher
     {
+        private readonly bool useLimit;
+        public LightSwitcher()
+        {
+            useLimit = true;
+        }
 
+        public LightSwitcher(bool useLimit)
+        {
+            this.useLimit = useLimit;
+        }
         private bool IsInstructionValid(Instruction instruction)
         {
             return instruction.XFrom >= -50 &&
@@ -20,7 +29,7 @@
             {
                 var instruction = InstructionCreator.Create(step);
 
-                if (!IsInstructionValid(instruction)) continue;
+                if (useLimit && !IsInstructionValid(instruction)) continue;
 
                 for (var x = instruction.XFrom; x <= instruction.XTo; x++)
                 {

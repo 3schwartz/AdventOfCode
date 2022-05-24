@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Xunit;
@@ -7,17 +6,19 @@ namespace Day22.Tests;
 
 public class Day22Tests
 {
-    [Fact]
-    public async Task GivenLimit_WhenGivenSteps_ThenSwitchLights()
+    [Theory]
+    [InlineData("../../../../../data/day22_data_test.txt", true, 590784)]
+    [InlineData("../../../../../data/day22_data_test2.txt", false, 2758514936282235)]
+    public async Task GivenLimit_WhenGivenSteps_ThenSwitchLights(string file, bool useLimit, long expectedCount)
     {
         // Arrange
-        var lines = await File.ReadAllLinesAsync("../../../../../data/day22_data_test.txt");
+        var lines = await File.ReadAllLinesAsync(file);
         
         // Act
-        var lightsOn = new LightSwitcher().GetOnLights(lines);
+        var lightsOn = new LightSwitcher(useLimit).GetOnLights(lines);
 
         // Assert
-        Assert.Equal(590784, lightsOn);
+        Assert.Equal(expectedCount, lightsOn);
     }
 
     [Fact]
