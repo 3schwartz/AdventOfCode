@@ -4,7 +4,9 @@ using Day22;
 namespace Benchmark
 {
     [MemoryDiagnoser]
-    [SimpleJob(launchCount: 1, warmupCount: 1, targetCount: 3)]
+    [MediumRunJob, SkewnessColumn, KurtosisColumn]
+    [RPlotExporter]
+    //[SimpleJob(launchCount: 1, warmupCount: 1, targetCount: 3)]
     public class Day22Benchmark
     {
         private string[]? lines;
@@ -25,6 +27,12 @@ namespace Benchmark
         public void LightIntervalSwitcher()
         {
             _ = new LightIntervalSwitcher(lines!).GetOnLights(true);
+        }
+
+        [Benchmark]
+        public void LightIntervalSwitcherLessIf()
+        {
+            _ = new LightIntervalSwitcherLessIf(lines!).GetOnLights(true);
         }
     }
 }

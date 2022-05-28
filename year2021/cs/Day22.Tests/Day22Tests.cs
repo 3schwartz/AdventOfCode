@@ -9,6 +9,21 @@ public class Day22Tests
     [Theory]
     [InlineData("../../../../../data/day22_data_test1.txt", true, 590784)]
     [InlineData("../../../../../data/day22_data_test2.txt", false, 2758514936282235)]
+    public async Task UsingLightIntervalSwitcherLessIf_GivenLimit_WhenGivenSteps_ThenSwitchLights(string file, bool useLimit, long expectedCount)
+    {
+        // Arrange
+        var lines = await File.ReadAllLinesAsync(file);
+
+        // Act
+        var lightsOn = new LightIntervalSwitcherLessIf(lines).GetOnLights(useLimit);
+
+        // Assert
+        Assert.Equal(expectedCount, lightsOn);
+    }
+
+    [Theory]
+    [InlineData("../../../../../data/day22_data_test1.txt", true, 590784)]
+    [InlineData("../../../../../data/day22_data_test2.txt", false, 2758514936282235)]
     public async Task UsingLightIntervalSwitcher_GivenLimit_WhenGivenSteps_ThenSwitchLights(string file, bool useLimit, long expectedCount)
     {
         // Arrange
