@@ -5,8 +5,6 @@ namespace Benchmark
 {
     [MemoryDiagnoser]
     [MediumRunJob, SkewnessColumn, KurtosisColumn]
-    [RPlotExporter]
-    //[SimpleJob(launchCount: 1, warmupCount: 1, targetCount: 3)]
     public class Day22Benchmark
     {
         private string[]? lines;
