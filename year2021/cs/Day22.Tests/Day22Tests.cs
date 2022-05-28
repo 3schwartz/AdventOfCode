@@ -7,15 +7,29 @@ namespace Day22.Tests;
 public class Day22Tests
 {
     [Theory]
-    [InlineData("../../../../../data/day22_data_test.txt", true, 590784)]
+    [InlineData("../../../../../data/day22_data_test1.txt", true, 590784)]
     [InlineData("../../../../../data/day22_data_test2.txt", false, 2758514936282235)]
-    public async Task GivenLimit_WhenGivenSteps_ThenSwitchLights(string file, bool useLimit, long expectedCount)
+    public async Task UsingLightIntervalSwitcher_GivenLimit_WhenGivenSteps_ThenSwitchLights(string file, bool useLimit, long expectedCount)
+    {
+        // Arrange
+        var lines = await File.ReadAllLinesAsync(file);
+
+        // Act
+        var lightsOn = new LightIntervalSwitcher(lines).GetOnLights(useLimit);
+
+        // Assert
+        Assert.Equal(expectedCount, lightsOn);
+    }
+
+    [Theory]
+    [InlineData("../../../../../data/day22_data_test1.txt", true, 590784)]
+    public async Task UsingLightSwitcher_GivenLimit_WhenGivenSteps_ThenSwitchLights(string file, bool useLimit, long expectedCount)
     {
         // Arrange
         var lines = await File.ReadAllLinesAsync(file);
         
         // Act
-        var lightsOn = new LightSwitcher(useLimit).GetOnLights(lines);
+        var lightsOn = new LightSwitcher(lines).GetOnLights(useLimit);
 
         // Assert
         Assert.Equal(expectedCount, lightsOn);
@@ -34,7 +48,7 @@ public class Day22Tests
         };
 
         // Act
-        var lightsOn = new LightSwitcher().GetOnLights(steps);
+        var lightsOn = new LightSwitcher(steps).GetOnLights(true);
 
         // Assert
         Assert.Equal(39, lightsOn);
@@ -52,7 +66,7 @@ public class Day22Tests
         int zFrom, int zTo)
     {
         // Act
-        var instruction = InstructionCreator.Create(line);
+        var instruction = LightSwitcher.Create(line);
 
         // Assert
         Assert.Equal(turn, instruction.Turn);

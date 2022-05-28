@@ -2,6 +2,15 @@
 
 var lines = await File.ReadAllLinesAsync("../../../../../data/day22_data.txt");
 
-var lightsOn = new LightSwitcher().GetOnLights(lines);
+var lightSwitcher = new LightIntervalSwitcher(lines);
 
-Console.WriteLine($"Part 1: {lightsOn}");
+var lightsOnWithLimit = lightSwitcher.GetOnLights(true);
+
+Console.WriteLine($"Part 1: {lightsOnWithLimit}");
+
+var lightsOn = lightSwitcher.GetOnLights(false);
+
+Console.WriteLine($"Part 2: {lightsOn}");
+
+
+
