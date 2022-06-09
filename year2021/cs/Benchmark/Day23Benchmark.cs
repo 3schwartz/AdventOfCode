@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
+using Microsoft.Diagnostics.Runtime.ICorDebug;
 
 namespace Benchmark
 {
@@ -8,6 +9,7 @@ namespace Benchmark
     {
         private IList<char> hallWay;
         private List<Stack<char>> rooms;
+        private IList<char> listHallWay;
 
         [GlobalSetup]
         public void Setup()
@@ -18,6 +20,8 @@ namespace Benchmark
                 CreateRoom('C', 'D'),
                 CreateRoom('B', 'C'),
                 CreateRoom('D', 'A')};
+
+            listHallWay = hallWay.Concat(new[] {'B', 'A', 'C', 'D', 'B', 'C', 'D', 'A'}).ToList();
         }
 
         [Benchmark(Baseline = true)]
@@ -38,6 +42,33 @@ namespace Benchmark
         }
 
         [Benchmark]
+        public void SequenceEquals()
+        {
+            var equals = true;
+            equals &= hallWay.SequenceEqual(hallWay);
+            foreach (var room in rooms)
+            {
+                equals &= room.SequenceEqual(room);
+            }
+        }
+
+        [Benchmark]
+        public void SequenceListEqual()
+        {
+            _ = listHallWay.SequenceEqual(listHallWay);
+        }
+
+        [Benchmark]
+        public void ForEachListEqual()
+        {
+            var eqauls = true;
+            for (var i = 0; i < listHallWay.Count; i++)
+            {
+                eqauls &= listHallWay[i].Equals(listHallWay[i]);
+            }
+        }
+
+        [Benchmark]
         public void BaselineGetHash()
         {
             _ = hallWay.GetHashCode() ^ rooms.GetHashCode();
@@ -52,6 +83,35 @@ namespace Benchmark
             foreach (var flat in flatten)
             {
                 hash ^= flat.GetHashCode();
+            }
+        }
+
+        [Benchmark]
+        public void SequenceGetHash()
+        {
+            var hash = 1;
+            hallWay.Select(c => c.GetHashCode()).Aggregate(hash, ((a, b) => a ^ b));
+            foreach (var room in rooms)
+            {
+                hash = room.Select(c => c.GetHashCode()).Aggregate(hash, ((a, b) => a ^ b));
+            }
+        }
+
+        [Benchmark]
+        public void SequenceListGetHash()
+        {
+            var hash = 1;
+            _ = listHallWay.Aggregate(hash, (i, c) => i ^ c.GetHashCode());
+        }
+
+
+        [Benchmark]
+        public void ForEachListGetHash()
+        {
+            var hash = 1;
+            for (var i = 0; i < listHallWay.Count; i++)
+            {
+                hash ^= listHallWay[i].GetHashCode();
             }
         }
 
