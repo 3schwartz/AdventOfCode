@@ -6,4 +6,5 @@ using BenchmarkDotNet.Running;
 //BenchmarkRunner.Run<Day15Benchmark>(DefaultConfig.Instance, args);
 //BenchmarkRunner.Run<Day16Benchmark>(DefaultConfig.Instance, args);
 //BenchmarkRunner.Run<Day20Benchmark>(DefaultConfig.Instance, args);
-BenchmarkRunner.Run<Day22Benchmark>(DefaultConfig.Instance, args);
+BenchmarkRunner.Run<Day23Benchmark>(DefaultConfig.Instance.WithOptions(ConfigOptions.DisableOptimizationsValidator),
+    args);
