@@ -96,7 +96,7 @@ namespace Day23
             return 0;
         }
 
-        private IList<(int Cost, string State)> GetPossibleStates(string state, int cost)
+        internal IList<(int Cost, string State)> GetPossibleStates(string state, int cost)
         {
             var newStates = new List<(int Cost, string State)>();
             AddAmphipodsWhichCanMoveOutFromRooms(newStates, state, cost);

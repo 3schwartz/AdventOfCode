@@ -82,6 +82,33 @@ public class Day23Tests
         Assert.Equal(size, visited.Count);
     }
 
+    [Theory]
+    [InlineData("...........BACDBCDA", 0,  "...B.......BACD.CDA", 40)]
+    [InlineData("...B.......BACD.CDA", 40, "...B.C.....BA.D.CDA", 240)]
+    [InlineData("...B.C.....BA.D.CDA", 240, "...B.......BA.DCCDA", 440)]
+    public void GivenState_WhenFindGetPossible_ThenFindAtLeastOptimal(
+        string state,
+        int cost,
+        string expectedState,
+        int expectedCost)
+    {
+        // Arrange
+        var rooms = new List<char>()
+            {'B', 'A', 'C', 'D', 'B', 'C', 'D', 'A'};
+        var roomSize = 2;
+        var sorter = new AmphipodStringSorter(rooms, roomSize);
+
+        // Act
+
+        var states = sorter.GetPossibleStates(state, cost);
+
+        // Assert
+        var actualState = states.First(s => s.State == expectedState);
+        Assert.NotNull(actualState);
+        Assert.Equal(expectedCost, actualState.Cost);
+
+    }
+
     [Fact]
     public void GivenStringSorter_WhenCalculateLeastEnergy_ThenCorrect()
     {
