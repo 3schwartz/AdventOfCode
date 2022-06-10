@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
@@ -41,11 +40,9 @@ public class Day23Tests
     public void GivenRoom_WhenGet_ThenCorrect(int idx, string room)
     {
         // Arrange
-        var rooms = new List<char>()
-            {'B', 'A', 'C', 'D', 'B', 'C', 'D', 'A'};
         var state = "...........BACDBCDA";
         var roomSize = 2;
-        var sorter = new AmphipodStringSorter(rooms, roomSize);
+        var sorter = new AmphipodStringSorter(roomSize);
 
         // Act
         var roomSpan = sorter.GetRoom(idx, state);
@@ -96,7 +93,7 @@ public class Day23Tests
         var rooms = new List<char>()
             {'B', 'A', 'C', 'D', 'B', 'C', 'D', 'A'};
         var roomSize = 2;
-        var sorter = new AmphipodStringSorter(rooms, roomSize);
+        var sorter = new AmphipodStringSorter(roomSize);
 
         // Act
 
@@ -110,56 +107,54 @@ public class Day23Tests
     }
 
     [Fact]
-    public void GivenStringSorter_WhenCalculateLeastEnergy_ThenCorrect()
+    public void GivenStringSorterSmallRoom_WhenCalculateLeastEnergy_ThenCorrect()
     {
         // Arrange
         var rooms = new List<char>()
             {'B', 'A', 'C', 'D', 'B', 'C', 'D', 'A'};
         var roomSize = 2;
-        var sorter = new AmphipodStringSorter(rooms, roomSize);
+        var sorter = new AmphipodStringSorter(roomSize);
 
         // Act
-        var energy = sorter.CalculateLeastEnergy();
+        var energy = sorter.CalculateLeastEnergy(rooms);
 
         // Assert
         Assert.Equal(12521, energy);
     }
 
-    //[Fact]
-    //public void GivenRooms_WhenCalculateLeastEnergy_ThenCorrect()
-    //{
-    //    // Arrange
-    //    var rooms = new List<Stack<char>> {
-    //        CreateRoom('B', 'A'),
-    //        CreateRoom('C', 'D'),
-    //        CreateRoom('B', 'C'),
-    //        CreateRoom('D', 'A')};
-    //    var sorter = new AmphipodRoomSorter();
+    [Fact]
+    public void GivenStringSorterBigRoom_WhenCalculateLeastEnergy_ThenCorrect()
+    {
+        // Arrange
+        var rooms = new List<char>()
+            {'B', 'D','D', 'A', 'C','C','B', 'D', 'B','B','A', 'C', 'D','A','C', 'A'};
+        var roomSize = 4;
+        var sorter = new AmphipodStringSorter(roomSize);
 
-    //    // Act
-    //    var energy = sorter.CalculateLeastEnergy(rooms);
+        // Act
+        var energy = sorter.CalculateLeastEnergy(rooms);
 
-    //    // Assert
-    //    Assert.Equal(12521, energy);
-    //}
+        // Assert
+        Assert.Equal(44169, energy);
+    }
 
-    //[Fact]
-    //public void GivenRooms_WhenCalculateLeastEnergy_ThenCorrect2()
-    //{
-    //    // Arrange
-    //    var rooms = new List<Stack<char>> {
-    //        CreateRoom('D', 'B'),
-    //        CreateRoom('A', 'C'),
-    //        CreateRoom('D', 'B'),
-    //        CreateRoom('C', 'A')};
-    //    var sorter = new AmphipodRoomSorter();
+    [Fact(Skip = "Really slow")]
+    public void GivenRooms_WhenCalculateLeastEnergy_ThenCorrect()
+    {
+        // Arrange
+        var rooms = new List<Stack<char>> {
+            CreateRoom('B', 'A'),
+            CreateRoom('C', 'D'),
+            CreateRoom('B', 'C'),
+            CreateRoom('D', 'A')};
+        var sorter = new AmphipodRoomSorter();
 
-    //    // Act
-    //    var energy = sorter.CalculateLeastEnergy(rooms);
+        // Act
+        var energy = sorter.CalculateLeastEnergy(rooms);
 
-    //    // Assert
-    //    Assert.Equal(12521, energy);
-    //}
+        // Assert
+        Assert.Equal(12521, energy);
+    }
 
     private Stack<char> CreateRoom(char outer, char inner)
     {

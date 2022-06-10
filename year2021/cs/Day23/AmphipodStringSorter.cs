@@ -1,6 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-
-namespace Day23
+﻿namespace Day23
 {
     internal class AmphipodStringSorter
     {
@@ -14,13 +12,11 @@ namespace Day23
         private readonly IReadOnlyList<int> hallwayEntries = new List<int>() { 2, 4, 6, 8 };
 
         private readonly string end;
-        private readonly string initial;
         private readonly int roomSizes;
 
-        public AmphipodStringSorter(IList<char> rooms, int roomSizes)
+        public AmphipodStringSorter(int roomSizes)
         {
             end = GetEnd(roomSizes);
-            initial = GetInitial(rooms, roomSizes);
             this.roomSizes = roomSizes;
         }
 
@@ -70,8 +66,9 @@ namespace Day23
             return state.ToString();
         }
 
-        internal int CalculateLeastEnergy()
+        internal int CalculateLeastEnergy(IList<char> rooms)
         {
+            var initial = GetInitial(rooms, roomSizes); ;
             var leastEnergyPath = new PriorityQueue<string, int>();
             leastEnergyPath.Enqueue(initial, 0);
 
