@@ -222,9 +222,9 @@ namespace Day23
                     Span<char> clone = stackalloc char[state.Length];
                     state.CopyTo(clone);
                     clone[i] = '.';
-                    clone[11 + (destination / 2 - 1) + RoomOuterFreeElement(destinationRoom)] = state[i];
+                    clone[11 + (destination / 2 - 1) * roomSizes - 1 + RoomOuterFreeElement(destinationRoom)] = state[i];
                     var totalCost = cost + moveCost[state[i]] *
-                        (Math.Abs(destination - i) + 1 + roomSizes - RoomSize(destinationRoom) + 1);
+                        (Math.Abs(destination - i) + 1 + roomSizes - RoomSize(destinationRoom) - 1);
                     newStates.Add((totalCost, clone.ToString()));
                 }
             }

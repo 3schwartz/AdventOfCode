@@ -83,8 +83,8 @@ public class Day23Tests
     }
 
     [Theory]
-    [InlineData("...........BACDBCDA", 0,  "...B.......BACD.CDA", 40)]
-    [InlineData("...B.......BACD.CDA", 40, "...B.C.....BA.D.CDA", 240)]
+    //[InlineData("...........BACDBCDA", 0,  "...B.......BACD.CDA", 40)]
+    //[InlineData("...B.......BACD.CDA", 40, "...B.C.....BA.D.CDA", 240)]
     [InlineData("...B.C.....BA.D.CDA", 240, "...B.......BA.DCCDA", 440)]
     public void GivenState_WhenFindGetPossible_ThenFindAtLeastOptimal(
         string state,
