@@ -4,7 +4,7 @@ namespace Day24
 {
     internal class ArithmeticLogicUnit
     {
-        private IDictionary<string,int> processingUnits = new Dictionary<string, int>
+        private readonly IDictionary<string,int> processingUnits = new Dictionary<string, int>
             {
                 {"w",0 },
                 {"x",0 },
@@ -13,7 +13,7 @@ namespace Day24
 
             };
 
-        internal void Restore()
+        private void Restore()
         {
             foreach (var item in processingUnits)
             {
@@ -23,12 +23,16 @@ namespace Day24
 
         internal (long Highest, IReadOnlyDictionary<string, int> Run) FindHighestMonad(string[] instructions)
         {
+            var listed = InitInstructions(instructions);
+
             for (long i = 99999999999999; i >= 11111111111111; i--)
             {
+                if (i % 10_000_000 == 0) Console.WriteLine(i);
+
                 var monad = i.ToString();
                 if (monad.Contains('0')) continue;
                 
-                var run = RunMonad(instructions, monad);
+                var run = RunMonad(listed, monad);
                 var valid = run.Match(run =>
                 {
                     if (run["z"] == 0)
@@ -52,26 +56,60 @@ namespace Day24
             throw new InvalidOperationException("Given instructions didn't gave a solution");
         }
 
+        private (bool, string, int) SetLookup(string unit)
+        {
+            if (processingUnits.Keys.Contains(unit))
+            {
+                return (true, unit, 0);
+            }
+
+            return (false, unit, int.Parse(unit));
+        }
+
+        internal (IList<(string, string)> instructions, IDictionary<int, (bool, string, int)> lookup) InitInstructions(string[] instructions)
+        {
+            var lookup = new Dictionary<int, (bool, string, int)>();
+            var listed = new List<(string,string)>(instructions.Length);
+
+            for (int i = 0; i < instructions.Length; i++)
+            {
+                var splitted = instructions[i].Split(' ');
+                
+                listed.Add((splitted[0], splitted[1]));
+
+                if (splitted[0] == "inp")
+                {
+                    continue;
+                }
+
+                lookup.Add(i, SetLookup(splitted[2]));
+            }
+
+            return (listed, lookup);
+        }
+
         internal Result<IDictionary<string, int>> RunMonad(
-            string[] instructions,
+            (IList<(string Instruct, string LookUp)> instructions, IDictionary<int, (bool, string, int)> lookup) instructions,
             string digits)
         {
             var idx = 0;
-            foreach (var instruction in instructions)
+            for (int i = 0; i < instructions.instructions.Count; i++)
             {
-                var splitted = instruction.Split(' ');
-                if(splitted[0] == "inp")
+                var (Instruct, LookUp) = instructions.instructions[i];
+                
+                if(Instruct == "inp")
                 {
-                    processingUnits[splitted[1]] = digits[idx] - '0';
+                    processingUnits[LookUp] = digits[idx] - '0';
                     idx++;
                     continue;
                 }
 
-                var b = GetUnitInstruction(splitted[2]);
-                var a = splitted[1];
+                var b = GetUnitInstruction(instructions.lookup[i]);
+                var a = LookUp;
 
-                switch (splitted[0])
+                switch (Instruct)
                 {
+
                     case "add":
                         processingUnits[a] += b;
                         continue;
@@ -91,21 +129,20 @@ namespace Day24
                         processingUnits[a] = processingUnits[a] == b ? 1 : 0;
                         continue;
                     default:
-                        return new Result<IDictionary<string, int>>(new InvalidOperationException($"Unknown instruction {splitted[0]}"));
+                        return new Result<IDictionary<string, int>>(new InvalidOperationException($"Unknown instruction {Instruct}"));
                 }
             }
 
             return new Result<IDictionary<string, int>>(processingUnits);
         }
 
-        private int GetUnitInstruction(string unit)
+        private int GetUnitInstruction((bool, string, int) p)
         {
-            if(processingUnits.TryGetValue(unit, out var instruction))
+            if (p.Item1)
             {
-                return instruction;
+                return processingUnits[p.Item2];
             }
-
-            return int.Parse(unit);
+            return p.Item3;
         }
     }
 }
