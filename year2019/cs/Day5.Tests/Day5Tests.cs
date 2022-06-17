@@ -38,23 +38,69 @@ public class Day5Tests
         Assert.Equal(4925, optimal);
     }
 
+    [Fact]
+    public void WhenRunningTest_ThenCorrect()
+    {
+        // Arrange
+        var codes = File.ReadAllText("../../../../../data/day5_data.txt")
+            .Split(",")
+            .Select(c => int.Parse(c))
+            .ToList();
+        var coder = new IntCoder();
+
+        // Act
+        int diagnostocCode = coder.RunTest(codes, 1);
+
+        // Assert
+        Assert.Equal(13087969, diagnostocCode);
+    }
+
     internal class IntCoder
     {
-        internal int FindOutput(IList<int> codes)
+        internal int RunTest(IList<int> codes, int input)
         {
-            for (int i = 0; i <= 99; i++)
+            var idx = 0;
+            var outputs = new List<int>();
+            do
             {
-                for (int j = 0; j <= 99; j++)
+                var execution = codes[idx];
+                switch (execution % 100)
                 {
-                    var copy = new List<int>(codes);
-                    RunInstructions(copy, i, j);
-                    if(copy[0] == 19690720)
-                    {
-                        return 100 * i + j;
-                    }
+                    case 1:
+                        codes[GetIdxFromMode(codes, execution, 3, idx)] = 
+                            codes[GetIdxFromMode(codes, execution, 2, idx)] + codes[GetIdxFromMode(codes, execution, 1, idx)];
+                        idx += 4;
+                        break;
+                    case 2:
+                        codes[GetIdxFromMode(codes, execution, 3, idx)] =
+                            codes[GetIdxFromMode(codes, execution, 2, idx)] * codes[GetIdxFromMode(codes, execution, 1, idx)];
+                        idx += 4;
+                        break;
+                    case 3:
+                        codes[GetIdxFromMode(codes, execution, 1, idx)] = input;
+                        idx += 2;
+                        break;
+                    case 4:
+                        outputs.Add(codes[GetIdxFromMode(codes, execution, 1, idx)]);
+                        idx += 2;
+                        break;
+                    case 99:
+                        idx = codes.Count;
+                        break;
+                    default:
+                        throw new Exception($"OptCode not known {execution}");
                 }
-            }
-            throw new Exception("Nothing found");
+            } while (idx < codes.Count);
+
+            return outputs[^1];
+        }
+
+        private int GetIdxFromMode(IList<int> codes, int execution, int parameterPosition, int idx)
+        {
+            var mode = execution / ((int)Math.Pow(10, 1 + parameterPosition));
+            mode %= 10;
+            return mode == 1 ? idx + parameterPosition : codes[idx + parameterPosition];
+
         }
 
         internal void RunInstructions(IList<int> codes, int noun, int verb)
@@ -81,6 +127,23 @@ public class Day5Tests
                 }
                 idx += 4;
             } while (idx < codes.Count);
+        }
+
+        internal int FindOutput(IList<int> codes)
+        {
+            for (int i = 0; i <= 99; i++)
+            {
+                for (int j = 0; j <= 99; j++)
+                {
+                    var copy = new List<int>(codes);
+                    RunInstructions(copy, i, j);
+                    if (copy[0] == 19690720)
+                    {
+                        return 100 * i + j;
+                    }
+                }
+            }
+            throw new Exception("Nothing found");
         }
     }
 }
