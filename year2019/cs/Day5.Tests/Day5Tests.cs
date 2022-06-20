@@ -3,11 +3,33 @@ using System.IO;
 using Xunit;
 using System.Linq;
 using System.Collections.Generic;
+using Xunit.Abstractions;
 
 namespace Day5.Tests;
 
 public class Day5Tests
 {
+    private readonly ITestOutputHelper output;
+
+    public Day5Tests(ITestOutputHelper output)
+    {
+        this.output = output;
+    }
+
+    [Fact]
+    public void Program()
+    {
+        var codes = File.ReadAllText("../../../../../data/day5_data.txt")
+            .Split(",")
+            .Select(c => int.Parse(c))
+            .ToList();
+        var coder = new IntCoder();
+
+        int diagnostocCode = coder.RunTest(codes, 5);
+
+        output.WriteLine($"Part 1 : {diagnostocCode}");
+    }
+
     [Fact]
     public void WhenRunningInitialIntCodeProgram_ThenCorrect()
     {
@@ -83,6 +105,34 @@ public class Day5Tests
                     case 4:
                         outputs.Add(codes[GetIdxFromMode(codes, execution, 1, idx)]);
                         idx += 2;
+                        break;
+                    case 5:
+                        if(codes[GetIdxFromMode(codes,execution,1, idx)] != 0)
+                        {
+                            idx = codes[GetIdxFromMode(codes, execution, 2, idx)];
+                            break;
+                        }
+                        idx += 3;
+                        break;
+                    case 6:
+                        if (codes[GetIdxFromMode(codes, execution, 1, idx)] == 0)
+                        {
+                            idx = codes[GetIdxFromMode(codes, execution, 2, idx)];
+                            break;
+                        }
+                        idx += 3;
+                        break;
+                    case 7:
+                        codes[GetIdxFromMode(codes, execution, 3, idx)] =
+                            codes[GetIdxFromMode(codes, execution, 1, idx)] < codes[GetIdxFromMode(codes, execution, 2, idx)] ?
+                            1 : 0;
+                        idx += 4;
+                        break;
+                    case 8:
+                        codes[GetIdxFromMode(codes, execution, 3, idx)] =
+                            codes[GetIdxFromMode(codes, execution, 1, idx)] == codes[GetIdxFromMode(codes, execution, 2, idx)] ?
+                            1 : 0;
+                        idx += 4;
                         break;
                     case 99:
                         idx = codes.Count;
