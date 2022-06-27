@@ -23,7 +23,7 @@ public class Day17Benchmark
     }
 
     [Benchmark]
-    public void SortOfSubject()
+    public void Reactive()
     {
         _ = ReactiveCoder.FindMaxThrusterSignal(codes!);
     }
