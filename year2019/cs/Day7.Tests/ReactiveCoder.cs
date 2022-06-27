@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Reactive.Disposables;
 using System.Reactive.Subjects;
 using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace Day7.Tests;
@@ -11,21 +10,24 @@ namespace Day7.Tests;
 internal class ReactiveCoder : ISubject<int>, IDisposable
 {
     public string Identifier { get; }
-    public Task? Work { get; private set; }
     private readonly IList<int> codes;
-    private readonly Channel<int> channel;
     private readonly CancellationTokenSource cts;
-    private int idx;
     private readonly List<int> outputs;
+    private readonly TaskCompletionSource<int> taskCompletionSource;
+    private readonly Queue<int> inputs;
+    private IObserver<int>? observer;
+    private int idx;
 
-    private ReactiveCoder(string identifier, IList<int> codes)
+    private ReactiveCoder(string identifier, IList<int> codes, int input)
     {
         Identifier = identifier;
         this.codes = codes;
-        channel = Channel.CreateUnbounded<int>();
         cts = new CancellationTokenSource();
         idx = 0;
         outputs = new List<int>();
+        inputs = new Queue<int>();
+        inputs.Enqueue(input);
+        taskCompletionSource = new TaskCompletionSource<int>();
     }
 
     internal static int FindMaxThrusterSignal(IList<int> codes)
@@ -37,25 +39,24 @@ internal class ReactiveCoder : ISubject<int>, IDisposable
     {
         return async (codes, inputs) =>
         {
-            var coders = await SetupAmplifiers(codes, inputs)
-                .ConfigureAwait(false);
+            var coders = SetupAmplifiers(codes, inputs);
+            _ = Task.Run(() => coders["A"].OnNext(0));
             var coder = coders["E"];
 
-            await coder.Work!
+            var thrusterSignal = await coder.GetLargestSignal()
                 .ConfigureAwait(false);
-            var thrusterSignal = coder.GetLargestSignal();
             return thrusterSignal;
         };
     }
 
-    internal static async Task<IDictionary<string, ReactiveCoder>> SetupAmplifiers(IList<int> codes,
+    internal static IDictionary<string, ReactiveCoder> SetupAmplifiers(IList<int> codes,
         (int A, int B, int C, int D, int E) inputs)
     {
-        var a = await CreateReactiveCoder("A", new List<int>(codes), new List<int> { inputs.A, 0});
-        var b = await CreateReactiveCoder("B", new List<int>(codes), new List<int> { inputs.B });
-        var c = await CreateReactiveCoder("C", new List<int>(codes), new List<int> { inputs.C });
-        var d = await CreateReactiveCoder("D", new List<int>(codes), new List<int> { inputs.D });
-        var e = await CreateReactiveCoder("E", new List<int>(codes), new List<int> { inputs.E });
+        var a = new ReactiveCoder("A", new List<int>(codes), inputs.A);
+        var b = new ReactiveCoder("B", new List<int>(codes), inputs.B);
+        var c = new ReactiveCoder("C", new List<int>(codes), inputs.C);
+        var d = new ReactiveCoder("D", new List<int>(codes), inputs.D);
+        var e = new ReactiveCoder("E", new List<int>(codes), inputs.E);
         a.Subscribe(b);
         b.Subscribe(c);
         c.Subscribe(d);
@@ -71,116 +72,94 @@ internal class ReactiveCoder : ISubject<int>, IDisposable
         };
     }
 
-    internal static async Task<ReactiveCoder> CreateReactiveCoder(string identifier, IList<int> codes, IList<int> initialInputs)
-    {
-        var coder = new ReactiveCoder(identifier, codes);
-        foreach (var initialInput in initialInputs)
-        {
-            await coder.channel.Writer.WriteAsync( initialInput, coder.cts.Token);
-        }
-        return coder;
-    }
-
     public void OnCompleted()
     {
-        // Swallow
+        // swallow
     }
 
     public void OnError(Exception error)
     {
-        throw new NotImplementedException();
-    }
-
-    public void OnNext(int value)
-    {
-        channel.Writer.TryWrite(value);
+        taskCompletionSource.SetException(error);
     }
 
     public IDisposable Subscribe(IObserver<int> observer)
     {
-        Work = Task.Run(() => Run(observer));
+        this.observer = observer;
         return Disposable.Empty;
     }
 
-    internal int GetLargestSignal()
+    private Task<int> GetLargestSignal()
     {
-        return outputs[^1];
+        return taskCompletionSource.Task;
     }
 
-    private async Task Run(IObserver<int> observer)
+    public void OnNext(int input)
     {
-        await foreach (var input in channel.Reader.ReadAllAsync(cts.Token))
+        inputs.Enqueue(input);
+        do
         {
-            var inputUsed = false;
-            var keepWhileLoopOn = true;
-            do
+            var execution = codes[idx];
+            switch (execution % 100)
             {
-                var execution = codes[idx];
-                switch (execution % 100)
-                {
-                    case 1:
-                        codes[GetIdxFromMode(codes, execution, 3, idx)] =
-                            codes[GetIdxFromMode(codes, execution, 2, idx)] + codes[GetIdxFromMode(codes, execution, 1, idx)];
-                        idx += 4;
+                case 1:
+                    codes[GetIdxFromMode(codes, execution, 3, idx)] =
+                        codes[GetIdxFromMode(codes, execution, 2, idx)] + codes[GetIdxFromMode(codes, execution, 1, idx)];
+                    idx += 4;
+                    break;
+                case 2:
+                    codes[GetIdxFromMode(codes, execution, 3, idx)] =
+                        codes[GetIdxFromMode(codes, execution, 2, idx)] * codes[GetIdxFromMode(codes, execution, 1, idx)];
+                    idx += 4;
+                    break;
+                case 3:
+                    if (!inputs.TryDequeue(out var outputQueue)) return;
+
+                    codes[GetIdxFromMode(codes, execution, 1, idx)] = outputQueue;
+                    idx += 2;
+                    break;
+                case 4:
+                    var output = codes[GetIdxFromMode(codes, execution, 1, idx)];
+                    outputs.Add(output);
+                    idx += 2;
+                    observer!.OnNext(output);
+                    break;
+                case 5:
+                    if (codes[GetIdxFromMode(codes, execution, 1, idx)] != 0)
+                    {
+                        idx = codes[GetIdxFromMode(codes, execution, 2, idx)];
                         break;
-                    case 2:
-                        codes[GetIdxFromMode(codes, execution, 3, idx)] =
-                            codes[GetIdxFromMode(codes, execution, 2, idx)] * codes[GetIdxFromMode(codes, execution, 1, idx)];
-                        idx += 4;
+                    }
+                    idx += 3;
+                    break;
+                case 6:
+                    if (codes[GetIdxFromMode(codes, execution, 1, idx)] == 0)
+                    {
+                        idx = codes[GetIdxFromMode(codes, execution, 2, idx)];
                         break;
-                    case 3:
-                        if (inputUsed)
-                        {
-                            keepWhileLoopOn = false;
-                            break;
-                        }
-                        codes[GetIdxFromMode(codes, execution, 1, idx)] = input;
-                        idx += 2;
-                        inputUsed = true;
-                        break;
-                    case 4:
-                        var output = codes[GetIdxFromMode(codes, execution, 1, idx)];
-                        observer.OnNext(output);
-                        outputs.Add(output);
-                        idx += 2;
-                        break;
-                    case 5:
-                        if (codes[GetIdxFromMode(codes, execution, 1, idx)] != 0)
-                        {
-                            idx = codes[GetIdxFromMode(codes, execution, 2, idx)];
-                            break;
-                        }
-                        idx += 3;
-                        break;
-                    case 6:
-                        if (codes[GetIdxFromMode(codes, execution, 1, idx)] == 0)
-                        {
-                            idx = codes[GetIdxFromMode(codes, execution, 2, idx)];
-                            break;
-                        }
-                        idx += 3;
-                        break;
-                    case 7:
-                        codes[GetIdxFromMode(codes, execution, 3, idx)] =
-                            codes[GetIdxFromMode(codes, execution, 1, idx)] < codes[GetIdxFromMode(codes, execution, 2, idx)] ?
-                                1 : 0;
-                        idx += 4;
-                        break;
-                    case 8:
-                        codes[GetIdxFromMode(codes, execution, 3, idx)] =
-                            codes[GetIdxFromMode(codes, execution, 1, idx)] == codes[GetIdxFromMode(codes, execution, 2, idx)] ?
-                                1 : 0;
-                        idx += 4;
-                        break;
-                    case 99:
-                        observer.OnCompleted();
-                        Dispose();
-                        return;
-                    default:
-                        throw new Exception($"OptCode not known {execution}");
-                }
-            } while (keepWhileLoopOn);
-        }
+                    }
+                    idx += 3;
+                    break;
+                case 7:
+                    codes[GetIdxFromMode(codes, execution, 3, idx)] =
+                        codes[GetIdxFromMode(codes, execution, 1, idx)] < codes[GetIdxFromMode(codes, execution, 2, idx)] ?
+                            1 : 0;
+                    idx += 4;
+                    break;
+                case 8:
+                    codes[GetIdxFromMode(codes, execution, 3, idx)] =
+                        codes[GetIdxFromMode(codes, execution, 1, idx)] == codes[GetIdxFromMode(codes, execution, 2, idx)] ?
+                            1 : 0;
+                    idx += 4;
+                    break;
+                case 99:
+                    taskCompletionSource.TrySetResult(outputs[^1]);
+                    observer!.OnCompleted();
+                    Dispose();
+                    return;
+                default:
+                    throw new Exception($"OptCode not known {execution}");
+            }
+        } while (true);
     }
 
     private static int GetIdxFromMode(IList<int> codes, int execution, int parameterPosition, int idx)

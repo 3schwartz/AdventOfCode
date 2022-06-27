@@ -5,7 +5,7 @@ using Day7.Tests;
 namespace Benchmark;
 
 [MemoryDiagnoser]
-[SimpleJob(launchCount: 10, warmupCount: 1, targetCount: 10)]
+[SimpleJob(launchCount: 2, warmupCount: 1, targetCount: 2)]
 public class Day17Benchmark
 {
     private IList<int>? codes;
