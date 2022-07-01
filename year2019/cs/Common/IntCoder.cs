@@ -79,7 +79,6 @@ internal class IntCoder
 
         return outputs[^1];
     }
-
     internal int FindMaxThrusterSignal(IList<int> codes)
     {
         Span<int> inputs = stackalloc int[5] { -1,-1,-1,-1,-1};
