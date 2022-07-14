@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -13,6 +14,35 @@ public class Day8Tests
     public Day8Tests(ITestOutputHelper output)
     {
         this.output = output;
+    }
+
+    [Fact]
+    public void Part2()
+    {
+        var input = File.ReadAllText("../../../../../data/day8_data.txt");
+        var columns = 25;
+        var rows = 6;
+        var imageSize = rows * columns;
+        var image = new Dictionary<(int, int), char>();
+        for (int i = 0; i < input.Length; i++)
+        {
+            var row = i / columns - rows * (i / imageSize);
+            var col = i % columns;
+            if (input[i] != '2')
+            {
+                image.TryAdd((row, col), input[i]);
+            }
+        }
+
+        Span<char> rowsInput = stackalloc char[columns];
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < columns; j++)
+            {
+                rowsInput[j] = image[(i, j)] == '1' ? '#' : '.';
+            }
+            output.WriteLine(rowsInput.ToString());
+        }
     }
 
     [Fact]
