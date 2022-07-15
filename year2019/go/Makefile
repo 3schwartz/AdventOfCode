@@ -1,13 +1,19 @@
 .DEFAULT_GOAL := build
 
 fmt:
-	go fmt
+	go fmt ./...
 .PHONY:fmt
 
 vet: fmt
-	go vet
+	go vet ./...
 .PHONY:vet
 
-build: vet
-	go build
-.PHONY:build	
+build:
+	go build ./...
+.PHONY:build
+
+build-only:
+	go build ./...
+
+test: build-only
+	go test ./...

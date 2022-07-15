@@ -9,12 +9,13 @@ import (
 
 func main() {
 	input := readData()
+
 	part1(input)
 	part2(input)
 }
 
 func readData() []string {
-	f, err := os.ReadFile("../data/day1_data.txt")
+	f, err := os.ReadFile("../../../data/day1_data.txt")
 	if err != nil {
 		panic(err)
 	}
