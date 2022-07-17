@@ -151,7 +151,7 @@ func newMinimumCalculator(wireOneInput []string, wireSecondInput []string) minim
 }
 
 func (mc *minimumCalculator) getMinimumDistance() int {
-	intersections := mc.getIntersection()
+	intersections := getIntersection(mc.VisitsOne, mc.VisitsTwo)
 	if len(intersections) == 0 {
 		panic("No valid intersections")
 	}
@@ -169,7 +169,7 @@ func (mc *minimumCalculator) getMinimumDistance() int {
 }
 
 func (mc *minimumCalculator) getMinimumSteps() int {
-	intersections := mc.getIntersection()
+	intersections := getIntersection(mc.VisitsOne, mc.VisitsTwo)
 	if len(intersections) == 0 {
 		panic("No valid intersections")
 	}
@@ -195,13 +195,13 @@ func (mc *minimumCalculator) getMinimumSteps() int {
 	return minValue
 }
 
-func (mc *minimumCalculator) getIntersection() []coordinate {
+func getIntersection(visitOne coordinateVisits, visitSecond coordinateVisits) []coordinate {
 	bucket := map[coordinate]bool{}
 	intersect := []coordinate{}
-	for key := range mc.VisitsOne {
+	for key := range visitOne {
 		bucket[key] = true
 	}
-	for key := range mc.VisitsTwo {
+	for key := range visitSecond {
 		if bucket[key] {
 			intersect = append(intersect, key)
 		}

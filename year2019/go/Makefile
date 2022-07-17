@@ -20,3 +20,6 @@ test: build-only
 
 test3:
 	go test ./cmd/day3 -v
+
+bench3:
+	go test ./cmd/day3 -v -bench=. -benchmem
