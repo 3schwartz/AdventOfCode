@@ -2,89 +2,86 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
 )
 
 func main() {
-	a := Coordinate{}
-	b := Coordinate{}
-	fmt.Println(a == b)
-	// wireOne, wireTwo := readData()
-	// fmt.Println(data)
+	wireOne, wireTwo := readData()
+	minimumCalculator := newMinimumCalculator(wireOne, wireTwo)
+	minimumDistance := minimumCalculator.getMinimumDistance()
+
+	fmt.Printf("Part 1: %d\n", minimumDistance)
+
+	minimumSteps := minimumCalculator.getMinimumSteps()
+
+	fmt.Printf("Part 2: %d\n", minimumSteps)
 }
 
-type Move struct {
+type move struct {
 	Direction string
 	Step      int
 }
 
-func NewMove(movement string) Move {
-	// steps := make([]int, len(movement)-1)
-	// for i, v := range movement[1:] {
-	// 	step, err := strconv.Atoi(string(v))
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// 	steps[i] = step
-	// }
+func newMove(movement string) move {
 	step, err := strconv.Atoi(string(movement[1:]))
 	if err != nil {
 		panic(err)
 	}
-	return Move{
+	return move{
 		Direction: movement[:1],
 		Step:      step,
 	}
 }
 
-type Wire struct {
-	Moves []Move
+type wire struct {
+	Moves []move
 }
 
-func NewWire(moves []string) Wire {
-	movements := make([]Move, 0, len(moves))
+func newWire(moves []string) wire {
+	movements := make([]move, 0, len(moves))
 	for _, v := range moves {
-		movements = append(movements, NewMove(v))
+		movements = append(movements, newMove(v))
 	}
-	return Wire{
+	return wire{
 		Moves: movements,
 	}
 
 }
 
-type Coordinate struct {
+type coordinate struct {
 	x int
 	y int
 }
 
-type GridVisits map[Coordinate]int
+type gridVisits map[coordinate]int
 
-type Coordinates map[string]int
+type coordinates map[string]int
 
-type ICalculator interface {
-	CalculateCoordinates(wire Wire) GridVisits
-	AddRange(coordinates Coordinates, coord string, value int, positive bool, places GridVisits)
+type iCalculator interface {
+	calculateCoordinates(wire wire) gridVisits
+	addRange(coordinates coordinates, coord string, value int, positive bool, places gridVisits)
 }
 
-type CoordinateCalculator struct {
+type coordinateCalculator struct {
 }
 
-func (cc CoordinateCalculator) CalculateCoordinates(wire Wire) GridVisits {
-	coordinates := Coordinates{"x": 0, "y": 0, "s": 0}
-	places := GridVisits{}
+func (cc coordinateCalculator) calculateCoordinates(wire wire) gridVisits {
+	coordinates := coordinates{"x": 0, "y": 0, "s": 0}
+	places := gridVisits{}
 
 	for _, moves := range wire.Moves {
 		switch direction := moves.Direction; direction {
 		case "U":
-			cc.AddRange(coordinates, "x", moves.Step, true, places)
+			cc.addRange(coordinates, "x", moves.Step, true, places)
 		case "D":
-			cc.AddRange(coordinates, "x", moves.Step, false, places)
+			cc.addRange(coordinates, "x", moves.Step, false, places)
 		case "R":
-			cc.AddRange(coordinates, "y", moves.Step, true, places)
+			cc.addRange(coordinates, "y", moves.Step, true, places)
 		case "L":
-			cc.AddRange(coordinates, "y", moves.Step, false, places)
+			cc.addRange(coordinates, "y", moves.Step, false, places)
 		default:
 			panic(fmt.Errorf("unknown direction %s", direction))
 		}
@@ -92,7 +89,14 @@ func (cc CoordinateCalculator) CalculateCoordinates(wire Wire) GridVisits {
 	return places
 }
 
-func (cc CoordinateCalculator) AddRange(coordinates Coordinates, coord string, value int, positive bool, places GridVisits) {
+func (cc coordinateCalculator) directionConditionComparer(pos int, after int, multiplier int) bool {
+	if multiplier > 0 {
+		return pos < after+multiplier
+	}
+	return pos > after+multiplier
+}
+
+func (cc coordinateCalculator) addRange(coordinates coordinates, coord string, value int, positive bool, places gridVisits) {
 	multiplier := -1
 	if positive {
 		multiplier = 1
@@ -102,12 +106,12 @@ func (cc CoordinateCalculator) AddRange(coordinates Coordinates, coord string, v
 	after := before + multiplier*value
 	steps := coordinates["s"] + 1
 
-	for i := before + multiplier; i < after+multiplier; i += multiplier {
+	for i := before + multiplier; cc.directionConditionComparer(i, after, multiplier); i += multiplier {
 		switch coord {
 		case "x":
-			places[Coordinate{i, coordinates["y"]}] = steps
+			places[coordinate{i, coordinates["y"]}] = steps
 		case "y":
-			places[Coordinate{i, coordinates["y"]}] = steps
+			places[coordinate{coordinates["x"], i}] = steps
 		default:
 			panic(fmt.Sprintf("Unknown coordinate: %s", coord))
 		}
@@ -118,53 +122,90 @@ func (cc CoordinateCalculator) AddRange(coordinates Coordinates, coord string, v
 	case "x":
 		coordinates["x"] += multiplier * value
 	case "y":
-		coordinates["x"] += multiplier * value
+		coordinates["y"] += multiplier * value
 	default:
 		panic(fmt.Sprintf("Unknown coordinate: %s", coord))
 	}
 	coordinates["s"] += value
 }
 
-type MinimumCalculator struct {
-	Calculator ICalculator
-	WireOne    Wire
-	WireTwo    Wire
-	VisitsOne  GridVisits
-	VisitsTwo  GridVisits
+type minimumCalculator struct {
+	Calculator iCalculator
+	WireOne    wire
+	WireTwo    wire
+	VisitsOne  gridVisits
+	VisitsTwo  gridVisits
 }
 
-func NewMinimumCalculator(wireOneInput []string, wireSecondInput []string) MinimumCalculator {
-	calculator := CoordinateCalculator{}
-	wireOne := NewWire(wireOneInput)
-	wireTwo := NewWire(wireSecondInput)
-	wireOneVisited := calculator.CalculateCoordinates(wireOne)
-	wireTwoVisited := calculator.CalculateCoordinates(wireTwo)
-	return MinimumCalculator{
+func newMinimumCalculator(wireOneInput []string, wireSecondInput []string) minimumCalculator {
+	calculator := coordinateCalculator{}
+	wireOne := newWire(wireOneInput)
+	wireTwo := newWire(wireSecondInput)
+	wireOneVisited := calculator.calculateCoordinates(wireOne)
+	wireTwoVisited := calculator.calculateCoordinates(wireTwo)
+	return minimumCalculator{
 		calculator,
 		wireOne, wireTwo, wireOneVisited, wireTwoVisited,
 	}
 }
 
-func (mc *MinimumCalculator) GetIntersection() []Coordinate {
-	bucket := map[Coordinate]bool{}
-	toDelete := []Coordinate{}
+func (mc *minimumCalculator) getMinimumDistance() int {
+	intersections := mc.getIntersection()
+	if len(intersections) == 0 {
+		panic("No valid intersections")
+	}
+	minValue := math.MaxInt32
+	for _, intersect := range intersections {
+		if intersect.x == 0 && intersect.y == 0 {
+			continue
+		}
+		manhattanDistance := int(math.Abs(float64(intersect.x))) + int(math.Abs(float64(intersect.y)))
+		if manhattanDistance < minValue {
+			minValue = manhattanDistance
+		}
+	}
+	return minValue
+}
+
+func (mc *minimumCalculator) getMinimumSteps() int {
+	intersections := mc.getIntersection()
+	if len(intersections) == 0 {
+		panic("No valid intersections")
+	}
+	minValue := math.MaxInt32
+	for _, intersect := range intersections {
+		if intersect.x == 0 && intersect.y == 0 {
+			continue
+		}
+		stepsOne, ok := mc.VisitsOne[intersect]
+		if !ok {
+			panic("Intersect not present in visited first")
+		}
+		stepsTwo, ok := mc.VisitsTwo[intersect]
+		if !ok {
+			panic("Intersect not present in visited second")
+		}
+
+		steps := stepsOne + stepsTwo
+		if steps < minValue {
+			minValue = steps
+		}
+	}
+	return minValue
+}
+
+func (mc *minimumCalculator) getIntersection() []coordinate {
+	bucket := map[coordinate]bool{}
+	intersect := []coordinate{}
 	for key := range mc.VisitsOne {
 		bucket[key] = true
 	}
 	for key := range mc.VisitsTwo {
 		if bucket[key] {
-			continue
+			intersect = append(intersect, key)
 		}
-		toDelete = append(toDelete, key)
 	}
-	for _, key := range toDelete {
-		delete(bucket, key)
-	}
-	intersection := make([]Coordinate, 0, len(bucket))
-	for key := range bucket {
-		intersection = append(intersection, key)
-	}
-	return intersection
+	return intersect
 }
 
 func readData() ([]string, []string) {
@@ -172,8 +213,8 @@ func readData() ([]string, []string) {
 	if err != nil {
 		panic(err)
 	}
-	trimmed := strings.Trim(string(f), "\n")
-	data := strings.Split(trimmed, "\n")
+	trimmed := strings.Trim(string(f), "\r\n")
+	data := strings.Split(trimmed, "\r\n")
 
 	if length := len(data); length != 2 {
 		panic(fmt.Sprintf("Length should be 2 was %d", length))

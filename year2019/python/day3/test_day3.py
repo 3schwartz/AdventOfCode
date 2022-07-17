@@ -34,7 +34,8 @@ class TestDay3(unittest.TestCase):
         expected = 159
 
         # Act
-        actual = MinimumCalculator(first, second).get_minimum_distance()
+        minimum_calculator = MinimumCalculator(first, second)
+        actual = minimum_calculator.get_minimum_distance()
 
         # Assert
         self.assertEqual(expected, actual)
