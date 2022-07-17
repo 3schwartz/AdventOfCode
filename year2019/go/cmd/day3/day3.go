@@ -56,32 +56,32 @@ type coordinate struct {
 	y int
 }
 
-type gridVisits map[coordinate]int
+type coordinateVisits map[coordinate]int
 
-type coordinates map[string]int
+type position map[string]int
 
-type iCalculator interface {
-	calculateCoordinates(wire wire) gridVisits
-	addRange(coordinates coordinates, coord string, value int, positive bool, places gridVisits)
+type coordinateMapper interface {
+	mapCoordinates(wire wire) coordinateVisits
+	addCoordinates(coordinates position, coord string, value int, positive bool, places coordinateVisits)
 }
 
-type coordinateCalculator struct {
+type wireCoordinateMapper struct {
 }
 
-func (cc coordinateCalculator) calculateCoordinates(wire wire) gridVisits {
-	coordinates := coordinates{"x": 0, "y": 0, "s": 0}
-	places := gridVisits{}
+func (cc wireCoordinateMapper) mapCoordinates(wire wire) coordinateVisits {
+	currentPosition := position{"x": 0, "y": 0, "s": 0}
+	places := coordinateVisits{}
 
 	for _, moves := range wire.Moves {
 		switch direction := moves.Direction; direction {
 		case "U":
-			cc.addRange(coordinates, "x", moves.Step, true, places)
+			cc.addCoordinates(currentPosition, "x", moves.Step, true, places)
 		case "D":
-			cc.addRange(coordinates, "x", moves.Step, false, places)
+			cc.addCoordinates(currentPosition, "x", moves.Step, false, places)
 		case "R":
-			cc.addRange(coordinates, "y", moves.Step, true, places)
+			cc.addCoordinates(currentPosition, "y", moves.Step, true, places)
 		case "L":
-			cc.addRange(coordinates, "y", moves.Step, false, places)
+			cc.addCoordinates(currentPosition, "y", moves.Step, false, places)
 		default:
 			panic(fmt.Errorf("unknown direction %s", direction))
 		}
@@ -89,29 +89,30 @@ func (cc coordinateCalculator) calculateCoordinates(wire wire) gridVisits {
 	return places
 }
 
-func (cc coordinateCalculator) directionConditionComparer(pos int, after int, multiplier int) bool {
+func (cc wireCoordinateMapper) directionConditionComparer(pos int, after int, multiplier int) bool {
 	if multiplier > 0 {
 		return pos < after+multiplier
 	}
 	return pos > after+multiplier
 }
 
-func (cc coordinateCalculator) addRange(coordinates coordinates, coord string, value int, positive bool, places gridVisits) {
+// Change current position and visited input parameters
+func (cc wireCoordinateMapper) addCoordinates(currentPosition position, coord string, value int, positive bool, visited coordinateVisits) {
 	multiplier := -1
 	if positive {
 		multiplier = 1
 	}
 
-	before := coordinates[coord]
+	before := currentPosition[coord]
 	after := before + multiplier*value
-	steps := coordinates["s"] + 1
+	steps := currentPosition["s"] + 1
 
 	for i := before + multiplier; cc.directionConditionComparer(i, after, multiplier); i += multiplier {
 		switch coord {
 		case "x":
-			places[coordinate{i, coordinates["y"]}] = steps
+			visited[coordinate{i, currentPosition["y"]}] = steps
 		case "y":
-			places[coordinate{coordinates["x"], i}] = steps
+			visited[coordinate{currentPosition["x"], i}] = steps
 		default:
 			panic(fmt.Sprintf("Unknown coordinate: %s", coord))
 		}
@@ -120,29 +121,29 @@ func (cc coordinateCalculator) addRange(coordinates coordinates, coord string, v
 
 	switch coord {
 	case "x":
-		coordinates["x"] += multiplier * value
+		currentPosition["x"] += multiplier * value
 	case "y":
-		coordinates["y"] += multiplier * value
+		currentPosition["y"] += multiplier * value
 	default:
 		panic(fmt.Sprintf("Unknown coordinate: %s", coord))
 	}
-	coordinates["s"] += value
+	currentPosition["s"] += value
 }
 
 type minimumCalculator struct {
-	Calculator iCalculator
+	Calculator coordinateMapper
 	WireOne    wire
 	WireTwo    wire
-	VisitsOne  gridVisits
-	VisitsTwo  gridVisits
+	VisitsOne  coordinateVisits
+	VisitsTwo  coordinateVisits
 }
 
 func newMinimumCalculator(wireOneInput []string, wireSecondInput []string) minimumCalculator {
-	calculator := coordinateCalculator{}
+	calculator := wireCoordinateMapper{}
 	wireOne := newWire(wireOneInput)
 	wireTwo := newWire(wireSecondInput)
-	wireOneVisited := calculator.calculateCoordinates(wireOne)
-	wireTwoVisited := calculator.calculateCoordinates(wireTwo)
+	wireOneVisited := calculator.mapCoordinates(wireOne)
+	wireTwoVisited := calculator.mapCoordinates(wireTwo)
 	return minimumCalculator{
 		calculator,
 		wireOne, wireTwo, wireOneVisited, wireTwoVisited,
