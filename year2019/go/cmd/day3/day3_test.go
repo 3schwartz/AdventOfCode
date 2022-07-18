@@ -1,7 +1,6 @@
 package main
 
 import (
-	"math/rand"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -49,19 +48,6 @@ func Test_newMove(t *testing.T) {
 	if move.Step != 74 {
 		t.Error("Wrong step", move.Step)
 	}
-}
-
-var blackhole_getIntersection []coordinate
-
-func createRandomCoordinateVisits(size int) coordinateVisits {
-	coordinateVisits := coordinateVisits{}
-	for {
-		coordinateVisits[coordinate{rand.Intn(size), rand.Intn(size)}] = 0
-		if len(coordinateVisits) >= size {
-			break
-		}
-	}
-	return coordinateVisits
 }
 
 func Test_minimumCalculator_getMinimumDistance(t *testing.T) {

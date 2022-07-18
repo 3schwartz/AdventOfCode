@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"testing"
 )
+
+var blackhole_getIntersection []coordinate
 
 func Benchmark_getIntersection(b *testing.B) {
 	for _, v := range []int{1, 10, 100, 1_000, 10_000} {
@@ -20,4 +23,15 @@ func Benchmark_getIntersection(b *testing.B) {
 			}
 		})
 	}
+}
+
+func createRandomCoordinateVisits(size int) coordinateVisits {
+	coordinateVisits := coordinateVisits{}
+	for {
+		coordinateVisits[coordinate{rand.Intn(size), rand.Intn(size)}] = 0
+		if len(coordinateVisits) >= size {
+			break
+		}
+	}
+	return coordinateVisits
 }

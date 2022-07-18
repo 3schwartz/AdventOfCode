@@ -23,3 +23,6 @@ test3:
 
 bench3:
 	go test ./cmd/day3 -v -bench=. -benchmem -run=^a
+
+test7:
+	go test ./cmd/day7 -v
