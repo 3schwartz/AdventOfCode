@@ -209,6 +209,20 @@ func getIntersection(visitOne coordinateVisits, visitSecond coordinateVisits) []
 	return intersect
 }
 
+func getIntersectionGeneric[T comparable, K1 any, K2 any](m1 map[T]K1, m2 map[T]K2) []T {
+	bucket := map[T]bool{}
+	intersect := []T{}
+	for key := range m1 {
+		bucket[key] = true
+	}
+	for key := range m2 {
+		if bucket[key] {
+			intersect = append(intersect, key)
+		}
+	}
+	return intersect
+}
+
 func readData() ([]string, []string) {
 	f, err := os.ReadFile("../../../data/day3_data.txt")
 	if err != nil {
