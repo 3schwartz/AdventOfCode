@@ -2,6 +2,16 @@ package coders
 
 import "math"
 
+type channelCoder struct {
+	reader chan int
+}
+
+func (cc *channelCoder) Run() {
+	for v := range cc.reader {
+
+	}
+}
+
 func ChannelCoderFindMaxThrusterSignal(codes []int) int {
 	return 0
 }
