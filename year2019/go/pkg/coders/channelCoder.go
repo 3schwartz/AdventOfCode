@@ -7,7 +7,7 @@ import (
 )
 
 type observer interface {
-	Notify(output int)
+	notify(output int)
 }
 
 type channelCoder struct {
@@ -35,7 +35,7 @@ func newChannelCoder(identifier string, codesInput []int, inputs []int) channelC
 }
 
 // Notify implements observer
-func (cc *channelCoder) Notify(output int) {
+func (cc *channelCoder) notify(output int) {
 	go func() {
 		cc.reader <- output
 	}()
@@ -82,7 +82,7 @@ func (cc *channelCoder) run(ctx context.Context, done chan<- struct{}) {
 					inputUsed = true
 				case 4:
 					output := cc.codes[cc.getIdxFromMode(execution, 1, cc.idx)]
-					cc.observer.Notify(output)
+					cc.observer.notify(output)
 					cc.output = append(cc.output, output)
 					cc.idx += 2
 				case 5:
