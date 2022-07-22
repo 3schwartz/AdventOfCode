@@ -18,11 +18,16 @@ build-only:
 test: build-only
 	go test ./... -v
 
+# Tests
 test3:
 	go test ./cmd/day3 -v
 
+test7:
+	go test ./cmd/day7 -v
+
+# Benchmarks
 bench3:
 	go test ./cmd/day3 -v -bench=. -benchmem -run=^a
 
-test7:
-	go test ./cmd/day7 -v
+bench7:
+	go test ./cmd/day7 -v -bench=. -benchmem -run=^a

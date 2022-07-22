@@ -2,6 +2,7 @@ package main
 
 import (
 	"advent/pkg/coders"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -9,7 +10,20 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func TestSolutions(t *testing.T) {
+var blackhole int
+
+func Benchmark_coders(b *testing.B) {
+	input := readData()
+	codes := coders.ParseIntCodes(input)
+
+	b.Run(fmt.Sprintf("ChannelCoder"), func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			blackhole = coders.ChannelCoderFindMaxThrusterSignal(codes, coders.FromTo{From: 0, To: 5})
+		}
+	})
+}
+
+func TestSolutions_channelCoder(t *testing.T) {
 	// Arrange
 	input := readData()
 	codes := coders.ParseIntCodes(input)
