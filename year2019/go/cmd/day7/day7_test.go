@@ -2,11 +2,38 @@ package main
 
 import (
 	"advent/pkg/coders"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 )
+
+func TestSolutions(t *testing.T) {
+	// Arrange
+	input := readData()
+	codes := coders.ParseIntCodes(input)
+
+	// Act
+	actualPart1 := coders.ChannelCoderFindMaxThrusterSignal(codes, coders.FromTo{From: 0, To: 5})
+	actualPart2 := coders.ChannelCoderFindMaxThrusterSignal(codes, coders.FromTo{From: 5, To: 10})
+
+	// Assert
+	if diff := cmp.Diff(14902, actualPart1); diff != "" {
+		t.Error(diff)
+	}
+	if diff := cmp.Diff(6489132, actualPart2); diff != "" {
+		t.Error(diff)
+	}
+}
+
+func readData() []string {
+	f, err := os.ReadFile("../../../data/day7_data.txt")
+	if err != nil {
+		panic(err)
+	}
+	return strings.Split(string(f), ",")
+}
 
 func Test_channelCoder_findMaxThrusterSignal(t *testing.T) {
 	data := []struct {
@@ -31,7 +58,7 @@ func Test_channelCoder_findMaxThrusterSignal(t *testing.T) {
 			codes := coders.ParseIntCodes(strings.Split(d.codes, ","))
 
 			// Act
-			actual := coders.ChannelCoderFindMaxThrusterSignal(codes)
+			actual := coders.ChannelCoderFindMaxThrusterSignal(codes, coders.FromTo{From: 5, To: 10})
 
 			// Assert
 			if diff := cmp.Diff(d.expected, actual); diff != "" {
