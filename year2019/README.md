@@ -24,5 +24,5 @@ cpu: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz
 
 | Name | Runs | Average | Allocated | Allocations from heap |
 |---------------------------------------	|-----------------:	|--------------------:	|---------------------:	|-------------------------------------------:	|
-| ChannelCoder | 187 | 6.390.699 ns/op |  3.020.306 B/op | 5.520 allocs/op |
-| ReactiveCoder | 2.378 |  933.929 ns/op | 2.549.760 B/op	| 3.720 allocs/op |
+| ChannelCoder | 187 | 6.390699 ms/op |  3_020_306 B/op | 5_520 allocs/op |
+| ReactiveCoder | 2_378 |  0.933929 ms/op | 2_549_760 B/op	| 3_720 allocs/op |
