@@ -70,7 +70,7 @@ func readData() []string {
 	return strings.Split(string(f), ",")
 }
 
-func Test_channelCoder_findMaxThrusterSignal(t *testing.T) {
+func Test_findMaxThrusterSignal(t *testing.T) {
 	data := []struct {
 		name     string
 		codes    string
