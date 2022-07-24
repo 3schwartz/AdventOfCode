@@ -22,7 +22,7 @@ IterationCount=2  LaunchCount=2  WarmupCount=1
 cpu: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz
 ````
 
-| Name | Runs | Average | Allocated | Allocations from heap |
+| Name | Runs | Mean | Allocated | Allocations from heap |
 |---------------------------------------	|-----------------:	|--------------------:	|---------------------:	|-------------------------------------------:	|
 | ChannelCoder | 187 | 6.390699 ms/op |  3_020_306 B/op | 5_520 allocs/op |
 | ReactiveCoder | 2_378 |  0.933929 ms/op | 2_549_760 B/op	| 3_720 allocs/op |
