@@ -1,7 +1,9 @@
 package coders
 
 import (
+	"errors"
 	"fmt"
+	"reflect"
 )
 
 type subject interface {
@@ -166,4 +168,42 @@ func (q *queue[T]) tryDequeue() (T, bool) {
 	value := q.bucket[0]
 	q.bucket = q.bucket[1:]
 	return value, true
+}
+
+type queueInterface struct {
+	bucket []interface{}
+}
+
+func newQueueInterface() *queueInterface {
+	return &queueInterface{
+		bucket: []interface{}{},
+	}
+}
+
+func (q *queueInterface) append(input interface{}) error {
+	if len(q.bucket) != 0 && reflect.TypeOf(q.bucket[0]) != reflect.TypeOf(input) {
+		return errors.New("input type not same as those already in queue")
+	}
+	q.bucket = append(q.bucket, input)
+	return nil
+}
+
+func (q *queueInterface) tryDequeue(out interface{}) (bool, error) {
+	if len(q.bucket) == 0 {
+		return false, nil
+	}
+
+	valuePtr := reflect.ValueOf(out)
+	if valuePtr.Kind() != reflect.Ptr {
+		return false, errors.New("must be a pointer")
+	}
+
+	value := q.bucket[0]
+	if valuePtr.Elem().Type() != reflect.TypeOf(value) {
+		return false, errors.New("output must be of same type as queue elements")
+	}
+
+	q.bucket = q.bucket[1:]
+	valuePtr.Elem().Set(reflect.ValueOf(value))
+	return true, nil
 }
