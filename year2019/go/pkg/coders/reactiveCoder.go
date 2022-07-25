@@ -166,6 +166,8 @@ func (q *queue[T]) tryDequeue() (T, bool) {
 		return dummy, false
 	}
 	value := q.bucket[0]
+	var zero T
+	q.bucket[0] = zero // Avoid memory leak
 	q.bucket = q.bucket[1:]
 	return value, true
 }
@@ -202,8 +204,10 @@ func (q *queueInterface) tryDequeue(out interface{}) (bool, error) {
 	if valuePtr.Elem().Type() != reflect.TypeOf(value) {
 		return false, errors.New("output must be of same type as queue elements")
 	}
-
-	q.bucket = q.bucket[1:]
 	valuePtr.Elem().Set(reflect.ValueOf(value))
+
+	var zero interface{}
+	q.bucket[0] = zero // Avoid memory leak
+	q.bucket = q.bucket[1:]
 	return true, nil
 }

@@ -59,21 +59,25 @@ func Benchmark_queues(b *testing.B) {
 func Test_queue(t *testing.T) {
 	// Arrange
 	queue := newQueue[int]()
-
-	// Act
 	queue.append(1)
 	queue.append(2)
-	value, ok := queue.tryDequeue()
+	queue.append(3)
+
+	// Act
+	valueOne, okOne := queue.tryDequeue()
+	valueTwo, okTwo := queue.tryDequeue()
 
 	// Assert
-	if !ok {
+	if !okOne || !okTwo {
 		t.Error("Should dequeue")
 	}
-
-	if value != 1 {
-		t.Error(fmt.Sprintf("Wrong value %d", value))
+	if valueOne != 1 {
+		t.Error(fmt.Sprintf("Wrong value %d", valueOne))
 	}
-	if diff := cmp.Diff([]int{2}, queue.bucket); diff != "" {
+	if valueTwo != 2 {
+		t.Error(fmt.Sprintf("Wrong value %d", valueTwo))
+	}
+	if diff := cmp.Diff([]int{3}, queue.bucket); diff != "" {
 		t.Error(diff)
 	}
 }
@@ -81,24 +85,31 @@ func Test_queue(t *testing.T) {
 func Test_queueInterface(t *testing.T) {
 	// Arrange
 	queue := newQueueInterface()
-
-	// Act
 	queue.append(1)
 	queue.append(2)
-	var out int
-	ok, err := queue.tryDequeue(&out)
+	queue.append(3)
+
+	// Act
+	var outOne int
+	okOne, errOne := queue.tryDequeue(&outOne)
+	var outTwo int
+	okTwo, errTwo := queue.tryDequeue(&outTwo)
 
 	// Assert
-	if err != nil {
-		t.Error(err)
-	}
-	if !ok {
+	if !okOne || !okTwo {
 		t.Error("Should dequeue")
 	}
-	if out != 1 {
-		t.Error(fmt.Sprintf("Wrong value %d", out))
+	if errOne != nil || errTwo != nil {
+		t.Error(errOne)
+		t.Error(errTwo)
 	}
-	if diff := cmp.Diff([]interface{}{2}, queue.bucket); diff != "" {
+	if outOne != 1 {
+		t.Error(fmt.Sprintf("Wrong value %d", outOne))
+	}
+	if outTwo != 2 {
+		t.Error(fmt.Sprintf("Wrong value %d", outTwo))
+	}
+	if diff := cmp.Diff([]interface{}{3}, queue.bucket); diff != "" {
 		t.Error(diff)
 	}
 }
