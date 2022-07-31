@@ -11,7 +11,7 @@ func main() {
 	codes := readData()
 	intCodes := coders.ParseIntCodes(codes)
 	intCoderInstance := coders.IntCoder{}
-	codesModified := intCoderInstance.RunInstructions(intCodes, 12, 2)
+	codesModified := intCoderInstance.RunWithNounAndVerb(intCodes, 12, 2)
 	fmt.Printf("Part 1: %d\n", codesModified[0])
 
 	optima, err := intCoderInstance.FindOptimalOutput(intCodes, 19690720)

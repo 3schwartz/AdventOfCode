@@ -5,6 +5,8 @@ import (
 	"unsafe"
 )
 
+func main() {}
+
 // Deprecated: For fun and benchmark
 func mapIntegersFromAsciiBytesUsingPointers(firstByte byte, secondByte byte) (int8, int8) {
 	firstByte = firstByte - '0'
