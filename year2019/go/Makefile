@@ -22,6 +22,9 @@ test: build-only
 test3:
 	go test ./cmd/day3 -v
 
+test4:
+	go test ./cmd/day4 -v
+
 test7:
 	go test ./cmd/day7 -v
 
