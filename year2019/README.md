@@ -1,4 +1,18 @@
 # 2019 Benchmarks
+
+## Day 4
+
+#### Go
+
+````
+cpu: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz
+````
+
+| Name | Runs | Mean | Allocated | Allocations from heap |
+|---------------------------------------	|-----------------:	|--------------------:	|---------------------:	|-------------------------------------------:	|
+| Benchmark_mapIntegersFromAsciiBytes/Pointers-8 | 693726696 | 1.815 ns/op |  0 B/op | 0 allocs/op |
+| Benchmark_mapIntegersFromAsciiBytes/Converter-8 | 1000000000 |  0.8019 ns/op | 0 B/op	| 0 allocs/op |
+
 ## Day 7
 ### Part 2
 

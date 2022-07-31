@@ -23,7 +23,7 @@ test3:
 	go test ./cmd/day3 -v
 
 test4:
-	go test ./cmd/day4 -v
+	go test ./cmd/day4
 
 test7:
 	go test ./cmd/day7 -v
@@ -31,6 +31,9 @@ test7:
 # Benchmarks
 bench3:
 	go test ./cmd/day3 -v -bench=. -benchmem -run=^a
+
+bench4:
+	go test ./cmd/day4 -bench=. -benchmem -run=^a	
 
 bench7:
 	go test ./cmd/day7 -bench=. -benchmem -run=^a
