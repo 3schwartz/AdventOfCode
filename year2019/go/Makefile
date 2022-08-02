@@ -28,6 +28,9 @@ test4:
 test5:
 	go test ./cmd/day5
 
+test6:
+	go test ./cmd/day6
+
 test7:
 	go test ./cmd/day7 -v
 
