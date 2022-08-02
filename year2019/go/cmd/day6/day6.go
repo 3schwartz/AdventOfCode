@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+func main() {}
+
 type orbitCalculator struct {
 	orbits map[string][]string
 }
