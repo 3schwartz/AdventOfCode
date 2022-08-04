@@ -3,6 +3,24 @@
 internal class IntCoder
 {
 
+    private class DefaultDict<TKey, TValue> : Dictionary<TKey, TValue> where TValue : new() where TKey : notnull
+    {
+        public new TValue this[TKey key]
+        {
+            get
+            {
+                if (!TryGetValue(key, out var val))
+                {
+                    val = new TValue();
+                    Add(key, val);
+                }
+                return val;
+            }
+            set { base[key] = value; }
+        }
+
+    }
+
     internal static IList<int> InputToCodes(string input)
     {
         return input
@@ -11,79 +29,98 @@ internal class IntCoder
         .ToList();
     }
 
+    private long idx = 0;
+    private long relativeBase = 0;
 
-    internal int RunTest(IList<int> codes, Func<int,int> getInput)
+
+    internal long RunTest(IList<int> codesInput, Func<long, long> getInput)
     {
-        var idx = 0;
-        var inputCalled = 0;
-        var outputs = new List<int>();
-        do
+        var codes = new DefaultDict<long, long>();
+        for (int i = 0; i < codesInput.Count; i++)
         {
-            var execution = codes[idx];
-            switch (execution % 100)
+            codes.Add(i, codesInput[i]);
+        }
+        try
+        {
+            var inputCalled = 0;
+            var outputs = new List<long>();
+            do
             {
-                case 1:
-                    codes[GetIdxFromMode(codes, execution, 3, idx)] =
-                        codes[GetIdxFromMode(codes, execution, 2, idx)] + codes[GetIdxFromMode(codes, execution, 1, idx)];
-                    idx += 4;
-                    break;
-                case 2:
-                    codes[GetIdxFromMode(codes, execution, 3, idx)] =
-                        codes[GetIdxFromMode(codes, execution, 2, idx)] * codes[GetIdxFromMode(codes, execution, 1, idx)];
-                    idx += 4;
-                    break;
-                case 3:
-                    codes[GetIdxFromMode(codes, execution, 1, idx)] = getInput(inputCalled);
-                    idx += 2;
-                    inputCalled++;
-                    break;
-                case 4:
-                    outputs.Add(codes[GetIdxFromMode(codes, execution, 1, idx)]);
-                    idx += 2;
-                    break;
-                case 5:
-                    if (codes[GetIdxFromMode(codes, execution, 1, idx)] != 0)
-                    {
-                        idx = codes[GetIdxFromMode(codes, execution, 2, idx)];
+                var execution = codes[idx];
+                switch (execution % 100)
+                {
+                    case 1:
+                        codes[GetIdxFromMode(codes, execution, 3)] =
+                            codes[GetIdxFromMode(codes, execution, 2)] + codes[GetIdxFromMode(codes, execution, 1)];
+                        idx += 4;
                         break;
-                    }
-                    idx += 3;
-                    break;
-                case 6:
-                    if (codes[GetIdxFromMode(codes, execution, 1, idx)] == 0)
-                    {
-                        idx = codes[GetIdxFromMode(codes, execution, 2, idx)];
+                    case 2:
+                        codes[GetIdxFromMode(codes, execution, 3)] =
+                            codes[GetIdxFromMode(codes, execution, 2)] * codes[GetIdxFromMode(codes, execution, 1)];
+                        idx += 4;
                         break;
-                    }
-                    idx += 3;
-                    break;
-                case 7:
-                    codes[GetIdxFromMode(codes, execution, 3, idx)] =
-                        codes[GetIdxFromMode(codes, execution, 1, idx)] < codes[GetIdxFromMode(codes, execution, 2, idx)] ?
-                        1 : 0;
-                    idx += 4;
-                    break;
-                case 8:
-                    codes[GetIdxFromMode(codes, execution, 3, idx)] =
-                        codes[GetIdxFromMode(codes, execution, 1, idx)] == codes[GetIdxFromMode(codes, execution, 2, idx)] ?
-                        1 : 0;
-                    idx += 4;
-                    break;
-                case 99:
-                    idx = codes.Count;
-                    break;
-                default:
-                    throw new Exception($"OptCode not known {execution}");
-            }
-        } while (idx < codes.Count);
+                    case 3:
+                        codes[GetIdxFromMode(codes, execution, 1)] = getInput(inputCalled);
+                        idx += 2;
+                        inputCalled++;
+                        break;
+                    case 4:
+                        outputs.Add(codes[GetIdxFromMode(codes, execution, 1)]);
+                        idx += 2;
+                        break;
+                    case 5:
+                        if (codes[GetIdxFromMode(codes, execution, 1)] != 0)
+                        {
+                            idx = codes[GetIdxFromMode(codes, execution, 2)];
+                            break;
+                        }
+                        idx += 3;
+                        break;
+                    case 6:
+                        if (codes[GetIdxFromMode(codes, execution, 1)] == 0)
+                        {
+                            idx = codes[GetIdxFromMode(codes, execution, 2)];
+                            break;
+                        }
+                        idx += 3;
+                        break;
+                    case 7:
+                        codes[GetIdxFromMode(codes, execution, 3)] =
+                            codes[GetIdxFromMode(codes, execution, 1)] < codes[GetIdxFromMode(codes, execution, 2)] ?
+                            1 : 0;
+                        idx += 4;
+                        break;
+                    case 8:
+                        codes[GetIdxFromMode(codes, execution, 3)] =
+                            codes[GetIdxFromMode(codes, execution, 1)] == codes[GetIdxFromMode(codes, execution, 2)] ?
+                            1 : 0;
+                        idx += 4;
+                        break;
+                    case 9:
+                        relativeBase += codes[GetIdxFromMode(codes, execution, 1)];
+                        idx += 2;
+                        break;
+                    case 99:
+                        idx = codes.Count;
+                        break;
+                    default:
+                        throw new Exception($"OptCode not known {execution}");
+                }
+            } while (idx < codes.Count);
 
-        return outputs[^1];
+            return outputs[^1];
+        }
+        finally
+        {
+            idx = 0;
+            relativeBase = 0;
+        }
     }
-    internal int FindMaxThrusterSignal(IList<int> codes)
+    internal long FindMaxThrusterSignal(IList<int> codes)
     {
-        Span<int> inputs = stackalloc int[5] { -1,-1,-1,-1,-1};
-        int last;
-        int maxSignal = int.MinValue;
+        Span<long> inputs = stackalloc long[5] { -1,-1,-1,-1,-1};
+        long last;
+        long maxSignal = int.MinValue;
 
         for (int first = 0; first < 5; first++)
         {
@@ -131,12 +168,17 @@ internal class IntCoder
         return maxSignal;
     }
 
-    private int GetIdxFromMode(IList<int> codes, int execution, int parameterPosition, int idx)
+    private long GetIdxFromMode(IDictionary<long, long> codes, long execution, int parameterPosition)
     {
         var mode = execution / (int)Math.Pow(10, 1 + parameterPosition);
         mode %= 10;
-        return mode == 1 ? idx + parameterPosition : codes[idx + parameterPosition];
-
+        return mode switch
+        {
+            0 => codes[idx + parameterPosition],
+            1 => idx + parameterPosition,
+            2 => codes[idx + parameterPosition] + relativeBase,
+            _ => throw new ArgumentOutOfRangeException(nameof(mode), "Mode not known"),
+        };
     }
 
     internal void RunInstructions(IList<int> codes, int noun, int verb)

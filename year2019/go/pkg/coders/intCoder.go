@@ -19,6 +19,8 @@ func ParseIntCodes(codes []string) []int {
 }
 
 type IntCoder struct {
+	idx          int
+	relativeBase int
 }
 
 func (ic IntCoder) RunWithNounAndVerb(codesInput []int, noun int, verb int) []int {
@@ -43,62 +45,72 @@ func (ic IntCoder) FindOptimalOutput(codesInput []int, optimalValue int) (int, e
 	return 0, fmt.Errorf("no noun and verb found for optimal value: %d", optimalValue)
 }
 
-func (ic IntCoder) RunWithInput(codesInput []int, input int) int {
-	codes := make([]int, len(codesInput))
-	copy(codes, codesInput)
+func (ic *IntCoder) RunWithInput(codesInput []int, input int) int {
+	codes := make(map[int]int, len(codesInput))
+	for i, v := range codesInput {
+		codes[i] = v
+	}
 	lastOutput := ic.runModifyingInstructionsNew(codes, input)
 	return lastOutput
 }
 
 // Modifies given slice
-func (ic IntCoder) runModifyingInstructionsNew(codes []int, input int) int {
-	var idx int
+func (ic *IntCoder) runModifyingInstructionsNew(codes map[int]int, input int) int {
+	defer func() {
+		ic.idx = 0
+		ic.relativeBase = 0
+	}()
 	outputs := make([]int, 0)
 optLoop:
 	for {
-		execution := codes[idx]
+		execution := codes[ic.idx]
 		switch optCode := execution % 100; optCode {
 		case 1:
-			codes[ic.getIdxFromMode(codes, execution, 3, idx)] =
-				codes[ic.getIdxFromMode(codes, execution, 2, idx)] + codes[ic.getIdxFromMode(codes, execution, 1, idx)]
-			idx += 4
+			codes[ic.getIdxFromMode(codes, execution, 3)] =
+				codes[ic.getIdxFromMode(codes, execution, 2)] + codes[ic.getIdxFromMode(codes, execution, 1)]
+			ic.idx += 4
 		case 2:
-			codes[ic.getIdxFromMode(codes, execution, 3, idx)] =
-				codes[ic.getIdxFromMode(codes, execution, 2, idx)] * codes[ic.getIdxFromMode(codes, execution, 1, idx)]
-			idx += 4
+			bar := codes[ic.getIdxFromMode(codes, execution, 2)] * codes[ic.getIdxFromMode(codes, execution, 1)]
+			newIdx := ic.getIdxFromMode(codes, execution, 3)
+			codes[newIdx] = bar
+
+			ic.idx += 4
 		case 3:
-			codes[ic.getIdxFromMode(codes, execution, 1, idx)] = input
-			idx += 2
+			codes[ic.getIdxFromMode(codes, execution, 1)] = input
+			ic.idx += 2
 		case 4:
-			output := codes[ic.getIdxFromMode(codes, execution, 1, idx)]
+			output := codes[ic.getIdxFromMode(codes, execution, 1)]
 			outputs = append(outputs, output)
-			idx += 2
+			ic.idx += 2
 		case 5:
-			if codes[ic.getIdxFromMode(codes, execution, 1, idx)] != 0 {
-				idx = codes[ic.getIdxFromMode(codes, execution, 2, idx)]
+			if codes[ic.getIdxFromMode(codes, execution, 1)] != 0 {
+				ic.idx = codes[ic.getIdxFromMode(codes, execution, 2)]
 				break
 			}
-			idx += 3
+			ic.idx += 3
 		case 6:
-			if codes[ic.getIdxFromMode(codes, execution, 1, idx)] == 0 {
-				idx = codes[ic.getIdxFromMode(codes, execution, 2, idx)]
+			if codes[ic.getIdxFromMode(codes, execution, 1)] == 0 {
+				ic.idx = codes[ic.getIdxFromMode(codes, execution, 2)]
 				break
 			}
-			idx += 3
+			ic.idx += 3
 		case 7:
 			var toAssign int
-			if codes[ic.getIdxFromMode(codes, execution, 1, idx)] < codes[ic.getIdxFromMode(codes, execution, 2, idx)] {
+			if codes[ic.getIdxFromMode(codes, execution, 1)] < codes[ic.getIdxFromMode(codes, execution, 2)] {
 				toAssign = 1
 			}
-			codes[ic.getIdxFromMode(codes, execution, 3, idx)] = toAssign
-			idx += 4
+			codes[ic.getIdxFromMode(codes, execution, 3)] = toAssign
+			ic.idx += 4
 		case 8:
 			var toAssign int
-			if codes[ic.getIdxFromMode(codes, execution, 1, idx)] == codes[ic.getIdxFromMode(codes, execution, 2, idx)] {
+			if codes[ic.getIdxFromMode(codes, execution, 1)] == codes[ic.getIdxFromMode(codes, execution, 2)] {
 				toAssign = 1
 			}
-			codes[ic.getIdxFromMode(codes, execution, 3, idx)] = toAssign
-			idx += 4
+			codes[ic.getIdxFromMode(codes, execution, 3)] = toAssign
+			ic.idx += 4
+		case 9:
+			ic.relativeBase += codes[ic.getIdxFromMode(codes, execution, 1)]
+			ic.idx += 2
 		case 99:
 			break optLoop
 		default:
@@ -107,6 +119,21 @@ optLoop:
 	}
 
 	return outputs[len(outputs)-1]
+}
+
+func (ic *IntCoder) getIdxFromMode(codes map[int]int, execution int, parameterPosition int) int {
+	mode := execution / int(math.Pow(10, 1+float64(parameterPosition)))
+	mode %= 10
+	switch mode {
+	case 0:
+		return codes[ic.idx+parameterPosition]
+	case 1:
+		return ic.idx + parameterPosition
+	case 2:
+		return ic.relativeBase + codes[ic.idx+parameterPosition]
+	default:
+		panic(fmt.Sprintf("Mode not known: %d", mode))
+	}
 }
 
 // Modifies given slice
@@ -130,13 +157,4 @@ optLoop:
 		}
 		idx += 4
 	}
-}
-
-func (cc IntCoder) getIdxFromMode(codes []int, execution int, parameterPosition int, idx int) int {
-	mode := execution / int(math.Pow(10, 1+float64(parameterPosition)))
-	mode %= 10
-	if mode == 1 {
-		return idx + parameterPosition
-	}
-	return codes[idx+parameterPosition]
 }

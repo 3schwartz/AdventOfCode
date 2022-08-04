@@ -22,7 +22,7 @@ public partial class Day5Tests
 
         var coder = new IntCoder();
 
-        int diagnostocCode = coder.RunTest(codes, _ => 5);
+        var diagnostocCode = coder.RunTest(codes, _ => 5);
 
         output.WriteLine($"Part 2 : {diagnostocCode}");
     }
@@ -38,7 +38,7 @@ public partial class Day5Tests
         var coder = new IntCoder();
 
         // Act
-        int diagnostocCode = coder.RunTest(codes, _ => 1);
+        var diagnostocCode = coder.RunTest(codes, _ => 1);
 
         // Assert
         Assert.Equal(13087969, diagnostocCode);
