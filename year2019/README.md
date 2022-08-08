@@ -44,6 +44,23 @@ cpu: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz
 ## Day 10
 ### Part 1
 
+#### C#
+``` ini
+
+BenchmarkDotNet=v0.13.1, OS=Windows 10.0.19043.1826 (21H1/May2021Update)
+Intel Core i7-8565U CPU 1.80GHz (Whiskey Lake), 1 CPU, 8 logical and 4 physical cores
+.NET SDK=6.0.302
+  [Host]     : .NET 6.0.7 (6.0.722.32202), X64 RyuJIT
+  Job-JTHTNY : .NET 6.0.7 (6.0.722.32202), X64 RyuJIT
+
+IterationCount=2  LaunchCount=2  WarmupCount=1  
+
+```
+|                 Method |      Mean |     Error |    StdDev |     Gen 0 |   Gen 1 | Allocated |
+|----------------------- |----------:|----------:|----------:|----------:|--------:|----------:|
+| DetectedAsteroidsAsync |  5.612 ms |  3.921 ms | 0.6068 ms | 2320.3125 | 23.4375 |      8 MB |
+|  DetectedAsteroidsSync | 15.413 ms | 10.536 ms | 1.6305 ms | 1937.5000 | 15.6250 |      8 MB |
+
 #### Go
 ````
 cpu: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz

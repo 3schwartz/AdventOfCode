@@ -1,9 +1,32 @@
 using Shouldly;
+using System.Collections.Concurrent;
 
 namespace Day10.Tests;
 
 public class Day10Tests
 {
+    [Theory]
+    // Part 1
+    [InlineData("", 19, 14, 274)]
+    [InlineData("_test", 3, 4, 8)]
+    [InlineData("_test2", 11, 13, 210)]
+
+    public void WhenGivenMap_ThenCorrectDetectedAsteroidsAsync(string file, int x, int y, int expected)
+    {
+        // Arrange
+        var data = File.ReadAllText($"../../../../../data/day10{file}_data.txt");
+        var asteroidMap = new AsteroidMap(data);
+        var monitoringStation = new MonitoringStation(asteroidMap);
+
+        // Act
+        var monitoringLocation = monitoringStation.FindLocationWithMaxDetectedAsteroidsAsync();
+
+        // Assert
+        monitoringLocation.Coordinate.X.ShouldBe(x);
+        monitoringLocation.Coordinate.Y.ShouldBe(y);
+        monitoringLocation.DetectedAsteroids.ShouldBe(expected);
+    }
+
     [Theory]
     // Part 1
     [InlineData("", 19, 14, 274)]
@@ -69,6 +92,28 @@ internal class MonitoringStation
             }
         }
         return location;
+    }
+
+    internal MonitoringLocation FindLocationWithMaxDetectedAsteroidsAsync()
+    {
+        var count = asteroidMap.Asteroids.Count;
+        var locations = new ConcurrentBag<MonitoringLocation>();
+        var tasks = new Task[count];
+
+        var idx = 0;
+        foreach (var asteroid in asteroidMap.Asteroids)
+        {
+            tasks[idx] = Task.Run(() =>
+            {
+                var nearest = FindNearestAsteroids(asteroid, asteroidMap.Asteroids);
+                locations.Add(new MonitoringLocation(nearest.Count, asteroid));
+            });
+
+            idx++;
+        }
+        Task.WaitAll(tasks);
+
+        return locations.MaxBy((m) => m.DetectedAsteroids);
     }
 
     internal IList<(int X, int Y)> VaporizeAsteroids((int x, int y) center)

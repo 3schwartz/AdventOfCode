@@ -1,24 +1,25 @@
-﻿Microsoft Visual Studio Solution File, Format Version 12.00
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32328.378
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Day5.Tests", "Day5.Tests\Day5.Tests.csproj", "{3269D621-C1A3-401B-96E3-B9DC0711A328}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Day6.Tests", "Day6.Tests\Day6.Tests.csproj", "{56BF5AC7-5954-4589-9C39-E6085A50972C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Day6.Tests", "Day6.Tests\Day6.Tests.csproj", "{56BF5AC7-5954-4589-9C39-E6085A50972C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Day7.Tests", "Day7.Tests\Day7.Tests.csproj", "{1C6F0593-D82B-4CED-B6A5-2CB5F282CEF6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Day7.Tests", "Day7.Tests\Day7.Tests.csproj", "{1C6F0593-D82B-4CED-B6A5-2CB5F282CEF6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{C3AD76AD-5555-49CA-A1E4-34089301EDD8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "Common\Common.csproj", "{C3AD76AD-5555-49CA-A1E4-34089301EDD8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmark", "Benchmark\Benchmark.csproj", "{D6B4C2E0-D41D-45E5-9D30-68C1DB719E56}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmark", "Benchmark\Benchmark.csproj", "{D6B4C2E0-D41D-45E5-9D30-68C1DB719E56}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Day8.Tests", "Day8.Tests\Day8.Tests.csproj", "{78A85098-F49C-4081-AA0D-94CF8F20D87D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Day8.Tests", "Day8.Tests\Day8.Tests.csproj", "{78A85098-F49C-4081-AA0D-94CF8F20D87D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Day2.Tests", "Day2.Tests\Day2.Tests.csproj", "{C6973EA4-0703-400E-922D-6FA3216033B0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Day2.Tests", "Day2.Tests\Day2.Tests.csproj", "{C6973EA4-0703-400E-922D-6FA3216033B0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Day9.Tests", "Day9.Tests\Day9.Tests.csproj", "{A8BC23A7-690D-4B18-9B97-3A3ADAE26BFD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Day9.Tests", "Day9.Tests\Day9.Tests.csproj", "{A8BC23A7-690D-4B18-9B97-3A3ADAE26BFD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Day10.Tests", "Day10.Tests\Day10.Tests.csproj", "{6DED7B80-5EF6-4A85-9F81-8D6353F5264E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Day10.Tests", "Day10.Tests\Day10.Tests.csproj", "{6DED7B80-5EF6-4A85-9F81-8D6353F5264E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
