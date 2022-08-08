@@ -97,8 +97,7 @@ internal class MonitoringStation
     internal MonitoringLocation FindLocationWithMaxDetectedAsteroidsAsync()
     {
         var count = asteroidMap.Asteroids.Count;
-        var locations = new ConcurrentBag<MonitoringLocation>();
-        var tasks = new Task[count];
+        var tasks = new Task<MonitoringLocation>[count];
 
         var idx = 0;
         foreach (var asteroid in asteroidMap.Asteroids)
@@ -106,14 +105,14 @@ internal class MonitoringStation
             tasks[idx] = Task.Run(() =>
             {
                 var nearest = FindNearestAsteroids(asteroid, asteroidMap.Asteroids);
-                locations.Add(new MonitoringLocation(nearest.Count, asteroid));
+                return new MonitoringLocation(nearest.Count, asteroid);
             });
 
             idx++;
         }
         Task.WaitAll(tasks);
 
-        return locations.MaxBy((m) => m.DetectedAsteroids);
+        return tasks.Select(t => t.Result).MaxBy((m) => m.DetectedAsteroids);
     }
 
     internal IList<(int X, int Y)> VaporizeAsteroids((int x, int y) center)
