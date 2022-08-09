@@ -3,15 +3,52 @@
     /// <summary>
     /// Used for Day 11.
     /// </summary>
-    internal partial class IntCoder
+    public partial class IntCoder
     {
-        internal DefaultDict<(int, int), (int Color, int VisitedCount)> PaintHull(IList<long> codesInput)
+        public void OutputHullPaint(
+            DefaultDict<(int X, int Y), (int Color, int VisitedCount)> visited,
+            Action<string> output)
+        {
+            (int xMin, int yMin, int xMax, int yMax) = (int.MaxValue, int.MaxValue, int.MinValue, int.MinValue);
+
+            foreach (var (key, color) in visited)
+            {
+                if (key.X > xMax)
+                {
+                    xMax = key.X;
+                }
+                if (key.X < xMin)
+                {
+                    xMin = key.X;
+                }
+                if (key.Y > yMax)
+                {
+                    yMax = key.Y;
+                }
+                if (key.Y < yMin)
+                {
+                    yMin = key.Y;
+                }
+            }
+            var xLength = Math.Abs(xMin) + Math.Abs(xMax) + 1;
+            var yLength = Math.Abs(yMin) + Math.Abs(yMax) + 1;
+            Span<char> rows = stackalloc char[yLength];
+            for (var i = 0; i < xLength; i++)
+            {
+                for (var j = 0; j < yLength; j++)
+                {
+                    rows[j] = visited[(i - Math.Abs(xMin), j - Math.Abs(yMin))].Color == 1 ? '#' : '.';
+                }
+                output(rows.ToString());
+            }
+        }
+
+        // Don't need visisted count - refactod
+        public void PaintHullWithInput(IList<long> codesInput, DefaultDict<(int, int), (int Color, int VisitedCount)> visited)
         {
             (int X, int Y) currentPosition = (0, 0);
             (int X, int Y) direction = (0, 1);
             var outputCallCount = 0;
-            // Don't need visisted count - refactor
-            var visited = new DefaultDict<(int, int), (int Color, int VisitedCount)>();
             var codes = new DefaultDict<long, long>();
             for (int i = 0; i < codesInput.Count; i++)
             {
@@ -105,14 +142,19 @@
                             throw new Exception($"OptCode not known {execution}");
                     }
                 } while (idx < codes.Count);
-
-                return visited;
             }
             finally
             {
                 idx = 0;
                 relativeBase = 0;
             }
+        }
+
+        public DefaultDict<(int, int), (int Color, int VisitedCount)> PaintHull(IList<long> codesInput)
+        {
+            var visited = new DefaultDict<(int, int), (int Color, int VisitedCount)>();
+            PaintHullWithInput(codesInput, visited);
+            return visited;
         }
     }
 }

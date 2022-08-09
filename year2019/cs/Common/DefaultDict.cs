@@ -1,22 +1,19 @@
 ﻿namespace Common;
 
-internal partial class IntCoder
+public class DefaultDict<TKey, TValue> : Dictionary<TKey, TValue> where TValue : new() where TKey : notnull
 {
-    internal class DefaultDict<TKey, TValue> : Dictionary<TKey, TValue> where TValue : new() where TKey : notnull
+    public new TValue this[TKey key]
     {
-        public new TValue this[TKey key]
+        get
         {
-            get
+            if (!TryGetValue(key, out var val))
             {
-                if (!TryGetValue(key, out var val))
-                {
-                    val = new TValue();
-                    Add(key, val);
-                }
-                return val;
+                val = new TValue();
+                Add(key, val);
             }
-            set { base[key] = value; }
+            return val;
         }
-
+        set { base[key] = value; }
     }
+
 }

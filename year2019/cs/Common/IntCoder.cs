@@ -1,6 +1,6 @@
 ﻿namespace Common;
 
-internal partial class IntCoder
+public partial class IntCoder
 {
 
     internal static IList<int> InputToCodes(string input)
