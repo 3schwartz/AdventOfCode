@@ -56,7 +56,6 @@
             }
             try
             {
-                var inputCalled = 0;
                 do
                 {
                     var execution = codes[idx];
@@ -75,7 +74,6 @@
                         case 3:
                             codes[GetIdxFromMode(codes, execution, 1)] = visited[currentPosition];
                             idx += 2;
-                            inputCalled++;
                             break;
                         case 4:
                             outputCallCount++;
@@ -89,7 +87,7 @@
                             };
                             if (outputCallCount % 2 == 1)
                             {
-                                visited[currentPosition] = (action);
+                                visited[currentPosition] = action;
                                 continue;
                             }
                             switch (action)
