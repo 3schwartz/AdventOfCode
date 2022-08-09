@@ -6,7 +6,7 @@
     public partial class IntCoder
     {
         public void OutputHullPaint(
-            DefaultDict<(int X, int Y), (int Color, int VisitedCount)> visited,
+            DefaultDict<(int X, int Y), int> visited,
             Action<string> output)
         {
             (int xMin, int yMin, int xMax, int yMax) = (int.MaxValue, int.MaxValue, int.MinValue, int.MinValue);
@@ -37,14 +37,14 @@
             {
                 for (var j = 0; j < yLength; j++)
                 {
-                    rows[j] = visited[(i - Math.Abs(xMin), j - Math.Abs(yMin))].Color == 1 ? '#' : '.';
+                    rows[j] = visited[(i - Math.Abs(xMin), j - Math.Abs(yMin))] == 1 ? '#' : '.';
                 }
                 output(rows.ToString());
             }
         }
 
         // Don't need visisted count - refactod
-        public void PaintHullWithInput(IList<long> codesInput, DefaultDict<(int, int), (int Color, int VisitedCount)> visited)
+        public void PaintHullWithInput(IList<long> codesInput, DefaultDict<(int, int), int> visited)
         {
             (int X, int Y) currentPosition = (0, 0);
             (int X, int Y) direction = (0, 1);
@@ -73,7 +73,7 @@
                             idx += 4;
                             break;
                         case 3:
-                            codes[GetIdxFromMode(codes, execution, 1)] = visited[currentPosition].Color;
+                            codes[GetIdxFromMode(codes, execution, 1)] = visited[currentPosition];
                             idx += 2;
                             inputCalled++;
                             break;
@@ -89,7 +89,7 @@
                             };
                             if (outputCallCount % 2 == 1)
                             {
-                                visited[currentPosition] = (action, visited[currentPosition].VisitedCount + 1);
+                                visited[currentPosition] = (action);
                                 continue;
                             }
                             switch (action)
@@ -150,9 +150,9 @@
             }
         }
 
-        public DefaultDict<(int, int), (int Color, int VisitedCount)> PaintHull(IList<long> codesInput)
+        public DefaultDict<(int, int), int> PaintHull(IList<long> codesInput)
         {
-            var visited = new DefaultDict<(int, int), (int Color, int VisitedCount)>();
+            var visited = new DefaultDict<(int, int), int>();
             PaintHullWithInput(codesInput, visited);
             return visited;
         }

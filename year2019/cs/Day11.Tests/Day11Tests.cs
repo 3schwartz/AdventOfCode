@@ -41,9 +41,9 @@ public class Day11Tests
             .ToList();
 
         var coder = new IntCoder();
-        var visited = new DefaultDict<(int X, int Y), (int Color, int VisitedCount)>
+        var visited = new DefaultDict<(int X, int Y), int>
         {
-            { (0, 0), (1, 1) }
+            { (0, 0), 1 }
         };
 
         // Act
