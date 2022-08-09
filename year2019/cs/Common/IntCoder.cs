@@ -1,25 +1,7 @@
 ﻿namespace Common;
 
-internal class IntCoder
+internal partial class IntCoder
 {
-
-    private class DefaultDict<TKey, TValue> : Dictionary<TKey, TValue> where TValue : new() where TKey : notnull
-    {
-        public new TValue this[TKey key]
-        {
-            get
-            {
-                if (!TryGetValue(key, out var val))
-                {
-                    val = new TValue();
-                    Add(key, val);
-                }
-                return val;
-            }
-            set { base[key] = value; }
-        }
-
-    }
 
     internal static IList<int> InputToCodes(string input)
     {
@@ -116,6 +98,7 @@ internal class IntCoder
             relativeBase = 0;
         }
     }
+
     internal long FindMaxThrusterSignal(IList<int> codes)
     {
         Span<long> inputs = stackalloc long[5] { -1,-1,-1,-1,-1};
