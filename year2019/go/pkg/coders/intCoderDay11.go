@@ -18,7 +18,7 @@ type PaintHullIntCoder struct {
 	IntCoder
 }
 
-func (ph *PaintHullIntCoder) OutputHullPaint(visited map[Coordinate]int) {
+func (ph *PaintHullIntCoder) OutputHullPaint(visited map[Coordinate]int, writer func(output []string)) {
 	xMin, yMin := math.MaxInt, math.MaxInt
 	xMax, yMax := math.MinInt, math.MinInt
 	for coord := range visited {
@@ -47,7 +47,8 @@ func (ph *PaintHullIntCoder) OutputHullPaint(visited map[Coordinate]int) {
 			}
 			rows[j] = output
 		}
-		fmt.Println(rows)
+		writer(rows)
+		// fmt.Println(rows)
 	}
 }
 

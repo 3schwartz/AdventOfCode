@@ -3,6 +3,7 @@ package main
 import (
 	"advent/pkg/coders"
 	"advent/pkg/read"
+	"fmt"
 )
 
 func main() {
@@ -19,5 +20,5 @@ func part2() {
 
 	intCoder.PaintHullWithInput(intCodes, visited)
 
-	intCoder.OutputHullPaint(visited)
+	intCoder.OutputHullPaint(visited, func(output []string) { fmt.Println(output) })
 }
