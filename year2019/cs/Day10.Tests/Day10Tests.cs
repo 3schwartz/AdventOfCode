@@ -11,7 +11,7 @@ public class Day10Tests
     [InlineData("_test", 3, 4, 8)]
     [InlineData("_test2", 11, 13, 210)]
 
-    public void WhenGivenMap_ThenCorrectDetectedAsteroidsAsync(string file, int x, int y, int expected)
+    public async Task WhenGivenMap_ThenCorrectDetectedAsteroidsAsync(string file, int x, int y, int expected)
     {
         // Arrange
         var data = File.ReadAllText($"../../../../../data/day10{file}_data.txt");
@@ -19,7 +19,7 @@ public class Day10Tests
         var monitoringStation = new MonitoringStation(asteroidMap);
 
         // Act
-        var monitoringLocation = monitoringStation.FindLocationWithMaxDetectedAsteroidsAsync();
+        var monitoringLocation = await monitoringStation.FindLocationWithMaxDetectedAsteroidsAsync();
 
         // Assert
         monitoringLocation.Coordinate.X.ShouldBe(x);
@@ -94,7 +94,7 @@ internal class MonitoringStation
         return location;
     }
 
-    internal MonitoringLocation FindLocationWithMaxDetectedAsteroidsAsync()
+    internal async Task<MonitoringLocation> FindLocationWithMaxDetectedAsteroidsAsync()
     {
         var count = asteroidMap.Asteroids.Count;
         var tasks = new Task<MonitoringLocation>[count];
@@ -110,9 +110,9 @@ internal class MonitoringStation
 
             idx++;
         }
-        Task.WaitAll(tasks);
+        var finished = await Task.WhenAll(tasks);
 
-        return tasks.Select(t => t.Result).MaxBy((m) => m.DetectedAsteroids);
+        return finished.Select(t => t).MaxBy((m) => m.DetectedAsteroids);
     }
 
     internal IList<(int X, int Y)> VaporizeAsteroids((int x, int y) center)
