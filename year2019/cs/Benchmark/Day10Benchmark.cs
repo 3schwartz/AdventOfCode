@@ -20,13 +20,13 @@ namespace Benchmark
         [Benchmark]
         public async Task DetectedAsteroidsAsync()
         {
-            _ = await monitoringStation.FindLocationWithMaxDetectedAsteroidsAsync();
+            _ = await monitoringStation!.FindLocationWithMaxDetectedAsteroidsAsync();
         }
 
         [Benchmark]
         public void DetectedAsteroidsSync()
         {
-            _ = monitoringStation.FindLocationWithMaxDetectedAsteroidsNew();
+            _ = monitoringStation!.FindLocationWithMaxDetectedAsteroidsNew();
         }
     }
 }

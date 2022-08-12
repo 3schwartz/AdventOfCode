@@ -1,6 +1,6 @@
 ﻿namespace Day12.Tests;
 
-internal class MoonSimulator
+public class MoonSimulator
 {
     private readonly List<Moon> moons;
     internal IReadOnlyCollection<Moon> Moons => moons.ToList();
@@ -12,7 +12,25 @@ internal class MoonSimulator
         Steps = 0;
     }
 
-    internal long StepsToGetBackToInitial()
+    public async Task<long> StepsToGetBackToInitialAsync()
+    {
+        var directions = new List<Moon.Direction>()
+        {
+            Moon.Direction.X,Moon.Direction.Y,Moon.Direction.Z,
+        };
+        var tasks = new List<Task<int>>(directions.Count);
+        foreach (var direction in directions)
+        {
+            tasks.Add(Task.Run(() => FindStepsToInitialInDirection(direction)));
+        }
+        var steps = await Task.WhenAll(tasks);
+
+        var yZ = LeastCommonMultiple(steps[1], steps[2]);
+        var xYZ = LeastCommonMultiple(steps[0], yZ);
+        return xYZ;
+    }
+
+    public long StepsToGetBackToInitial()
     {
         var steps = new List<int>();
         var directions = new List<Moon.Direction>()

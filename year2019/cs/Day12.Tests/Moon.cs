@@ -1,6 +1,6 @@
 ﻿namespace Day12.Tests;
 
-internal class Moon
+public class Moon
 {
     internal enum Direction
     {
@@ -25,7 +25,7 @@ internal class Moon
         cZ = coordinates.Z;
     }
 
-    internal static (Moon? Moon, Exception? Error) CreateMoon(string coordinates)
+    public static (Moon? Moon, Exception? Error) CreateMoon(string coordinates)
     {
         var coords = coordinates.Trim('<', '>')
             .Split(", ")
