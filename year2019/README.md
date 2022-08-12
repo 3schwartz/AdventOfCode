@@ -69,3 +69,26 @@ cpu: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz
 |---------------------------------------	|-----------------:	|--------------------:	|---------------------:	|-------------------------------------------:	|
 | Trigonometric-8 | 54 | 23_788_604 ns/op (23.78 ms/op) |  11_312_955 B/op ~ 11 MB | 10_112 allocs/op |
 | Slopes-8 | 24 |  43_277_388 ns/op (43.27 ms/op) | 26_828_667 B/op ~ 26 MB	| 21_284 allocs/op |
+
+## Day 12
+### Part 2
+
+#### C#
+
+Need to subtract SetupWithinEachBenchmark from the others. Can't use `[IterationSetup]` [since test below 100ms](https://benchmarkdotnet.org/articles/samples/IntroSetupCleanupIteration.html).
+
+``` ini
+
+BenchmarkDotNet=v0.13.1, OS=Windows 10.0.19043.1826 (21H1/May2021Update)
+Intel Core i7-8565U CPU 1.80GHz (Whiskey Lake), 1 CPU, 8 logical and 4 physical cores
+.NET SDK=6.0.302
+  [Host]     : .NET 6.0.7 (6.0.722.32202), X64 RyuJIT
+  DefaultJob : .NET 6.0.7 (6.0.722.32202), X64 RyuJIT
+
+
+```
+|                       Method |         Mean |       Error |     StdDev |       Median |    Ratio | RatioSD |     Gen 0 | Allocated |
+|----------------------------- |-------------:|------------:|-----------:|-------------:|---------:|--------:|----------:|----------:|
+|     SetupWithinEachBenchmark |     7.643 μs |   0.9430 μs |   2.780 μs |     6.323 μs |     1.00 |    0.00 |    1.6327 |      7 KB |
+|      StepsToGetBackToInitial | 9,155.421 μs (9.155 ms) | 284.7106 μs | 774.576 μs | 8,911.399 μs | 1,349.78 |  386.71 | 1875.0000 |  7,704 KB |
+| StepsToGetBackToInitialAsync | 6,093.327 μs (6.093 ms) | 120.9209 μs | 107.193 μs | 6,074.534 μs |   871.71 |  161.86 | 1890.6250 |  7,705 KB |

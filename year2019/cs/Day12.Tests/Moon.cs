@@ -62,19 +62,6 @@ public class Moon
         };
     }
 
-    private static int FindPullDirection(int current, int other)
-    {
-        if (current > other)
-        {
-            return -1;
-        }
-        if (other > current)
-        {
-            return 1;
-        }
-        return 0;
-    }
-
     internal void ApplyVelocity(Velocity pull)
     {
         vX += pull.X;
@@ -113,6 +100,25 @@ public class Moon
         };
     }
 
+    internal int GetTotalEnergy()
+    {
+        var potentialEnergy = Math.Abs(cX) + Math.Abs(cY) + Math.Abs(cZ);
+        var kineticEnergy = Math.Abs(vX) + Math.Abs(vY) + Math.Abs(vZ);
+        return potentialEnergy * kineticEnergy;
+    }
+
+    private static int FindPullDirection(int current, int other)
+    {
+        if (current > other)
+        {
+            return -1;
+        }
+        if (other > current)
+        {
+            return 1;
+        }
+        return 0;
+    }
     private void Move()
     {
         cX += vX;

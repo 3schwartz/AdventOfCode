@@ -101,12 +101,13 @@ public class MoonSimulator
         {
             for (int i = 0; i < moons.Count; i++)
             {
-                velocities[i] = new List<Velocity>();
+                var moonVelocities = new List<Velocity>();
                 for (var j = 0; j < moons.Count; j++)
                 {
                     if (i == j) continue;
-                    velocities[i].Add(moons[i].FindVelocityFromMoon(moons[j]));
+                    moonVelocities.Add(moons[i].FindVelocityFromMoon(moons[j]));
                 }
+                velocities[i] = moonVelocities;
             }
             foreach (var (key, pulls) in velocities)
             {
@@ -124,9 +125,7 @@ public class MoonSimulator
         var totalEnergy = 0;
         foreach(var moon in moons)
         {
-            var potentialEnergy = Math.Abs(moon.Coordinates.X) + Math.Abs(moon.Coordinates.Y) + Math.Abs(moon.Coordinates.Z);
-            var kineticEnergy = Math.Abs(moon.Velocity.X) + Math.Abs(moon.Velocity.Y) + Math.Abs(moon.Velocity.Z);
-            totalEnergy += potentialEnergy * kineticEnergy;
+            totalEnergy += moon.GetTotalEnergy();
         }
         return totalEnergy;
     }
