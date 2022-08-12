@@ -44,30 +44,37 @@ func (ms *moonSimulator) takeSteps(stepCount int) {
 			break
 		}
 
-		for i, moon := range ms.moons {
-			moonVelocities := make([]velocity, 0)
-			for _, moonOther := range ms.moons {
-				if moon == moonOther {
-					continue
-				}
-				moonVelocity := moon.findVelocityFromMoon(moonOther)
-				moonVelocities = append(moonVelocities, moonVelocity)
-			}
-			velocities[i] = moonVelocities
-		}
+		ms.findVelocitiesInStep(velocities)
 
-		for i, moonVelocities := range velocities {
-			pull := velocity{}
-			for _, moonVelocity := range moonVelocities {
-				pull = velocity{pull.x + moonVelocity.x, pull.y + moonVelocity.y, pull.z + moonVelocity.z}
-			}
-			ms.moons[i].applyVelocity(pull)
-		}
+		ms.applyVelocityInStep(velocities)
 
 		currentSteps++
 		ms.steps++
 	}
+}
 
+func (ms *moonSimulator) findVelocitiesInStep(velocities map[int][]velocity) {
+	for i, moon := range ms.moons {
+		moonVelocities := make([]velocity, 0)
+		for _, moonOther := range ms.moons {
+			if moon == moonOther {
+				continue
+			}
+			moonVelocity := moon.findVelocityFromMoon(moonOther)
+			moonVelocities = append(moonVelocities, moonVelocity)
+		}
+		velocities[i] = moonVelocities
+	}
+}
+
+func (ms *moonSimulator) applyVelocityInStep(velocities map[int][]velocity) {
+	for i, moonVelocities := range velocities {
+		pull := velocity{}
+		for _, moonVelocity := range moonVelocities {
+			pull = velocity{pull.x + moonVelocity.x, pull.y + moonVelocity.y, pull.z + moonVelocity.z}
+		}
+		ms.moons[i].applyVelocity(pull)
+	}
 }
 
 func (ms *moonSimulator) getTotalEnergy() int {
