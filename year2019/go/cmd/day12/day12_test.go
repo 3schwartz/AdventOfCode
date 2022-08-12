@@ -11,7 +11,7 @@ func Test_part1(t *testing.T) {
 	// Arrange
 	data := read.ReadDataAsString("day12")
 	lines := strings.Split(data, "\r\n")
-	moons := make([]*moon, len(lines))
+	moons := make([]*moon, 0, len(lines))
 	for _, line := range lines {
 		moons = append(moons, createNewMoon(line))
 	}
@@ -43,6 +43,7 @@ func (ms *moonSimulator) takeSteps(stepCount int) {
 		if currentSteps >= stepCount {
 			break
 		}
+
 		for i, moon := range ms.moons {
 			moonVelocities := make([]velocity, 0)
 			for _, moonOther := range ms.moons {
@@ -55,10 +56,26 @@ func (ms *moonSimulator) takeSteps(stepCount int) {
 			velocities[i] = moonVelocities
 		}
 
+		for i, moonVelocities := range velocities {
+			pull := velocity{}
+			for _, moonVelocity := range moonVelocities {
+				pull = velocity{pull.x + moonVelocity.x, pull.y + moonVelocity.y, pull.z + moonVelocity.z}
+			}
+			ms.moons[i].applyVelocity(pull)
+		}
+
 		currentSteps++
 		ms.steps++
 	}
 
+}
+
+func (ms *moonSimulator) getTotalEnergy() int {
+	var totalEnergy int
+	for _, moon := range ms.moons {
+		totalEnergy += moon.getTotalEnergy()
+	}
+	return totalEnergy
 }
 
 type velocity struct {
@@ -88,4 +105,44 @@ func createNewMoon(line string) *moon {
 		cY: coordPoints[1],
 		cZ: coordPoints[2],
 	}
+}
+
+func (m *moon) findVelocityFromMoon(moonOther *moon) velocity {
+	x := m.findPullDirection(m.cX, moonOther.cX)
+	y := m.findPullDirection(m.cY, moonOther.cY)
+	z := m.findPullDirection(m.cZ, moonOther.cZ)
+	return velocity{x, y, z}
+}
+
+func (m *moon) findPullDirection(current int, other int) int {
+	if current > other {
+		return -1
+	}
+	if current < other {
+		return 1
+	}
+	return 0
+}
+
+func (m *moon) applyVelocity(moonVelocity velocity) {
+	m.vX += moonVelocity.x
+	m.vY += moonVelocity.y
+	m.vZ += moonVelocity.z
+
+	m.cX += m.vX
+	m.cY += m.vY
+	m.cZ += m.vZ
+}
+
+func (m *moon) getTotalEnergy() int {
+	potentialEnergy := abs(m.cX) + abs(m.cY) + abs(m.cZ)
+	kineticEnergy := abs(m.vX) + abs(m.vY) + abs(m.vZ)
+	return potentialEnergy * kineticEnergy
+}
+
+func abs(value int) int {
+	if value < 0 {
+		return -1 * value
+	}
+	return value
 }
