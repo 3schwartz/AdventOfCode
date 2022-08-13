@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -39,6 +40,21 @@ func Test_part2Sync(t *testing.T) {
 	}
 }
 
+func Test_part2Async(t *testing.T) {
+	// Arrange
+	data := read.ReadDataAsString("day12")
+	moons := createMoonsFromInput(data)
+	simulator := createNewMoonSimulator(moons)
+
+	// Act
+	stepsToInitial := simulator.stepsToGetBackToInitialAsync()
+
+	// Assert
+	if stepsToInitial != 551272644867044 {
+		t.Errorf("Wrong steps to get back: %d", stepsToInitial)
+	}
+}
+
 type Direction int
 
 const (
@@ -54,6 +70,31 @@ type moonSimulator struct {
 
 func createNewMoonSimulator(moons []*moon) *moonSimulator {
 	return &moonSimulator{moons: moons}
+}
+
+func (ms *moonSimulator) stepsToGetBackToInitialAsync() int64 {
+	directions := [3]Direction{X, Y, Z}
+	tasks := make(chan int, len(directions))
+	var wg sync.WaitGroup
+	wg.Add(len(directions))
+	for _, direction := range directions {
+		go func(d Direction) {
+			defer wg.Done()
+			moonSteps := ms.findStepsToInitialInDirection(d)
+			tasks <- moonSteps
+		}(direction)
+	}
+	go func() {
+		wg.Wait()
+		close(tasks)
+	}()
+	steps := make([]int, 0, len(directions))
+	for s := range tasks {
+		steps = append(steps, s)
+	}
+	yZ := ms.leastCommonMultiple(int64(steps[1]), int64(steps[2]))
+	xYZ := ms.leastCommonMultiple(int64(steps[0]), yZ)
+	return xYZ
 }
 
 func (ms *moonSimulator) stepsToGetBackToInitial() int64 {

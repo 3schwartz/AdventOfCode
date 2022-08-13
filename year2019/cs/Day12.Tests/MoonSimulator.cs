@@ -32,11 +32,11 @@ public class MoonSimulator
 
     public long StepsToGetBackToInitial()
     {
-        var steps = new List<int>();
         var directions = new List<Moon.Direction>()
         {
             Moon.Direction.X,Moon.Direction.Y,Moon.Direction.Z,
         };
+        var steps = new List<int>(directions.Count);
         foreach (var direction in directions)
         {
             var moonSteps = FindStepsToInitialInDirection(direction);
