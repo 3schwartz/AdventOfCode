@@ -92,3 +92,14 @@ Intel Core i7-8565U CPU 1.80GHz (Whiskey Lake), 1 CPU, 8 logical and 4 physical 
 |     SetupWithinEachBenchmark |     7.643 μs |   0.9430 μs |   2.780 μs |     6.323 μs |     1.00 |    0.00 |    1.6327 |      7 KB |
 |      StepsToGetBackToInitial | 9,155.421 μs (9.155 ms) | 284.7106 μs | 774.576 μs | 8,911.399 μs | 1,349.78 |  386.71 | 1875.0000 |  7,704 KB |
 | StepsToGetBackToInitialAsync | 6,093.327 μs (6.093 ms) | 120.9209 μs | 107.193 μs | 6,074.534 μs |   871.71 |  161.86 | 1890.6250 |  7,705 KB |
+
+#### Go
+````
+cpu: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz
+````
+
+| Name | Runs | Mean | Allocated | Allocations from heap |
+|---------------------------------------	|-----------------:	|--------------------:	|---------------------:	|-------------------------------------------:	|
+| Setup-8 | 484393 | 2_339 ns/op (2.339 μs / op)) |  896 B/op | 23 allocs/op |
+| Sync-8 | 3 |  450_950_267 ns/op (460.950 ms/op) | 149_761_752 B/op ~ 149 MB	| 6_760_006 allocs/op |
+| Async-8 | 4 |  299_714_200 ns/op (299.714 ms/op) | 149_763_040 B/op ~ 149 MB	| 6_760_021 allocs/op |

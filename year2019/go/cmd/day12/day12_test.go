@@ -55,6 +55,33 @@ func Test_part2Async(t *testing.T) {
 	}
 }
 
+var blackholeSimulator *moonSimulator
+var blackholeSync, blackholeAsync int64
+
+func Benchmark_stepsToGetBackToInitial(b *testing.B) {
+	data := read.ReadDataAsString("day12")
+	b.Run("Setup", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			moons := createMoonsFromInput(data)
+			blackholeSimulator = createNewMoonSimulator(moons)
+		}
+	})
+	b.Run("Sync", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			moons := createMoonsFromInput(data)
+			simulator := createNewMoonSimulator(moons)
+			blackholeSync = simulator.stepsToGetBackToInitial()
+		}
+	})
+	b.Run("Async", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			moons := createMoonsFromInput(data)
+			simulator := createNewMoonSimulator(moons)
+			blackholeAsync = simulator.stepsToGetBackToInitialAsync()
+		}
+	})
+}
+
 type Direction int
 
 const (
@@ -62,6 +89,21 @@ const (
 	Y
 	Z
 )
+
+type velocity struct {
+	x, y, z int
+}
+
+type directionPosition struct {
+	coordinate, velocity int
+}
+
+func abs(value int) int {
+	if value < 0 {
+		return -1 * value
+	}
+	return value
+}
 
 type moonSimulator struct {
 	moons []*moon
@@ -224,10 +266,6 @@ func (ms *moonSimulator) getTotalEnergy() int {
 	return totalEnergy
 }
 
-type velocity struct {
-	x, y, z int
-}
-
 type moon struct {
 	vX, vY, vZ int
 	cX, cY, cZ int
@@ -335,15 +373,4 @@ func (m *moon) getDirectionPosition(direction Direction) directionPosition {
 	default:
 		panic(fmt.Sprintf("direction not mapped: %d", direction))
 	}
-}
-
-type directionPosition struct {
-	coordinate, velocity int
-}
-
-func abs(value int) int {
-	if value < 0 {
-		return -1 * value
-	}
-	return value
 }
