@@ -1,4 +1,6 @@
-﻿namespace Day12.Tests;
+﻿using System.Collections.Concurrent;
+
+namespace Day12.Tests;
 
 public class MoonSimulator
 {
@@ -10,6 +12,42 @@ public class MoonSimulator
     {
         this.moons = moons;
         Steps = 0;
+    }
+
+    public long StepsToGetBackToInitialPLinq()
+    {
+        var directions = new List<Moon.Direction>()
+        {
+            Moon.Direction.X,Moon.Direction.Y,Moon.Direction.Z,
+        };
+        var steps = directions
+            .AsParallel()
+            .Select(d => FindStepsToInitialInDirection(d))
+            .ToList();
+
+        var yZ = LeastCommonMultiple(steps[1], steps[2]);
+        var xYZ = LeastCommonMultiple(steps[0], yZ);
+        return xYZ;
+    }
+
+    public long StepsToGetBackToInitialParallel()
+    {
+        var directions = new List<Moon.Direction>()
+        {
+            Moon.Direction.X,Moon.Direction.Y,Moon.Direction.Z,
+        };
+        var concurrentSteps = new ConcurrentBag<int>();
+        Parallel.ForEach(directions, (d) =>
+        {
+            var step = FindStepsToInitialInDirection(d);
+            concurrentSteps.Add(step);
+        }
+        );
+        var steps = concurrentSteps.ToArray();
+
+        var yZ = LeastCommonMultiple(steps[1], steps[2]);
+        var xYZ = LeastCommonMultiple(steps[0], yZ);
+        return xYZ;
     }
 
     public async Task<long> StepsToGetBackToInitialAsync()

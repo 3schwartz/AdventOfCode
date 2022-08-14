@@ -87,6 +87,36 @@ public class Day12Tests
     }
 
     [Fact]
+    public void WhenFindStepsBeforeBackToInitialPLinq_ThenCorrect()
+    {
+        // Arrange
+        var lines = File.ReadAllLines("../../../../../data/day12_test2_data.txt");
+        var moons = lines.Select(line => Moon.CreateMoon(line).Moon).ToList();
+        var simulator = new MoonSimulator(moons!);
+
+        // Act
+        long stepsToInitial = simulator.StepsToGetBackToInitialPLinq();
+
+        // Assert
+        Assert.Equal(4686774924, stepsToInitial);
+    }
+
+    [Fact]
+    public void WhenFindStepsBeforeBackToInitialParralel_ThenCorrect()
+    {
+        // Arrange
+        var lines = File.ReadAllLines("../../../../../data/day12_test2_data.txt");
+        var moons = lines.Select(line => Moon.CreateMoon(line).Moon).ToList();
+        var simulator = new MoonSimulator(moons!);
+
+        // Act
+        long stepsToInitial = simulator.StepsToGetBackToInitialParallel();
+
+        // Assert
+        Assert.Equal(4686774924, stepsToInitial);
+    }
+
+    [Fact]
     public async Task WhenFindStepsBeforeBackToInitialAsync_ThenCorrect()
     {
         // Arrange

@@ -79,19 +79,23 @@ Need to subtract SetupWithinEachBenchmark from the others. Can't use `[Iteration
 
 ``` ini
 
-BenchmarkDotNet=v0.13.1, OS=Windows 10.0.19043.1826 (21H1/May2021Update)
+BenchmarkDotNet=v0.13.1, OS=Windows 10.0.19043.1889 (21H1/May2021Update)
 Intel Core i7-8565U CPU 1.80GHz (Whiskey Lake), 1 CPU, 8 logical and 4 physical cores
 .NET SDK=6.0.302
   [Host]     : .NET 6.0.7 (6.0.722.32202), X64 RyuJIT
-  DefaultJob : .NET 6.0.7 (6.0.722.32202), X64 RyuJIT
+  Job-AJRDKO : .NET 6.0.7 (6.0.722.32202), X64 RyuJIT
 
+IterationCount=2  LaunchCount=2  WarmupCount=1  
 
 ```
-|                       Method |         Mean |       Error |     StdDev |       Median |    Ratio | RatioSD |     Gen 0 | Allocated |
-|----------------------------- |-------------:|------------:|-----------:|-------------:|---------:|--------:|----------:|----------:|
-|     SetupWithinEachBenchmark |     7.643 μs |   0.9430 μs |   2.780 μs |     6.323 μs |     1.00 |    0.00 |    1.6327 |      7 KB |
-|      StepsToGetBackToInitial | 9,155.421 μs (9.155 ms) | 284.7106 μs | 774.576 μs | 8,911.399 μs | 1,349.78 |  386.71 | 1875.0000 |  7,704 KB |
-| StepsToGetBackToInitialAsync | 6,093.327 μs (6.093 ms) | 120.9209 μs | 107.193 μs | 6,074.534 μs |   871.71 |  161.86 | 1890.6250 |  7,705 KB |
+|                          Method |         Mean |          Error |        StdDev |       Median |    Ratio | RatioSD |     Gen 0 | Allocated |
+|-------------------------------- |-------------:|---------------:|--------------:|-------------:|---------:|--------:|----------:|----------:|
+|        SetupWithinEachBenchmark |     5.161 μs |      0.5341 μs |     0.0827 μs |     5.171 μs |     1.00 |    0.00 |    1.6327 |      7 KB |
+|         StepsToGetBackToInitial | 8,354.118 μs (8.354 ms) |    235.8402 μs |    36.4965 μs | 8,361.044 μs | 1,618.97 |   32.29 | 1875.0000 |  7,704 KB |
+|    StepsToGetBackToInitialAsync | 6,003.616 μs (6.003 ms) |  2,315.5482 μs |   358.3337 μs | 5,871.139 μs | 1,162.84 |   57.56 | 1890.6250 |  7,705 KB |
+| StepsToGetBackToInitialParallel | 6,298.035 μs (6.298 ms) |  3,461.2309 μs |   535.6293 μs | 6,323.941 μs | 1,220.90 |  112.10 | 1898.4375 |  7,707 KB |
+|    StepsToGetBackToInitialPLinq | 8,108.643 μs (8.108 ms) | 23,957.5509 μs | 3,707.4575 μs | 6,275.246 μs | 1,570.79 |  716.55 | 1898.4375 |  7,709 KB |
+
 
 #### Go
 ````

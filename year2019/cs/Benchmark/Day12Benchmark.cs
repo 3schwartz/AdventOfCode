@@ -29,7 +29,7 @@ namespace Benchmark
         {
             var moons = lines!.Select(line => Moon.CreateMoon(line).Moon).ToList();
             var simulator = new MoonSimulator(moons!);
-            _ = simulator!.StepsToGetBackToInitial();
+            _ = simulator.StepsToGetBackToInitial();
         }
 
         [Benchmark]
@@ -37,7 +37,23 @@ namespace Benchmark
         {
             var moons = lines!.Select(line => Moon.CreateMoon(line).Moon).ToList();
             var simulator = new MoonSimulator(moons!);
-            _ = await simulator!.StepsToGetBackToInitialAsync();
+            _ = await simulator.StepsToGetBackToInitialAsync();
+        }
+
+        [Benchmark]
+        public void StepsToGetBackToInitialParallel()
+        {
+            var moons = lines!.Select(line => Moon.CreateMoon(line).Moon).ToList();
+            var simulator = new MoonSimulator(moons!);
+            _ = simulator.StepsToGetBackToInitialParallel();
+        }
+
+        [Benchmark]
+        public void StepsToGetBackToInitialPLinq()
+        {
+            var moons = lines!.Select(line => Moon.CreateMoon(line).Moon).ToList();
+            var simulator = new MoonSimulator(moons!);
+            _ = simulator.StepsToGetBackToInitialPLinq();
         }
     }
 }
