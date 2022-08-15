@@ -10,13 +10,11 @@ func main() {
 	codes := read.ReadData("day13")
 	intCodes := coders.ParseIntCodes(codes)
 	intCoder := coders.ArcadeIntCoder{}
-	output := intCoder.PlayArcade(intCodes, 2)
+	state := intCoder.PlayArcade(intCodes)
 
-	blockTotal := 0
-	for _, value := range output {
-		if value == 2 {
-			blockTotal++
-		}
-	}
-	fmt.Printf("Part 1: %d", blockTotal)
+	fmt.Printf("Part 1: %d\n", state.BlockCount)
+
+	intCodes[0] = 2
+	state = intCoder.PlayArcade(intCodes)
+	fmt.Printf("Part 2: %d, with count %d\n", state.TotalScore, state.BlockCount)
 }

@@ -4,11 +4,19 @@ import (
 	"fmt"
 )
 
+type gameState struct {
+	TotalScore int
+	BlockCount int
+	paddleX    int
+	ballX      int
+	x, y       int
+}
+
 type ArcadeIntCoder struct {
 	IntCoder
 }
 
-func (aic *ArcadeIntCoder) PlayArcade(codesInput []int, input int) map[Coordinate]int {
+func (aic *ArcadeIntCoder) PlayArcade(codesInput []int) gameState {
 	codes := make(map[int]int, len(codesInput))
 	for i, v := range codesInput {
 		codes[i] = v
@@ -17,9 +25,8 @@ func (aic *ArcadeIntCoder) PlayArcade(codesInput []int, input int) map[Coordinat
 		aic.idx = 0
 		aic.relativeBase = 0
 	}()
-	outputs := map[Coordinate]int{}
+	state := gameState{}
 	outputCount := 0
-	var x, y int
 optLoop:
 	for {
 		execution := codes[aic.idx]
@@ -32,21 +39,20 @@ optLoop:
 			bar := codes[aic.getIdxFromMode(codes, execution, 2)] * codes[aic.getIdxFromMode(codes, execution, 1)]
 			newIdx := aic.getIdxFromMode(codes, execution, 3)
 			codes[newIdx] = bar
-
 			aic.idx += 4
 		case 3:
+			var input int
+			if state.ballX < state.paddleX {
+				input = -1
+			}
+			if state.ballX > state.paddleX {
+				input = 1
+			}
 			codes[aic.getIdxFromMode(codes, execution, 1)] = input
 			aic.idx += 2
 		case 4:
 			output := codes[aic.getIdxFromMode(codes, execution, 1)]
-			switch outputInstruction := outputCount % 3; outputInstruction {
-			case 0:
-				x = output
-			case 1:
-				y = output
-			case 2:
-				outputs[Coordinate{x, y}] = output
-			}
+			state = aic.evaluateOutput(state, outputCount, output)
 			outputCount++
 			aic.idx += 2
 		case 5:
@@ -84,5 +90,29 @@ optLoop:
 			panic(fmt.Sprintf("OptCode not known: %d", optCode))
 		}
 	}
-	return outputs
+	return state
+}
+
+func (aic *ArcadeIntCoder) evaluateOutput(state gameState, outputCount int, output int) gameState {
+	switch outputInstruction := outputCount % 3; outputInstruction {
+	case 0:
+		state.x = output
+	case 1:
+		state.y = output
+	case 2:
+		if state.x == -1 && state.y == 0 {
+			state.TotalScore = output
+			fmt.Printf("Block count: %d, with total score: %d\n", state.BlockCount, state.TotalScore)
+			break
+		}
+		switch output {
+		case 2:
+			state.BlockCount++
+		case 3:
+			state.paddleX = state.x
+		case 4:
+			state.ballX = state.x
+		}
+	}
+	return state
 }
