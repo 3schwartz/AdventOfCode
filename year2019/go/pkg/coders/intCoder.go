@@ -6,6 +6,11 @@ import (
 	"strconv"
 )
 
+type Coordinate struct {
+	x int
+	y int
+}
+
 func ParseIntCodes(codes []string) []int {
 	intCodes := make([]int, len(codes))
 	for i, code := range codes {
