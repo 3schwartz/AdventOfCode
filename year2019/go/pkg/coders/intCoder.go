@@ -75,10 +75,7 @@ optLoop:
 				codes[ic.getIdxFromMode(codes, execution, 2)] + codes[ic.getIdxFromMode(codes, execution, 1)]
 			ic.idx += 4
 		case 2:
-			bar := codes[ic.getIdxFromMode(codes, execution, 2)] * codes[ic.getIdxFromMode(codes, execution, 1)]
-			newIdx := ic.getIdxFromMode(codes, execution, 3)
-			codes[newIdx] = bar
-
+			codes[ic.getIdxFromMode(codes, execution, 3)] = codes[ic.getIdxFromMode(codes, execution, 2)] * codes[ic.getIdxFromMode(codes, execution, 1)]
 			ic.idx += 4
 		case 3:
 			codes[ic.getIdxFromMode(codes, execution, 1)] = input

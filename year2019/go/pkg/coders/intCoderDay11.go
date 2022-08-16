@@ -84,9 +84,7 @@ optLoop:
 				codes[ph.getIdxFromMode(codes, execution, 2)] + codes[ph.getIdxFromMode(codes, execution, 1)]
 			ph.idx += 4
 		case 2:
-			bar := codes[ph.getIdxFromMode(codes, execution, 2)] * codes[ph.getIdxFromMode(codes, execution, 1)]
-			newIdx := ph.getIdxFromMode(codes, execution, 3)
-			codes[newIdx] = bar
+			codes[ph.getIdxFromMode(codes, execution, 3)] = codes[ph.getIdxFromMode(codes, execution, 2)] * codes[ph.getIdxFromMode(codes, execution, 1)]
 
 			ph.idx += 4
 		case 3:

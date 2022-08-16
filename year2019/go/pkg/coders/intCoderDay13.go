@@ -36,9 +36,7 @@ optLoop:
 				codes[aic.getIdxFromMode(codes, execution, 2)] + codes[aic.getIdxFromMode(codes, execution, 1)]
 			aic.idx += 4
 		case 2:
-			bar := codes[aic.getIdxFromMode(codes, execution, 2)] * codes[aic.getIdxFromMode(codes, execution, 1)]
-			newIdx := aic.getIdxFromMode(codes, execution, 3)
-			codes[newIdx] = bar
+			codes[aic.getIdxFromMode(codes, execution, 3)] = codes[aic.getIdxFromMode(codes, execution, 2)] * codes[aic.getIdxFromMode(codes, execution, 1)]
 			aic.idx += 4
 		case 3:
 			var input int
