@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -25,7 +26,7 @@ func Test_correct_raw_count(t *testing.T) {
 	chemicals := parseChemicals("day14_test")
 
 	// Act
-	rawCount := chemicals.getRawCountFrom("FUEL")
+	rawCount := chemicals.getRawCountFrom("FUEL", 1)
 
 	// Assert
 	if rawCount != 31 {
@@ -33,12 +34,29 @@ func Test_correct_raw_count(t *testing.T) {
 	}
 }
 
-func (cs *chemicalStore) getRawCountFrom(s string) int {
-	chemical, ok := cs[s]
-
+func (cs chemicalStore) getRawCountFrom(name string, amount int) int {
+	if name == "ORE" {
+		return amount
+	}
+	chemical, ok := cs[name]
+	if !ok {
+		panic(fmt.Errorf("don't know chemical: %s", name))
+	}
+	totalRawCount := 0
+	for _, input := range chemical.chemicalInputs {
+		rawCount := cs.getRawCountFrom(input.name, input.count)
+		totalRawCount += rawCount
+	}
+	needAmount := int(math.Ceil(float64(amount) / float64(chemical.outputCount)))
+	return totalRawCount * needAmount
 }
 
-type chemicalStore map[chemical][]chemical
+type chemicalStore map[string]reaction
+
+type reaction struct {
+	outputCount    int
+	chemicalInputs []chemical
+}
 
 type chemical struct {
 	name  string
@@ -53,20 +71,16 @@ func parseChemicals(file string) *chemicalStore {
 	lines := strings.Split(string(f), "\r\n")
 	chemicals := chemicalStore{}
 	for _, line := range lines {
-		reaction := strings.Split(line, " => ")
-		if len(reaction) != 2 {
-			panic(fmt.Errorf("wrong length of reaction: %s", reaction))
+		reactionInput := strings.Split(line, " => ")
+		if len(reactionInput) != 2 {
+			panic(fmt.Errorf("wrong length of reaction: %s", reactionInput))
 		}
-		output := strings.Split(reaction[1], " ")
+		output := strings.Split(reactionInput[1], " ")
 		outputCount, err := strconv.Atoi(output[0])
 		if err != nil {
 			panic(err)
 		}
-		outputChemical := chemical{
-			name:  output[1],
-			count: outputCount,
-		}
-		inputChemicalsStrings := strings.Split(reaction[0], ", ")
+		inputChemicalsStrings := strings.Split(reactionInput[0], ", ")
 		inputChemicals := make([]chemical, len(inputChemicalsStrings))
 		for i := 0; i < len(inputChemicalsStrings); i++ {
 			inputChemical := strings.Split(inputChemicalsStrings[i], " ")
@@ -80,7 +94,7 @@ func parseChemicals(file string) *chemicalStore {
 			}
 			inputChemicals[i] = input
 		}
-		chemicals[outputChemical] = inputChemicals
+		chemicals[output[1]] = reaction{outputCount, inputChemicals}
 	}
 	return &chemicals
 }
