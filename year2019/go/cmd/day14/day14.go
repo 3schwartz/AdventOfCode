@@ -23,21 +23,23 @@ func (cs chemicalStore) getRawCountFrom(name string, needed int, stored map[stri
 	if !ok {
 		panic(fmt.Errorf("don't know chemical: %s", name))
 	}
+
+	needFactor := int(math.Ceil(float64(needed) / float64(chemical.outputCount)))
 	totalRawCount := 0
 	for _, input := range chemical.chemicalInputs {
-		if stored[input.name] >= input.count {
-			stored[input.name] -= input.count
+		inputNeed := needFactor * input.count
+		if stored[input.name] >= inputNeed {
+			stored[input.name] -= inputNeed
 			continue
 		}
-		askFor := input.count - stored[input.name]
+		askFor := inputNeed - stored[input.name]
 		stored[input.name] = 0
 		rawCount, produced := cs.getRawCountFrom(input.name, askFor, stored)
 		stored[input.name] += produced - askFor
 		totalRawCount += rawCount
 	}
 
-	needFactor := int(math.Ceil(float64(needed) / float64(chemical.outputCount)))
-	return totalRawCount * needFactor, chemical.outputCount * needFactor
+	return totalRawCount, chemical.outputCount * needFactor
 }
 
 type chemicalStore map[string]reaction
