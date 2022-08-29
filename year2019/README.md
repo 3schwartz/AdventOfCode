@@ -105,3 +105,16 @@ cpu: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz
 | Setup-8 | 484393 | 2_339 ns/op (2.339 μs / op)) |  896 B/op | 23 allocs/op |
 | Sync-8 | 3 |  450_950_267 ns/op (460.950 ms/op) | 149_761_752 B/op ~ 149 MB	| 6_760_006 allocs/op |
 | Async-8 | 4 |  299_714_200 ns/op (299.714 ms/op) | 149_763_040 B/op ~ 149 MB	| 6_760_021 allocs/op |
+
+## Day 14
+### Part 2
+
+#### Go
+````
+cpu: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz
+````
+
+| Name | Runs | Mean | Allocated | Allocations from heap |
+|---------------------------------------	|-----------------:	|--------------------:	|---------------------:	|-------------------------------------------:	|
+| Ratio-8 | 6246 | 179_402 ns/op |  15_509 B/op | 15 allocs/op |
+| Optimum-8 | 358 |  3_142_936 ns/op | 217_322 B/op	| 212 allocs/op |

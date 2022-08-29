@@ -10,9 +10,59 @@ import (
 
 func main() {
 	chemicals := parseChemicals("day14")
-	rawCount, _ := chemicals.getRawCountFrom("FUEL", 1, map[string]int{})
+	oreCount, _ := chemicals.getRawCountFrom("FUEL", 1, map[string]int{})
 
-	fmt.Printf("Part 1: %d\n", rawCount)
+	fmt.Printf("Part 1: %d\n", oreCount)
+
+	oreInjected := 1_000_000_000_000
+	actualFuelFloor := chemicals.getFuelGivenOre(oreInjected)
+
+	fmt.Printf("Part 2: %d\n", actualFuelFloor)
+
+	likelihoodFuel := chemicals.getFuelGivenOreUsingOptimum(oreInjected)
+
+	fmt.Printf("Part 2 using optimum: %d\n", likelihoodFuel)
+}
+
+// deprecated: Just for fun
+func (cs chemicalStore) getFuelGivenOreUsingOptimum(oreInjected int) int {
+	oreCount, _ := cs.getRawCountFrom("FUEL", 1, map[string]int{})
+
+	lowFuel := oreInjected / oreCount
+	highFuel := lowFuel * 10
+	for {
+		if oreHigh, _ := cs.getRawCountFrom("FUEL", highFuel, map[string]int{}); oreHigh < oreInjected {
+			lowFuel = highFuel
+			highFuel *= 10
+			continue
+		}
+		break
+	}
+	var likelihoodFuel int
+	for {
+		if !(lowFuel < highFuel-1) && highFuel != likelihoodFuel {
+			break
+		}
+		likelihoodFuel = (lowFuel + highFuel) / 2
+		oreLikelihood, _ := cs.getRawCountFrom("FUEL", likelihoodFuel, map[string]int{})
+		if oreLikelihood > oreInjected {
+			highFuel = likelihoodFuel
+		}
+		if oreLikelihood < oreInjected {
+			lowFuel = likelihoodFuel
+		}
+	}
+	return likelihoodFuel
+}
+
+func (cs chemicalStore) getFuelGivenOre(oreInjected int) int {
+	oreCount, _ := cs.getRawCountFrom("FUEL", 1, map[string]int{})
+
+	expectedFuel := oreInjected / oreCount
+	actualOreOnExpectedFuel, _ := cs.getRawCountFrom("FUEL", expectedFuel, map[string]int{})
+	oreRatio := float64(oreInjected) / float64(actualOreOnExpectedFuel)
+	actualFuelFloor := int(float64(expectedFuel) * oreRatio)
+	return actualFuelFloor
 }
 
 func (cs chemicalStore) getRawCountFrom(name string, needed int, stored map[string]int) (rawCount int, produced int) {
