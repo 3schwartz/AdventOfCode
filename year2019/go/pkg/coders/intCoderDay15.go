@@ -70,7 +70,7 @@ func (of *OxygenFinderIntCoder) updateWithInput(input int, execution int) {
 	of.movementCount++
 }
 
-func (of *OxygenFinderIntCoder) FindOxygen(walls map[Coordinate]bool) (bool, []*OxygenFinderIntCoder) {
+func (of *OxygenFinderIntCoder) FindOxygen(visited map[Coordinate]bool) (bool, []*OxygenFinderIntCoder) {
 optLoop:
 	for {
 		execution := of.codes[of.idx]
@@ -86,7 +86,7 @@ optLoop:
 			newOxygenFinders := make([]*OxygenFinderIntCoder, 0, 4)
 			for _, movement := range of.getMovements() {
 				nextPlace := of.position.add(movement.move)
-				if walls[nextPlace] {
+				if visited[nextPlace] {
 					continue
 				}
 				oxygenFinderCopy := of.copy(movement.move)
@@ -97,11 +97,11 @@ optLoop:
 		case 4:
 			output := of.codes[of.getIdxFromMode(of.codes, execution, 1)]
 			switch output {
-			case 0:
-				walls[of.position] = true
+			case 0: // wall
+				visited[of.position] = true
 				return false, nil
-			case 1:
-				break
+			case 1: // ok - continue search
+				visited[of.position] = true
 			case 2:
 				return true, nil
 			}

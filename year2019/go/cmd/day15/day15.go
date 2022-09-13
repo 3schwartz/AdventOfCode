@@ -24,15 +24,15 @@ func findOxygen(codesInput []int) (bool, int) {
 		priority: 0,
 		index:    0,
 	}}
-	walls := map[coders.Coordinate]bool{}
+	visited := map[coders.Coordinate]bool{}
 	for pq.Len() > 0 {
 		item := heap.Pop(&pq).(*OxygenFinderItem)
 
-		if walls[item.value.GetPosition()] {
+		if visited[item.value.GetPosition()] {
 			continue
 		}
 
-		foundOxygen, finders := item.value.FindOxygen(walls)
+		foundOxygen, finders := item.value.FindOxygen(visited)
 
 		if foundOxygen {
 			return true, item.value.GetMovementCount()
