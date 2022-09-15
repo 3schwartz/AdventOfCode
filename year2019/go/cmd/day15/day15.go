@@ -10,32 +10,71 @@ import (
 func main() {
 	codes := read.ReadData("day15")
 	intCodes := coders.ParseIntCodes(codes)
-	found, movementCount := findOxygen(intCodes)
+	found, oxygenDetectedDefinition := findOxygen(intCodes)
 	if !found {
 		panic("didn't find solution")
 	}
-	fmt.Printf("Part 1: %d\n", movementCount)
+	fmt.Printf("Part 1: %d\n", oxygenDetectedDefinition.coder.GetMovementCount())
+
+	countToFillOxygen := fillOxygen(oxygenDetectedDefinition)
+	fmt.Printf("Part 2: %d\n", countToFillOxygen)
 }
 
-func findOxygen(codesInput []int) (bool, int) {
+func fillOxygen(detected *oxygenDetected) int {
+	oxygenToFill := make(map[coders.Coordinate]bool, len(detected.locations))
+	for key, value := range detected.locations {
+		oxygenToFill[key] = value
+	}
+
+	position := detected.coder.GetPosition()
+	neighbors := []coders.Coordinate{position}
+
+	countToFillOxygen := 0
+	for len(oxygenToFill) > 0 {
+
+		neighborsNew := make([]coders.Coordinate, 0)
+		for _, oldNeighbor := range neighbors {
+			for _, movement := range detected.coder.GetMovements() {
+				neighbor := movement.Move.Add(oldNeighbor)
+				if !oxygenToFill[neighbor] {
+					continue
+				}
+				delete(oxygenToFill, neighbor)
+				neighborsNew = append(neighborsNew, neighbor)
+			}
+		}
+		neighbors = neighborsNew
+		countToFillOxygen++
+	}
+	return countToFillOxygen
+}
+
+type oxygenDetected struct {
+	coder     *coders.OxygenFinderIntCoder
+	locations map[coders.Coordinate]bool
+	walls     map[coders.Coordinate]bool
+}
+
+func findOxygen(codesInput []int) (bool, *oxygenDetected) {
 	oxygenFinder := coders.CreateOxygenFinderIntCoder(codesInput)
 	pq := PriorityQueue{&OxygenFinderItem{
 		value:    oxygenFinder,
 		priority: 0,
 		index:    0,
 	}}
-	visited := map[coders.Coordinate]bool{}
+	locations := map[coders.Coordinate]bool{}
+	walls := map[coders.Coordinate]bool{}
 	for pq.Len() > 0 {
 		item := heap.Pop(&pq).(*OxygenFinderItem)
 
-		if visited[item.value.GetPosition()] {
+		if locations[item.value.GetPosition()] || walls[item.value.GetPosition()] {
 			continue
 		}
 
-		foundOxygen, finders := item.value.FindOxygen(visited)
+		foundOxygen, finders := item.value.FindOxygen(locations, walls)
 
 		if foundOxygen {
-			return true, item.value.GetMovementCount()
+			return true, &oxygenDetected{item.value, locations, walls}
 		}
 
 		for _, finder := range finders {
@@ -46,7 +85,7 @@ func findOxygen(codesInput []int) (bool, int) {
 		}
 
 	}
-	return false, 0
+	return false, nil
 }
 
 // https://pkg.go.dev/container/heap

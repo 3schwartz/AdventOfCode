@@ -12,10 +12,10 @@ func Test_part1(t *testing.T) {
 	intCodes := coders.ParseIntCodes(codes)
 
 	// Act
-	_, movementCount := findOxygen(intCodes)
+	_, oxygenDetectedDefinition := findOxygen(intCodes)
 
 	// Assert
-	if movementCount != 266 {
+	if movementCount := oxygenDetectedDefinition.coder.GetMovementCount(); movementCount != 266 {
 		t.Errorf("Wrong answer: %d", movementCount)
 	}
 }

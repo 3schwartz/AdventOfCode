@@ -4,10 +4,10 @@ import "fmt"
 
 type movement struct {
 	input int
-	move  Coordinate
+	Move  Coordinate
 }
 
-func (c Coordinate) add(other Coordinate) Coordinate {
+func (c Coordinate) Add(other Coordinate) Coordinate {
 	return Coordinate{
 		c.x + other.x,
 		c.y + other.y,
@@ -31,7 +31,7 @@ func CreateOxygenFinderIntCoder(codesInput []int) *OxygenFinderIntCoder {
 	}
 }
 
-func (of OxygenFinderIntCoder) getMovements() []movement {
+func (of OxygenFinderIntCoder) GetMovements() []movement {
 	return []movement{
 		{1, Coordinate{0, 1}},
 		{2, Coordinate{0, -1}},
@@ -59,7 +59,7 @@ func (of *OxygenFinderIntCoder) copy(nextMove Coordinate) OxygenFinderIntCoder {
 			relativeBase: of.relativeBase,
 		},
 		codes:         codesCopy,
-		position:      of.position.add(nextMove),
+		position:      of.position.Add(nextMove),
 		movementCount: of.movementCount,
 	}
 }
@@ -70,7 +70,7 @@ func (of *OxygenFinderIntCoder) updateWithInput(input int, execution int) {
 	of.movementCount++
 }
 
-func (of *OxygenFinderIntCoder) FindOxygen(visited map[Coordinate]bool) (bool, []*OxygenFinderIntCoder) {
+func (of *OxygenFinderIntCoder) FindOxygen(locations map[Coordinate]bool, walls map[Coordinate]bool) (bool, []*OxygenFinderIntCoder) {
 optLoop:
 	for {
 		execution := of.codes[of.idx]
@@ -84,12 +84,12 @@ optLoop:
 			of.idx += 4
 		case 3:
 			newOxygenFinders := make([]*OxygenFinderIntCoder, 0, 4)
-			for _, movement := range of.getMovements() {
-				nextPlace := of.position.add(movement.move)
-				if visited[nextPlace] {
+			for _, movement := range of.GetMovements() {
+				nextPlace := of.position.Add(movement.Move)
+				if locations[nextPlace] || walls[nextPlace] {
 					continue
 				}
-				oxygenFinderCopy := of.copy(movement.move)
+				oxygenFinderCopy := of.copy(movement.Move)
 				oxygenFinderCopy.updateWithInput(movement.input, execution)
 				newOxygenFinders = append(newOxygenFinders, &oxygenFinderCopy)
 			}
@@ -98,10 +98,10 @@ optLoop:
 			output := of.codes[of.getIdxFromMode(of.codes, execution, 1)]
 			switch output {
 			case 0: // wall
-				visited[of.position] = true
+				walls[of.position] = true
 				return false, nil
 			case 1: // ok - continue search
-				visited[of.position] = true
+				locations[of.position] = true
 			case 2:
 				return true, nil
 			}
