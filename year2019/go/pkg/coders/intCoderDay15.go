@@ -31,15 +31,6 @@ func CreateOxygenFinderIntCoder(codesInput []int) *OxygenFinderIntCoder {
 	}
 }
 
-func (of OxygenFinderIntCoder) GetMovements() []movement {
-	return []movement{
-		{1, Coordinate{0, 1}},
-		{2, Coordinate{0, -1}},
-		{3, Coordinate{-1, 0}},
-		{4, Coordinate{1, 0}},
-	}
-}
-
 func (of *OxygenFinderIntCoder) GetPosition() Coordinate {
 	return of.position
 }
@@ -84,7 +75,7 @@ optLoop:
 			of.idx += 4
 		case 3:
 			newOxygenFinders := make([]*OxygenFinderIntCoder, 0, 4)
-			for _, movement := range of.GetMovements() {
+			for _, movement := range GetMovements() {
 				nextPlace := of.position.Add(movement.Move)
 				if locations[nextPlace] || walls[nextPlace] {
 					continue
@@ -142,4 +133,13 @@ optLoop:
 		}
 	}
 	panic("Should not finish with 99")
+}
+
+func GetMovements() []movement {
+	return []movement{
+		{1, Coordinate{0, 1}},
+		{2, Coordinate{0, -1}},
+		{3, Coordinate{-1, 0}},
+		{4, Coordinate{1, 0}},
+	}
 }

@@ -16,17 +16,18 @@ func main() {
 	}
 	fmt.Printf("Part 1: %d\n", oxygenDetectedDefinition.coder.GetMovementCount())
 
-	countToFillOxygen := fillOxygen(oxygenDetectedDefinition)
+	allOxygen := findAllOxygen(intCodes)
+	countToFillOxygen := fillOxygen(allOxygen)
 	fmt.Printf("Part 2: %d\n", countToFillOxygen)
 }
 
-func fillOxygen(detected *oxygenDetected) int {
+func fillOxygen(detected allOxygen) int {
 	oxygenToFill := make(map[coders.Coordinate]bool, len(detected.locations))
 	for key, value := range detected.locations {
 		oxygenToFill[key] = value
 	}
 
-	position := detected.coder.GetPosition()
+	position := detected.position
 	neighbors := []coders.Coordinate{position}
 
 	countToFillOxygen := 0
@@ -34,7 +35,7 @@ func fillOxygen(detected *oxygenDetected) int {
 
 		neighborsNew := make([]coders.Coordinate, 0)
 		for _, oldNeighbor := range neighbors {
-			for _, movement := range detected.coder.GetMovements() {
+			for _, movement := range coders.GetMovements() {
 				neighbor := movement.Move.Add(oldNeighbor)
 				if !oxygenToFill[neighbor] {
 					continue
@@ -47,6 +48,46 @@ func fillOxygen(detected *oxygenDetected) int {
 		countToFillOxygen++
 	}
 	return countToFillOxygen
+}
+
+func findAllOxygen(codesInput []int) allOxygen {
+	oxygenFinder := coders.CreateOxygenFinderIntCoder(codesInput)
+	pq := PriorityQueue{&OxygenFinderItem{
+		value:    oxygenFinder,
+		priority: 0,
+		index:    0,
+	}}
+	var oxygenSystem coders.Coordinate
+	locations := map[coders.Coordinate]bool{}
+	walls := map[coders.Coordinate]bool{}
+	for pq.Len() > 0 {
+		item := heap.Pop(&pq).(*OxygenFinderItem)
+
+		if locations[item.value.GetPosition()] || walls[item.value.GetPosition()] {
+			continue
+		}
+
+		foundOxygen, finders := item.value.FindOxygen(locations, walls)
+
+		if foundOxygen && oxygenSystem == (coders.Coordinate{}) {
+			oxygenSystem = item.value.GetPosition()
+		}
+
+		for _, finder := range finders {
+			heap.Push(&pq, &OxygenFinderItem{
+				value:    finder,
+				priority: finder.GetMovementCount(),
+			})
+		}
+
+	}
+	return allOxygen{oxygenSystem, locations, walls}
+}
+
+type allOxygen struct {
+	position  coders.Coordinate
+	locations map[coders.Coordinate]bool
+	walls     map[coders.Coordinate]bool
 }
 
 type oxygenDetected struct {
