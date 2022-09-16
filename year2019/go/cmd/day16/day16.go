@@ -15,9 +15,9 @@ func init() {
 
 func main() {
 	input := readData()
-	lastEight := cleanSignal(input, 100)
+	firstEight := cleanSignal(input, 100)
 
-	fmt.Printf("Part 1: %d\n", lastEight)
+	fmt.Printf("Part 1: %s\n", firstEight)
 }
 
 func readData() string {
@@ -29,7 +29,7 @@ func readData() string {
 	return input
 }
 
-func cleanSignal(input string, phaseCount int) int {
+func cleanSignal(input string, phaseCount int) string {
 	inputLength := len(input)
 
 	// Act
@@ -54,22 +54,19 @@ func cleanSignal(input string, phaseCount int) int {
 		output = newOutput
 	}
 
-	outputAfterPhase := toOneInt(output)
-	lastEight := outputAfterPhase % 100_000_000
-	return lastEight
+	outputAfterPhase := toOneString(output)
+	firstEight := outputAfterPhase[:8]
+
+	return firstEight
 }
 
-func toOneInt(output []int) int {
+func toOneString(output []int) string {
 	stringOutput := make([]string, len(output))
 	for i, out := range output {
 		stringOutput[i] = strconv.Itoa(out)
 	}
 	oneString := strings.Join(stringOutput, "")
-	outOneNumber, err := strconv.Atoi(oneString)
-	if err != nil {
-		panic(err)
-	}
-	return outOneNumber
+	return oneString
 }
 
 // The idx and row is indexed from 0.
