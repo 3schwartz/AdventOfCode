@@ -32,7 +32,6 @@ func readData() string {
 func cleanSignal(input string, phaseCount int) string {
 	inputLength := len(input)
 
-	// Act
 	output := make([]int, inputLength)
 	for i, v := range input {
 		output[i] = int(v - '0')
