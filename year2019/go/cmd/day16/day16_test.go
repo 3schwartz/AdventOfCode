@@ -6,26 +6,23 @@ import (
 
 func Test_givenPhaseCountWhenGivenInputSignalThenCorrectOutput(t *testing.T) {
 	data := []struct {
-		name          string
-		phaseCount    int
-		inputRepeated int
-		offset        int
-		input         string
-		expected      string
+		name       string
+		phaseCount int
+		input      string
+		expected   string
 	}{
-		// {"1", 1, 1, 0, "12345678", "48226158"},
-		// {"2", 2, 1, 0, "12345678", "34040438"},
-		// {"3", 3, 1, 0, "12345678", "03415518"},
-		// {"4", 4, 1, 0, "12345678", "01029498"},
-		// {"a", 100, 1, 0, "80871224585914546619083218645595", "24176176"},
-		// {"b", 100, 1, 0, "19617804207202209144916044189917", "73745418"},
-		// {"c", 100, 1, 0, "69317163492948606335995924319873", "52432133"},
-		{"repeat_a", 100, 10_000, 303673, "03036732577212944063491565474664", "84462026"},
+		{"1", 1, "12345678", "48226158"},
+		{"2", 2, "12345678", "34040438"},
+		{"3", 3, "12345678", "03415518"},
+		{"4", 4, "12345678", "01029498"},
+		{"a", 100, "80871224585914546619083218645595", "24176176"},
+		{"b", 100, "19617804207202209144916044189917", "73745418"},
+		{"c", 100, "69317163492948606335995924319873", "52432133"},
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
 			// Act
-			firstEight := cleanSignal(d.input, d.phaseCount, d.inputRepeated, d.offset)
+			firstEight := cleanSignal(d.input, d.phaseCount)
 
 			// Assert
 			if firstEight != d.expected {
