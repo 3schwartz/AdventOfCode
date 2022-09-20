@@ -15,9 +15,24 @@ func init() {
 
 func main() {
 	input := readData()
-	firstEight := cleanSignal(input, 100)
 
-	fmt.Printf("Part 1: %s\n", firstEight)
+	// firstEight := cleanSignal(input, 100, 1, 0)
+
+	// fmt.Printf("Part 1: %s\n", firstEight)
+
+	offset := getOffsetFromBeginning(input)
+
+	eightByOffset := cleanSignal(input, 100, 10_000, offset)
+
+	fmt.Printf("Part 2: %s\n", eightByOffset)
+}
+
+func getOffsetFromBeginning(input string) int {
+	offset, err := strconv.Atoi(input[:7])
+	if err != nil {
+		panic(err)
+	}
+	return offset
 }
 
 func readData() string {
@@ -29,18 +44,22 @@ func readData() string {
 	return input
 }
 
-func cleanSignal(input string, phaseCount int) string {
+func cleanSignal(input string, phaseCount int, inputRepeated int, offset int) string {
 	inputLength := len(input)
+	totalRowLength := inputLength * inputRepeated
 
-	output := make([]int, inputLength)
-	for i, v := range input {
-		output[i] = int(v - '0')
+	output := make([]int, totalRowLength)
+	for j := 0; j < inputRepeated; j++ {
+		for i, v := range input {
+			output[i+(j*inputLength)] = int(v - '0')
+		}
 	}
+
 	for i := 0; i < phaseCount; i++ {
-		newOutput := make([]int, inputLength)
-		for row := 0; row < inputLength; row++ {
+		newOutput := make([]int, totalRowLength)
+		for row := 0; row < totalRowLength; row++ {
 			var currentOutput int
-			for idx := 0; idx < inputLength; idx++ {
+			for idx := 0; idx < totalRowLength; idx++ {
 				toApply := findPatternToApply(idx, row, pattern)
 				currentOutput += toApply * output[idx]
 			}
@@ -54,7 +73,7 @@ func cleanSignal(input string, phaseCount int) string {
 	}
 
 	outputAfterPhase := toOneString(output)
-	firstEight := outputAfterPhase[:8]
+	firstEight := outputAfterPhase[offset:(8 + offset)]
 
 	return firstEight
 }
