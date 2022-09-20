@@ -15,9 +15,54 @@ func init() {
 
 func main() {
 	input := readData()
-	firstEight := cleanSignal(input, 100)
 
+	firstEight := cleanSignal(input, 100)
 	fmt.Printf("Part 1: %s\n", firstEight)
+
+	firstEightAfterOffset := cleanSignalByOffset(input, 100)
+	fmt.Printf("Part 2: %s\n", firstEightAfterOffset)
+}
+
+func cleanSignalByOffset(input string, phaseCount int) string {
+	inputRepeated := 10_000
+	offset := getOffsetFromBeginning(input)
+
+	inputLength := len(input)
+	totalRowLength := inputLength * inputRepeated
+
+	output := make([]int, totalRowLength)
+	for j := 0; j < inputRepeated; j++ {
+		for i, v := range input {
+			output[i+(j*inputLength)] = int(v - '0')
+		}
+	}
+
+	subsetLength := totalRowLength - offset
+	subset := make([]int, subsetLength)
+	for i := offset; i < totalRowLength; i++ {
+		subset[i-offset] = output[i]
+	}
+
+	for i := 0; i < phaseCount; i++ {
+		total := 0
+		for row := subsetLength - 1; row >= 0; row-- {
+			total += subset[row]
+			subset[row] = total % 10
+		}
+	}
+
+	outputAfterPhase := toOneString(subset)
+	firstEight := outputAfterPhase[:8]
+
+	return firstEight
+}
+
+func getOffsetFromBeginning(input string) int {
+	offset, err := strconv.Atoi(input[:7])
+	if err != nil {
+		panic(err)
+	}
+	return offset
 }
 
 func readData() string {

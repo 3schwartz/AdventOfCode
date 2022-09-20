@@ -4,6 +4,30 @@ import (
 	"testing"
 )
 
+func Test_givenOffsetFromBeginningWhenGivenInputSignalThenCorrectOutput(t *testing.T) {
+	data := []struct {
+		name       string
+		phaseCount int
+		input      string
+		expected   string
+	}{
+		{"a", 100, "03036732577212944063491565474664", "84462026"},
+		{"b", 100, "02935109699940807407585447034323", "78725270"},
+		{"c", 100, "03081770884921959731165446850517", "53553731"},
+	}
+	for _, d := range data {
+		t.Run(d.name, func(t *testing.T) {
+			// Act
+			firstEightAfterOffset := cleanSignalByOffset(d.input, 100)
+
+			// Assert
+			if firstEightAfterOffset != d.expected {
+				t.Errorf("wrong output: %s", firstEightAfterOffset)
+			}
+		})
+	}
+}
+
 func Test_givenPhaseCountWhenGivenInputSignalThenCorrectOutput(t *testing.T) {
 	data := []struct {
 		name       string
