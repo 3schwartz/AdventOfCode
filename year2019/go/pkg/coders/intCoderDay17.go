@@ -53,8 +53,6 @@ optLoop:
 			ascii.idx += 4
 		case 3:
 			panic("shouldn't be called")
-			// codes[ascii.getIdxFromMode(codes, execution, 1)] = input
-			// ascii.idx += 2
 		case 4:
 			output := codes[ascii.getIdxFromMode(codes, execution, 1)]
 			switch output {
