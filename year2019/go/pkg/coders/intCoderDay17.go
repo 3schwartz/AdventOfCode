@@ -1,9 +1,72 @@
 package coders
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+	"strconv"
+)
 
 type ASCIIIntCoder struct {
 	IntCoder
+}
+
+func (ASCIIIntCoder) findDirection(robot int) Coordinate {
+	switch robot {
+	case '^':
+		return Coordinate{0, -1}
+	case 'v':
+		return Coordinate{0, 1}
+	case '<':
+		return Coordinate{-1, 0}
+	case '>':
+		return Coordinate{1, 0}
+	default:
+		panic(fmt.Sprintf("doesn't not robot rune: %d", robot))
+	}
+}
+
+func (ascii ASCIIIntCoder) GetMovements(cameraMap map[Coordinate]int, robot int, robotPosition Coordinate) []string {
+	direction := ascii.findDirection(robot)
+	position := robotPosition
+	var straightCount int
+	movements := make([]string, 0)
+	for {
+		straight := position.Add(direction)
+		if cameraMap[straight] == '#' {
+			straightCount++
+			position = straight
+			continue
+		}
+		if straightCount != 0 {
+			movements = append(movements, strconv.Itoa(straightCount))
+			straightCount = 0
+		}
+
+		// Coordinate system in opposite direction
+		leftRotate := Coordinate{direction.y, -1 * direction.x}
+		if cameraMap[position.Add(leftRotate)] == '#' {
+			movements = append(movements, "L")
+			direction = leftRotate
+			continue
+		}
+		rightRotate := Coordinate{-1 * direction.y, direction.x}
+		if cameraMap[position.Add(rightRotate)] == '#' {
+			movements = append(movements, "R")
+			direction = rightRotate
+			continue
+		}
+		break
+	}
+	return movements
+}
+
+func (ASCIIIntCoder) GetRobotPosition(cameraMap map[Coordinate]int) (int, Coordinate, error) {
+	for key, value := range cameraMap {
+		if value == '^' || value == '<' || value == '>' || value == 'v' {
+			return value, key, nil
+		}
+	}
+	return 0, Coordinate{}, errors.New("couldn't find robot")
 }
 
 func (ascii ASCIIIntCoder) Print(cameraMap map[Coordinate]int) {
