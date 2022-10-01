@@ -15,11 +15,17 @@ func (ascii ASCIIIntCoder) Print(cameraMap map[Coordinate]int) {
 			if !ok {
 				break
 			}
-			currentPrint := "."
-			if output == 35 {
-				currentPrint = "#"
+			switch output {
+			case 35:
+				fmt.Print("#")
+			case 94:
+				fmt.Print("^")
+			case 46:
+				fmt.Print(".")
+			default:
+				panic(fmt.Sprintf("output not known: %d", output))
 			}
-			fmt.Print(currentPrint)
+
 			coord = Coordinate{coord.x + 1, coord.y}
 		}
 		fmt.Print("\n")
