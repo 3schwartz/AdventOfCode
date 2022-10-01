@@ -6,7 +6,33 @@ type ASCIIIntCoder struct {
 	IntCoder
 }
 
-func (ASCIIIntCoder) FindScaffoldIntersectionsAboveThreshold(cameraMap map[Coordinate]int, threshold int) int {
+func (ascii ASCIIIntCoder) Print(cameraMap map[Coordinate]int) {
+	fmt.Print("\n")
+	coord := Coordinate{}
+	for {
+		for {
+			output, ok := cameraMap[coord]
+			if !ok {
+				break
+			}
+			currentPrint := "."
+			if output == 35 {
+				currentPrint = "#"
+			}
+			fmt.Print(currentPrint)
+			coord = Coordinate{coord.x + 1, coord.y}
+		}
+		fmt.Print("\n")
+		coord = Coordinate{0, coord.y + 1}
+		_, hasNextLine := cameraMap[coord]
+		if !hasNextLine {
+			break
+		}
+	}
+	fmt.Print("\n")
+}
+
+func (ascii ASCIIIntCoder) FindScaffoldIntersections(cameraMap map[Coordinate]int) int {
 	var sum int
 	for coordinate, v := range cameraMap {
 		if v != 35 {
