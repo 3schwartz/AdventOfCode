@@ -35,7 +35,7 @@ func main() {
 
 	movementLogic, err := findMovementLogic(movements)
 	if err != nil {
-		// panic(err)
+		panic(err)
 	}
 	input := createInput(movementLogic)
 	codes[0] = "2"
@@ -44,19 +44,6 @@ func main() {
 		panic(err)
 	}
 	fmt.Printf("Part 2: %d", dust)
-
-	fmt.Println(len("10"))
-
-	testSlice := []int{1, 2, 3}
-	fmt.Println(len(testSlice))
-	fmt.Println(testSlice[1:3])
-	// TODO: Find patterns
-	bar := "R"
-	foo := 'R'
-	fmt.Println(bar)
-	fmt.Println(bar[0])
-	fmt.Println(foo)
-
 }
 
 func createInput(logic movementLogic) []int {
@@ -65,6 +52,7 @@ func createInput(logic movementLogic) []int {
 	input = append(input, createLine(logic.A)...)
 	input = append(input, createLine(logic.B)...)
 	input = append(input, createLine(logic.C)...)
+	input = append(input, 'n')
 	return input
 }
 
@@ -93,7 +81,6 @@ func findMovementLogic(route []string) (movementLogic, error) {
 	for a := 1; a <= 10; a++ {
 		endA := a
 		if endA > length {
-			fmt.Println("A")
 			break
 		}
 		aFunc := movementFunction{
@@ -114,7 +101,6 @@ func findMovementLogic(route []string) (movementLogic, error) {
 				break
 			}
 			if endB > length {
-				fmt.Println("B")
 				break
 			}
 			bFunc := movementFunction{
@@ -135,7 +121,6 @@ func findMovementLogic(route []string) (movementLogic, error) {
 					break
 				}
 				if endC > length {
-					fmt.Println("C")
 					break
 				}
 				cFunc := movementFunction{
