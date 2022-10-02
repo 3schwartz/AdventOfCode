@@ -135,6 +135,10 @@ func (ascii *ASCIIIntCoder) createCodes(codesAsStrings []string) map[int]int {
 }
 
 func (ascii *ASCIIIntCoder) CreateCameraMap(codesAsStrings []string) map[Coordinate]int {
+	defer func() {
+		ascii.idx = 0
+		ascii.relativeBase = 0
+	}()
 	codes := ascii.createCodes(codesAsStrings)
 	currentPosition := Coordinate{}
 	outputMap := map[Coordinate]int{}
@@ -204,4 +208,68 @@ optLoop:
 	}
 
 	return outputMap
+}
+
+func (ascii *ASCIIIntCoder) ReportDust(codesAsStrings []string, input []int) (int, error) {
+	defer func() {
+		ascii.idx = 0
+		ascii.relativeBase = 0
+	}()
+	var inputIdx int
+	codes := ascii.createCodes(codesAsStrings)
+optLoop:
+	for {
+		execution := codes[ascii.idx]
+		switch optCode := execution % 100; optCode {
+		case 1:
+			codes[ascii.getIdxFromMode(codes, execution, 3)] =
+				codes[ascii.getIdxFromMode(codes, execution, 2)] + codes[ascii.getIdxFromMode(codes, execution, 1)]
+			ascii.idx += 4
+		case 2:
+			codes[ascii.getIdxFromMode(codes, execution, 3)] = codes[ascii.getIdxFromMode(codes, execution, 2)] * codes[ascii.getIdxFromMode(codes, execution, 1)]
+			ascii.idx += 4
+		case 3:
+			codes[ascii.getIdxFromMode(codes, execution, 1)] = input[inputIdx]
+			ascii.idx += 2
+			inputIdx++
+		case 4:
+			output := codes[ascii.getIdxFromMode(codes, execution, 1)]
+			return output, nil
+		case 5:
+			if codes[ascii.getIdxFromMode(codes, execution, 1)] != 0 {
+				ascii.idx = codes[ascii.getIdxFromMode(codes, execution, 2)]
+				break
+			}
+			ascii.idx += 3
+		case 6:
+			if codes[ascii.getIdxFromMode(codes, execution, 1)] == 0 {
+				ascii.idx = codes[ascii.getIdxFromMode(codes, execution, 2)]
+				break
+			}
+			ascii.idx += 3
+		case 7:
+			var toAssign int
+			if codes[ascii.getIdxFromMode(codes, execution, 1)] < codes[ascii.getIdxFromMode(codes, execution, 2)] {
+				toAssign = 1
+			}
+			codes[ascii.getIdxFromMode(codes, execution, 3)] = toAssign
+			ascii.idx += 4
+		case 8:
+			var toAssign int
+			if codes[ascii.getIdxFromMode(codes, execution, 1)] == codes[ascii.getIdxFromMode(codes, execution, 2)] {
+				toAssign = 1
+			}
+			codes[ascii.getIdxFromMode(codes, execution, 3)] = toAssign
+			ascii.idx += 4
+		case 9:
+			ascii.relativeBase += codes[ascii.getIdxFromMode(codes, execution, 1)]
+			ascii.idx += 2
+		case 99:
+			break optLoop
+		default:
+			panic(fmt.Sprintf("OptCode not known: %d", optCode))
+		}
+	}
+
+	return 0, errors.New("couldn't find output dust")
 }

@@ -16,7 +16,7 @@ func main() {
 
 	fmt.Printf("Part 1: %d", scaffoldThreshold)
 
-	intCoder.Print(cameraMap)
+	// intCoder.Print(cameraMap)
 
 	robot, position, err := intCoder.GetRobotPosition(cameraMap)
 	if err != nil {
@@ -33,10 +33,17 @@ func main() {
 	fmt.Println()
 	fmt.Println("---")
 
-	// movementLogic, err := findMovementLogic(movements)
+	movementLogic, err := findMovementLogic(movements)
 	if err != nil {
 		panic(err)
 	}
+	input := createInput(movementLogic)
+	codes[0] = "2"
+	dust, err := intCoder.ReportDust(codes, input)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Part 2: %d", dust)
 
 	fmt.Println(len("10"))
 
@@ -52,13 +59,28 @@ func main() {
 
 }
 
-// func generateInput(logic movementLogic) {
-// 	input := make([]int, 0)
-// 	lengthRoutine := len(logic)
-// 	for i, routine := range logic.Routine {
-// 		input =
-// 	}
-// }
+func createInput(logic movementLogic) []int {
+	input := make([]int, 0)
+	input = append(input, createLine(logic.Routine)...)
+	input = append(input, createLine(logic.A)...)
+	input = append(input, createLine(logic.B)...)
+	input = append(input, createLine(logic.C)...)
+	return input
+}
+
+func createLine(line []rune) []int {
+	input := make([]int, 0)
+	lengthLine := len(line)
+	for i, routine := range line {
+		input = append(input, int(routine))
+		if i == lengthLine {
+			input = append(input, 10)
+			break
+		}
+		input = append(input, 44)
+	}
+	return input
+}
 
 func findMovementLogic(route []rune) (movementLogic, error) {
 	length := len(route)
