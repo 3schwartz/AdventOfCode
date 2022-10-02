@@ -24,35 +24,40 @@ func main() {
 	}
 
 	movements := intCoder.GetMovements(cameraMap, robot, position)
-
-	fmt.Println("Print movements:")
-	for _, movement := range movements {
-		fmt.Print(movement)
-
-	}
-	fmt.Println()
-	fmt.Println("---")
+	printMovements(movements)
 
 	movementLogic, err := findMovementLogic(movements)
 	if err != nil {
 		panic(err)
 	}
+
 	input := createInput(movementLogic)
 	codes[0] = "2"
-	dust, err := intCoder.ReportDust(codes, input)
-	if err != nil {
-		panic(err)
+	dust := intCoder.ReportDust(codes, input)
+
+	fmt.Printf("Part 2: %d", dust[len(dust)-1])
+}
+
+func printMovements(movements []string) {
+	fmt.Println("Print movements:")
+	for _, movement := range movements {
+		fmt.Print(movement)
 	}
-	fmt.Printf("Part 2: %d", dust)
+	fmt.Println()
+	fmt.Println("---")
 }
 
 func createInput(logic movementLogic) []int {
 	input := make([]int, 0)
-	input = append(input, createLine(logic.Routine)...)
-	input = append(input, createLine(logic.A)...)
-	input = append(input, createLine(logic.B)...)
-	input = append(input, createLine(logic.C)...)
-	input = append(input, 'n')
+	routine := createLine(logic.Routine)
+	input = append(input, routine...)
+	a := createLine(logic.A)
+	input = append(input, a...)
+	b := createLine(logic.B)
+	input = append(input, b...)
+	c := createLine(logic.C)
+	input = append(input, c...)
+	input = append(input, 'n', 10)
 	return input
 }
 
@@ -60,18 +65,14 @@ func createLine(line []string) []int {
 	input := make([]int, 0)
 	lengthLine := len(line)
 	for i, routine := range line {
-		lengthRoutine := len(routine)
-		for j, elm := range routine {
+		for _, elm := range routine {
 			input = append(input, int(elm))
-			if j != lengthRoutine-1 {
-				input = append(input, 44)
-			}
 		}
 		if i == lengthLine-1 {
 			input = append(input, 10)
 			break
 		}
-		input = append(input, 44)
+		input = append(input, ',')
 	}
 	return input
 }
@@ -83,9 +84,14 @@ func findMovementLogic(route []string) (movementLogic, error) {
 		if endA > length {
 			break
 		}
+		partA := route[0:endA]
+		if !isLessThanMemory(partA) {
+			break
+		}
+
 		aFunc := movementFunction{
-			route[0:endA],
-			len(route[0:endA]),
+			partA,
+			len(partA),
 		}
 		for b := 1; b <= 10; b++ {
 			endB := endA + b
@@ -103,9 +109,14 @@ func findMovementLogic(route []string) (movementLogic, error) {
 			if endB > length {
 				break
 			}
+			partB := route[endA:endB]
+			if !isLessThanMemory(partB) {
+				break
+			}
+
 			bFunc := movementFunction{
-				route[endA:endB],
-				len(route[endA:endB]),
+				partB,
+				len(partB),
 			}
 			for c := 1; c <= 10; c++ {
 				endC := endB + c
@@ -123,9 +134,14 @@ func findMovementLogic(route []string) (movementLogic, error) {
 				if endC > length {
 					break
 				}
+				partC := route[endB:endC]
+				if !isLessThanMemory(partC) {
+					break
+				}
+
 				cFunc := movementFunction{
-					route[endB:endC],
-					len(route[endB:endC]),
+					partC,
+					len(partC),
 				}
 
 				var foundLength int
@@ -146,9 +162,10 @@ func findMovementLogic(route []string) (movementLogic, error) {
 						foundLength += cFunc.length
 						continue
 					}
-					if len(movementLogicResult.Routine) > 10 {
+					if !isLessThanMemory(movementLogicResult.Routine) {
 						break
 					}
+
 					if foundLength >= length-1 {
 						movementLogicResult.A = aFunc.input
 						movementLogicResult.B = bFunc.input
@@ -161,6 +178,15 @@ func findMovementLogic(route []string) (movementLogic, error) {
 		}
 	}
 	return movementLogic{}, errors.New("not able to find movement logic")
+}
+
+func isLessThanMemory(sequence []string) bool {
+	commas := len(sequence) - 1
+	var asciis int
+	for _, v := range sequence {
+		asciis += len(v)
+	}
+	return commas+asciis <= 20
 }
 
 func doesFuncFit(route []string, moveFunc movementFunction, foundLength int, length int) bool {

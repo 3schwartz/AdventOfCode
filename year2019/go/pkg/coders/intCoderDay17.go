@@ -207,13 +207,14 @@ optLoop:
 	return outputMap
 }
 
-func (ascii *ASCIIIntCoder) ReportDust(codesAsStrings []string, input []int) (int, error) {
+func (ascii *ASCIIIntCoder) ReportDust(codesAsStrings []string, input []int) []int {
 	defer func() {
 		ascii.idx = 0
 		ascii.relativeBase = 0
 	}()
 	var inputIdx int
 	codes := ascii.createCodes(codesAsStrings)
+	outputs := make([]int, 0)
 optLoop:
 	for {
 		execution := codes[ascii.idx]
@@ -231,7 +232,9 @@ optLoop:
 			inputIdx++
 		case 4:
 			output := codes[ascii.getIdxFromMode(codes, execution, 1)]
-			return output, nil
+
+			outputs = append(outputs, output)
+			ascii.idx += 2
 		case 5:
 			if codes[ascii.getIdxFromMode(codes, execution, 1)] != 0 {
 				ascii.idx = codes[ascii.getIdxFromMode(codes, execution, 2)]
@@ -268,5 +271,5 @@ optLoop:
 		}
 	}
 
-	return 0, errors.New("couldn't find output dust")
+	return outputs
 }

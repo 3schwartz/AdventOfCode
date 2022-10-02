@@ -82,17 +82,3 @@ func Test_givenRoute_WhenFindingRoutineAndFunctions_ThenCorrect(t *testing.T) {
 		})
 	}
 }
-
-func Test_whenGivenRouteFrom_ThenNotError(t *testing.T) {
-	//Arrange
-	route := "L,12,L,8,R,12,L,10,L,8,L,12,R,12,L,12,L,8,R,12,R,12,L,8,L,10,L,12,L,8,R,12,L,12,L,8,R,12,R,12,L,8,L,10,L,10,L,8,L,12,R,12,R,12,L,8,L,10,L,10,L,8,L,12,R,12"
-	routeElements := strings.Split(route, ",")
-
-	// Act
-	_, err := findMovementLogic(routeElements)
-
-	// Assert
-	if err != nil {
-		t.Error(err)
-	}
-}
