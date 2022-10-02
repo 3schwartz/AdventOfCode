@@ -68,18 +68,12 @@ func createInput(logic movementLogic) []int {
 	return input
 }
 
-func createLine(line []string) []int {
+func createLine(line []rune) []int {
 	input := make([]int, 0)
 	lengthLine := len(line)
 	for i, routine := range line {
-		lengthRoutine := len(routine)
-		for j, elm := range routine {
-			input = append(input, int(elm))
-			if j != lengthRoutine-1 {
-				input = append(input, 44)
-			}
-		}
-		if i == lengthLine-1 {
+		input = append(input, int(routine))
+		if i == lengthLine {
 			input = append(input, 10)
 			break
 		}
@@ -88,7 +82,7 @@ func createLine(line []string) []int {
 	return input
 }
 
-func findMovementLogic(route []string) (movementLogic, error) {
+func findMovementLogic(route []rune) (movementLogic, error) {
 	length := len(route)
 	for a := 1; a <= 10; a++ {
 		if a > length {
@@ -121,17 +115,17 @@ func findMovementLogic(route []string) (movementLogic, error) {
 				movementLogicResult := movementLogic{}
 				for {
 					if doesFuncFit(route, aFunc, foundLength, length) {
-						movementLogicResult.Routine = append(movementLogicResult.Routine, "A")
+						movementLogicResult.Routine = append(movementLogicResult.Routine, 'A')
 						foundLength += aFunc.length
 						continue
 					}
 					if doesFuncFit(route, bFunc, foundLength, length) {
-						movementLogicResult.Routine = append(movementLogicResult.Routine, "B")
+						movementLogicResult.Routine = append(movementLogicResult.Routine, 'B')
 						foundLength += bFunc.length
 						continue
 					}
 					if doesFuncFit(route, cFunc, foundLength, length) {
-						movementLogicResult.Routine = append(movementLogicResult.Routine, "C")
+						movementLogicResult.Routine = append(movementLogicResult.Routine, 'C')
 						foundLength += cFunc.length
 						continue
 					}
@@ -149,7 +143,7 @@ func findMovementLogic(route []string) (movementLogic, error) {
 	return movementLogic{}, errors.New("not able to find movement logic")
 }
 
-func doesFuncFit(route []string, moveFunc movementFunction, foundLength int, length int) bool {
+func doesFuncFit(route []rune, moveFunc movementFunction, foundLength int, length int) bool {
 	if foundLength+moveFunc.length <= length && reflect.DeepEqual(moveFunc.input, route[foundLength:foundLength+moveFunc.length]) {
 		return true
 	}
@@ -157,13 +151,13 @@ func doesFuncFit(route []string, moveFunc movementFunction, foundLength int, len
 }
 
 type movementFunction struct {
-	input  []string
+	input  []rune
 	length int
 }
 
 type movementLogic struct {
-	Routine []string
-	A       []string
-	B       []string
-	C       []string
+	Routine []rune
+	A       []rune
+	B       []rune
+	C       []rune
 }
