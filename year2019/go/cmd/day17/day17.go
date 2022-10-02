@@ -14,7 +14,7 @@ func main() {
 
 	fmt.Printf("Part 1: %d", scaffoldThreshold)
 
-	intCoder.Print(cameraMap)
+	// intCoder.Print(cameraMap)
 
 	robot, position, err := intCoder.GetRobotPosition(cameraMap)
 	if err != nil {
@@ -31,10 +31,16 @@ func main() {
 	fmt.Println()
 	fmt.Println("---")
 
+	fmt.Println(len("10"))
+
+	testSlice := []int{1, 2, 3}
+	fmt.Println(len(testSlice))
+	fmt.Println(testSlice[1:3])
 	// TODO: Find patterns
 	bar := "R"
 	foo := 'R'
 	fmt.Println(bar)
 	fmt.Println(bar[0])
 	fmt.Println(foo)
+
 }
