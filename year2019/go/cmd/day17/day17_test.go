@@ -26,37 +26,73 @@ func Test_Part1(t *testing.T) {
 }
 
 func Test_givenRoute_WhenFindingRoutineAndFunctions_ThenCorrect(t *testing.T) {
-	// Arrange
-	expectedMovementLogic := movementLogic{
-		[]string{"A", "B", "C", "B", "A", "C"},
-		[]string{"R", "8", "R", "8"},
-		[]string{"R", "4", "R", "4"},
-		[]string{"R", "8", "L", "6", "L", "2"},
+	data := []struct {
+		name                  string
+		route                 string
+		expectedMovementLogic movementLogic
+	}{
+		{
+			"singleDigits",
+			"R,8,R,8,R,4,R,4,R,8,L,6,L,2,R,4,R,4,R,8,R,8,R,8,L,6,L,2",
+			movementLogic{
+				[]string{"A", "A", "B", "A", "C", "B", "A", "A", "A", "C"},
+				[]string{"R", "8"},
+				[]string{"R", "4", "R", "4"},
+				[]string{"L", "6", "L", "2"},
+			},
+		},
+		{
+			"part2",
+			"L,12,L,8,R,12,L,10,L,8,L,12,R,12,L,12,L,8,R,12,R,12,L,8,L,10,L,12,L,8,R,12,L,12,L,8,R,12,R,12,L,8,L,10,L,10,L,8,L,12,R,12,R,12,L,8,L,10,L,10,L,8,L,12,R,12",
+			movementLogic{
+				[]string{"A", "B", "A", "C", "A", "A", "C", "B", "C", "B"},
+				[]string{"L", "12", "L", "8", "R", "12"},
+				[]string{"L", "10", "L", "8", "L", "12", "R", "12"},
+				[]string{"R", "12", "L", "8", "L", "10"},
+			},
+		},
 	}
+	for _, d := range data {
+		t.Run(d.name, func(t *testing.T) {
+			//Arrange
+			routeElements := strings.Split(d.route, ",")
 
-	route := "R,8,R,8,R,4,R,4,R,8,L,6,L,2,R,4,R,4,R,8,R,8,R,8,L,6,L,2"
+			// Act
+			movementLogic, err := findMovementLogic(routeElements)
+
+			// Assert
+			if err != nil {
+				t.Error(err)
+			}
+			if !reflect.DeepEqual(movementLogic.Routine, d.expectedMovementLogic.Routine) {
+				t.Error("routine not equal")
+			}
+			if !reflect.DeepEqual(movementLogic.A, d.expectedMovementLogic.A) {
+				t.Error("A not equal")
+			}
+			if !reflect.DeepEqual(movementLogic.B, d.expectedMovementLogic.B) {
+				t.Error("B not equal")
+			}
+			if !reflect.DeepEqual(movementLogic.C, d.expectedMovementLogic.C) {
+				t.Error("C not equal")
+			}
+			if diff := cmp.Diff(d.expectedMovementLogic, movementLogic); diff != "" {
+				t.Error(diff)
+			}
+		})
+	}
+}
+
+func Test_whenGivenRouteFrom_ThenNotError(t *testing.T) {
+	//Arrange
+	route := "L,12,L,8,R,12,L,10,L,8,L,12,R,12,L,12,L,8,R,12,R,12,L,8,L,10,L,12,L,8,R,12,L,12,L,8,R,12,R,12,L,8,L,10,L,10,L,8,L,12,R,12,R,12,L,8,L,10,L,10,L,8,L,12,R,12"
 	routeElements := strings.Split(route, ",")
 
 	// Act
-	movementLogic, err := findMovementLogic(routeElements)
+	_, err := findMovementLogic(routeElements)
 
 	// Assert
 	if err != nil {
 		t.Error(err)
-	}
-	if !reflect.DeepEqual(movementLogic.Routine, expectedMovementLogic.Routine) {
-		t.Error("routine not equal")
-	}
-	if !reflect.DeepEqual(movementLogic.A, expectedMovementLogic.A) {
-		t.Error("A not equal")
-	}
-	if !reflect.DeepEqual(movementLogic.B, expectedMovementLogic.B) {
-		t.Error("B not equal")
-	}
-	if !reflect.DeepEqual(movementLogic.C, expectedMovementLogic.C) {
-		t.Error("C not equal")
-	}
-	if diff := cmp.Diff(expectedMovementLogic, movementLogic); diff != "" {
-		t.Error(diff)
 	}
 }

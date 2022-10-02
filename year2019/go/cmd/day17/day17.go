@@ -16,7 +16,7 @@ func main() {
 
 	fmt.Printf("Part 1: %d", scaffoldThreshold)
 
-	// intCoder.Print(cameraMap)
+	intCoder.Print(cameraMap)
 
 	robot, position, err := intCoder.GetRobotPosition(cameraMap)
 	if err != nil {
@@ -35,7 +35,7 @@ func main() {
 
 	movementLogic, err := findMovementLogic(movements)
 	if err != nil {
-		panic(err)
+		// panic(err)
 	}
 	input := createInput(movementLogic)
 	codes[0] = "2"
@@ -91,25 +91,51 @@ func createLine(line []string) []int {
 func findMovementLogic(route []string) (movementLogic, error) {
 	length := len(route)
 	for a := 1; a <= 10; a++ {
-		if a > length {
+		endA := a
+		if endA > length {
+			fmt.Println("A")
 			break
 		}
 		aFunc := movementFunction{
-			route[0:a],
-			len(route[0:a]),
+			route[0:endA],
+			len(route[0:endA]),
 		}
 		for b := 1; b <= 10; b++ {
-			endB := a + b
+			endB := endA + b
+			for {
+				if endB > length {
+					break
+				}
+				if reflect.DeepEqual(aFunc.input, route[a:endB]) {
+					endB += b
+					endA += b
+					continue
+				}
+				break
+			}
 			if endB > length {
+				fmt.Println("B")
 				break
 			}
 			bFunc := movementFunction{
-				route[a:endB],
-				len(route[a:endB]),
+				route[endA:endB],
+				len(route[endA:endB]),
 			}
 			for c := 1; c <= 10; c++ {
-				endC := a + b + c
+				endC := endB + c
+				for {
+					if endC > length {
+						break
+					}
+					if reflect.DeepEqual(bFunc.input, route[endB:endC]) || reflect.DeepEqual(aFunc.input, route[endB:endC]) {
+						endC += c
+						endB += c
+						continue
+					}
+					break
+				}
 				if endC > length {
+					fmt.Println("C")
 					break
 				}
 				cFunc := movementFunction{
@@ -135,7 +161,10 @@ func findMovementLogic(route []string) (movementLogic, error) {
 						foundLength += cFunc.length
 						continue
 					}
-					if foundLength >= length {
+					if len(movementLogicResult.Routine) > 10 {
+						break
+					}
+					if foundLength >= length-1 {
 						movementLogicResult.A = aFunc.input
 						movementLogicResult.B = bFunc.input
 						movementLogicResult.C = cFunc.input
