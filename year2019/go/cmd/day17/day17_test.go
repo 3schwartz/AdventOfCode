@@ -28,17 +28,21 @@ func Test_Part1(t *testing.T) {
 func Test_givenRoute_WhenFindingRoutineAndFunctions_ThenCorrect(t *testing.T) {
 	// Arrange
 	expectedMovementLogic := movementLogic{
-		[]string{"A", "B", "C", "B", "A", "C"},
-		[]string{"R", "8", "R", "8"},
-		[]string{"R", "4", "R", "4"},
-		[]string{"R", "8", "L", "6", "L", "2"},
+		[]rune{'A', 'B', 'C', 'B', 'A', 'C'},
+		[]rune{'R', '8', 'R', '8'},
+		[]rune{'R', '4', 'R', '4'},
+		[]rune{'R', '8', 'L', '6', 'L', '2'},
 	}
 
 	route := "R,8,R,8,R,4,R,4,R,8,L,6,L,2,R,4,R,4,R,8,R,8,R,8,L,6,L,2"
 	routeElements := strings.Split(route, ",")
+	runeElements := make([]rune, 0)
+	for _, routeElm := range routeElements {
+		runeElements = append(runeElements, rune(routeElm[0]))
+	}
 
 	// Act
-	movementLogic, err := findMovementLogic(routeElements)
+	movementLogic, err := findMovementLogic(runeElements)
 
 	// Assert
 	if err != nil {
