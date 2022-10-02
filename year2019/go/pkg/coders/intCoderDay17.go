@@ -25,11 +25,11 @@ func (ASCIIIntCoder) findDirection(robot int) Coordinate {
 	}
 }
 
-func (ascii ASCIIIntCoder) GetMovements(cameraMap map[Coordinate]int, robot int, robotPosition Coordinate) []rune {
+func (ascii ASCIIIntCoder) GetMovements(cameraMap map[Coordinate]int, robot int, robotPosition Coordinate) []string {
 	direction := ascii.findDirection(robot)
 	position := robotPosition
 	var straightCount int
-	movements := make([]rune, 0)
+	movements := make([]string, 0)
 	for {
 		straight := position.Add(direction)
 		if cameraMap[straight] == '#' {
@@ -38,23 +38,20 @@ func (ascii ASCIIIntCoder) GetMovements(cameraMap map[Coordinate]int, robot int,
 			continue
 		}
 		if straightCount != 0 {
-			straightCountString := strconv.Itoa(straightCount)
-			for _, straight := range straightCountString {
-				movements = append(movements, straight)
-			}
+			movements = append(movements, strconv.Itoa(straightCount))
 			straightCount = 0
 		}
 
 		// Coordinate system in opposite direction
 		leftRotate := Coordinate{direction.y, -1 * direction.x}
 		if cameraMap[position.Add(leftRotate)] == '#' {
-			movements = append(movements, 'L')
+			movements = append(movements, "L")
 			direction = leftRotate
 			continue
 		}
 		rightRotate := Coordinate{-1 * direction.y, direction.x}
 		if cameraMap[position.Add(rightRotate)] == '#' {
-			movements = append(movements, 'R')
+			movements = append(movements, "R")
 			direction = rightRotate
 			continue
 		}
