@@ -35,6 +35,7 @@ func Test_testCorrectSteps(t *testing.T) {
 		item := heap.Pop(&pq).(*Item)
 		collector := item.value
 		// Do logic
+		// If not ., then clear visited
 
 		neighbors := collector.getNeighbors()
 		for _, neighbor := range neighbors {
