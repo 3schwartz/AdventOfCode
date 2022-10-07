@@ -1,64 +1,55 @@
 package main
 
 import (
-	"container/heap"
-	"fmt"
-	"os"
-	"strings"
 	"testing"
-	"unicode"
 )
 
 func Test_testCorrectSteps(t *testing.T) {
-	f, err := os.ReadFile(fmt.Sprintf("../../../data/%s_data.txt", "day18_test1"))
-	if err != nil {
-		panic(err)
+	data := []struct {
+		name     string
+		fileName string
+		expected int
+	}{
+		// {"1",
+		// 	"day18_test1",
+		// 	8,
+		// },
+		// {"2",
+		// 	"day18_test2",
+		// 	86,
+		// },
+		// {"3",
+		// 	"day18_test3",
+		// 	132,
+		// },
+		// {"4",
+		// 	"day18_test4",
+		// 	136,
+		// },
+		{"5",
+			"day18_test5",
+			81,
+		},
 	}
-	lines := strings.Split(string(f), "\r\n")
+	for _, d := range data {
+		t.Run(d.name, func(t *testing.T) {
+			// Arrange
+			lines := createLines(d.fileName)
 
-	areaDefinition := createAreaMap(lines)
+			areaDefinition := createAreaDefinition(lines)
+			keyPathFinder := pathFinder{}
 
-	keyCollector := createKeyCollector(areaDefinition.areaMap, areaDefinition.startingPoint)
+			// Act
+			collector, err := keyPathFinder.findShortestPath(areaDefinition)
 
-	pq := make(PriorityQueue, 1)
-	pq[0] = &Item{
-		value:    keyCollector,
-		priority: keyCollector.steps,
-		index:    1,
+			// Assert
+			if err != nil {
+				t.Error(err)
+			}
+			if collector.steps != d.expected {
+				t.Errorf("wrong steps: %d, expected: %d", collector.steps, d.expected)
+			}
+		})
 	}
 
-	heap.Init(&pq)
-
-	for pq.Len() > 0 {
-		item := heap.Pop(&pq).(*Item)
-		collector := item.value
-
-		current := collector.areaMap[collector.currentPosition]
-
-		if unicode.IsUpper(current) && !collector.keysFound[current] {
-			continue
-		}
-
-		if unicode.IsLower(current) {
-			collector.keysFound[unicode.ToUpper(current)] = true
-			collector.keysFoundCount++
-			collector.visitedSinceLastKey = map[coord]bool{}
-		}
-
-		if collector.keysFoundCount == areaDefinition.keysInMap {
-			fmt.Printf("Part 1: %d\n", collector.steps)
-			break
-		}
-
-		collector.areaMap[collector.currentPosition] = '.'
-
-		neighbors := collector.getNeighbors()
-		for _, neighbor := range neighbors {
-			copied := collector.copy(neighbor)
-			heap.Push(&pq, &Item{
-				value:    copied,
-				priority: copied.steps,
-			})
-		}
-	}
 }

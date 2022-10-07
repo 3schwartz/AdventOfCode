@@ -1,9 +1,84 @@
 package main
 
-import "unicode"
+import (
+	"container/heap"
+	"errors"
+	"fmt"
+	"os"
+	"strings"
+	"unicode"
+)
 
 func main() {
+	lines := createLines("day18")
 
+	areaDefinition := createAreaDefinition(lines)
+	keyPathFinder := pathFinder{}
+
+	collector, err := keyPathFinder.findShortestPath(areaDefinition)
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Part 1: %d\n", collector.steps)
+}
+
+func createLines(fileName string) []string {
+	f, err := os.ReadFile(fmt.Sprintf("../../../data/%s_data.txt", fileName))
+	if err != nil {
+		panic(err)
+	}
+	lines := strings.Split(string(f), "\r\n")
+	return lines
+}
+
+type pathFinder struct{}
+
+func (pf pathFinder) findShortestPath(areaDefinition areaDefinition) (*keyCollector, error) {
+	keyCollector := createKeyCollector(areaDefinition.areaMap, areaDefinition.startingPoint)
+
+	pq := make(PriorityQueue, 1)
+	pq[0] = &Item{
+		value:    keyCollector,
+		priority: keyCollector.steps,
+		index:    1,
+	}
+
+	heap.Init(&pq)
+
+	for pq.Len() > 0 {
+		item := heap.Pop(&pq).(*Item)
+		collector := item.value
+
+		current := collector.areaMap[collector.currentPosition]
+
+		if unicode.IsUpper(current) && !collector.keysFound[current] {
+			continue
+		}
+
+		if unicode.IsLower(current) {
+			collector.keysFound[unicode.ToUpper(current)] = true
+			collector.keysFoundCount++
+			collector.visitedSinceLastKey = map[coord]bool{}
+		}
+
+		if collector.keysFoundCount == areaDefinition.keysInMap {
+			return collector, nil
+		}
+
+		collector.areaMap[collector.currentPosition] = '.'
+
+		neighbors := collector.getNeighbors()
+		for _, neighbor := range neighbors {
+			copied := collector.copy(neighbor)
+			heap.Push(&pq, &Item{
+				value:    copied,
+				priority: copied.steps,
+			})
+		}
+	}
+	return nil, errors.New("not able to find path")
 }
 
 type coord struct {
@@ -13,6 +88,23 @@ type coord struct {
 
 func (c coord) add(other coord) coord {
 	return coord{c.x + other.x, c.y + other.y}
+}
+
+type keyCollector struct {
+	areaMap             map[coord]rune
+	currentPosition     coord
+	steps               int
+	visitedSinceLastKey map[coord]bool
+	keysFoundCount      int
+	keysFound           map[rune]bool
+}
+
+func createKeyCollector(areaMap map[coord]rune, startingPosition coord) *keyCollector {
+	return &keyCollector{
+		areaMap:             areaMap,
+		currentPosition:     startingPosition,
+		visitedSinceLastKey: map[coord]bool{},
+	}
 }
 
 func (kc *keyCollector) getNeighbors() []coord {
@@ -62,30 +154,13 @@ func (kc *keyCollector) copy(newPosition coord) *keyCollector {
 	}
 }
 
-type keyCollector struct {
-	areaMap             map[coord]rune
-	currentPosition     coord
-	steps               int
-	visitedSinceLastKey map[coord]bool
-	keysFoundCount      int
-	keysFound           map[rune]bool
-}
-
-func createKeyCollector(areaMap map[coord]rune, startingPosition coord) *keyCollector {
-	return &keyCollector{
-		areaMap:             areaMap,
-		currentPosition:     startingPosition,
-		visitedSinceLastKey: map[coord]bool{},
-	}
-}
-
 type areaDefinition struct {
 	areaMap       map[coord]rune
 	startingPoint coord
 	keysInMap     int
 }
 
-func createAreaMap(lines []string) areaDefinition {
+func createAreaDefinition(lines []string) areaDefinition {
 	areaMap := map[coord]rune{}
 	var keys int
 	var startingPoint coord
