@@ -27,8 +27,8 @@ func (kc *keyCollector) getNeighbors() []coord {
 		if visited {
 			continue
 		}
-		_, ok := kc.areaMap[neighbor]
-		if ok {
+		point, ok := kc.areaMap[neighbor]
+		if ok && point != '#' {
 			neighbors = append(neighbors, neighbor)
 		}
 	}
@@ -45,6 +45,10 @@ func (kc *keyCollector) copy(newPosition coord) *keyCollector {
 	for key, value := range kc.visitedSinceLastKey {
 		visitedCopy[key] = value
 	}
+	keysFoundCopy := map[rune]bool{}
+	for key, value := range kc.keysFound {
+		keysFoundCopy[key] = value
+	}
 
 	visitedCopy[kc.currentPosition] = true
 
@@ -53,6 +57,8 @@ func (kc *keyCollector) copy(newPosition coord) *keyCollector {
 		currentPosition:     newPosition,
 		steps:               kc.steps + 1,
 		visitedSinceLastKey: visitedCopy,
+		keysFoundCount:      kc.keysFoundCount,
+		keysFound:           keysFoundCopy,
 	}
 }
 
@@ -61,6 +67,8 @@ type keyCollector struct {
 	currentPosition     coord
 	steps               int
 	visitedSinceLastKey map[coord]bool
+	keysFoundCount      int
+	keysFound           map[rune]bool
 }
 
 func createKeyCollector(areaMap map[coord]rune, startingPosition coord) *keyCollector {

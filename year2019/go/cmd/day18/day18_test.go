@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"unicode"
 )
 
 func Test_testCorrectSteps(t *testing.T) {
@@ -18,9 +19,6 @@ func Test_testCorrectSteps(t *testing.T) {
 	areaDefinition := createAreaMap(lines)
 
 	keyCollector := createKeyCollector(areaDefinition.areaMap, areaDefinition.startingPoint)
-	neighbors := keyCollector.getNeighbors()
-
-	fmt.Println(neighbors)
 
 	pq := make(PriorityQueue, 1)
 	pq[0] = &Item{
@@ -34,8 +32,25 @@ func Test_testCorrectSteps(t *testing.T) {
 	for pq.Len() > 0 {
 		item := heap.Pop(&pq).(*Item)
 		collector := item.value
-		// Do logic
-		// If not ., then clear visited
+
+		current := collector.areaMap[collector.currentPosition]
+
+		if unicode.IsUpper(current) && !collector.keysFound[current] {
+			continue
+		}
+
+		if unicode.IsLower(current) {
+			collector.keysFound[unicode.ToUpper(current)] = true
+			collector.keysFoundCount++
+			collector.visitedSinceLastKey = map[coord]bool{}
+		}
+
+		if collector.keysFoundCount == areaDefinition.keysInMap {
+			fmt.Printf("Part 1: %d\n", collector.steps)
+			break
+		}
+
+		collector.areaMap[collector.currentPosition] = '.'
 
 		neighbors := collector.getNeighbors()
 		for _, neighbor := range neighbors {
@@ -45,7 +60,5 @@ func Test_testCorrectSteps(t *testing.T) {
 				priority: copied.steps,
 			})
 		}
-
 	}
-
 }
