@@ -3,7 +3,7 @@ package main
 import "container/heap"
 
 type Item struct {
-	value    *keyCollector
+	value    *keyPriorityCollector
 	priority int
 	index    int
 }
@@ -39,7 +39,7 @@ func (pq *PriorityQueue) Pop() any {
 	return item
 }
 
-func (pq *PriorityQueue) update(item *Item, value *keyCollector, priority int) {
+func (pq *PriorityQueue) update(item *Item, value *keyPriorityCollector, priority int) {
 	item.value = value
 	item.priority = priority
 	heap.Fix(pq, item.index)
