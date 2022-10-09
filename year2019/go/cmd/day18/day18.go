@@ -33,6 +33,56 @@ func createLines(fileName string) []string {
 	return lines
 }
 
+type graph struct {
+	graph map[coord]map[rune]int
+}
+
+func createGraph(areaMap map[coord]rune) *graph {
+	graph := graph{}
+	for coord, symbol := range areaMap {
+		if !unicode.IsLetter(symbol) {
+			continue
+		}
+		coordNodes := graph.findCoordNodesInGraph(areaMap, coord)
+		graph.graph[coord] = coordNodes
+	}
+	return &graph
+}
+
+type nodeQueueElements struct {
+	coord coord
+	steps int
+}
+
+func (g graph) findCoordNodesInGraph(areaMap map[coord]rune, currentCoord coord) map[rune]int {
+	visited := map[coord]struct{}{}
+	nodes := map[rune]int{}
+	queue := createQueue[nodeQueueElements]()
+
+	queue.append(nodeQueueElements{
+		coord: currentCoord,
+		steps: 0})
+	visited[currentCoord] = struct{}{}
+	for {
+		current, moreElements := queue.tryDequeue()
+		if !moreElements {
+			break
+		}
+		for _, neighbor := range current.coord.getNeighbors() {
+
+		}
+
+	}
+
+	return nodes
+
+}
+
+type coordVisited struct {
+	coord     coord
+	keysAsBit int
+}
+
 type pathFinder struct{}
 
 func (pf pathFinder) findBitwiseKeyShift(key rune, currentKeys int) int {
@@ -40,11 +90,6 @@ func (pf pathFinder) findBitwiseKeyShift(key rune, currentKeys int) int {
 	keyBit := 1 << amountToShift
 	currentKeys |= keyBit
 	return currentKeys
-}
-
-type coordVisited struct {
-	coord     coord
-	keysAsBit int
 }
 
 func (pf pathFinder) findShortestPath(areaDefinition areaDefinition) (*keyCollector, error) {
@@ -110,6 +155,18 @@ func (c coord) add(other coord) coord {
 	return coord{c.x + other.x, c.y + other.y}
 }
 
+func (c coord) getNeighbors() [4]coord {
+	movements := [4]coord{
+		{-1, 0}, {1, 0}, {0, 1}, {0, -1},
+	}
+
+	neighbors := [4]coord{}
+	for i, m := range movements {
+		neighbors[i] = c.add(m)
+	}
+	return neighbors
+}
+
 type keyCollector struct {
 	areaMap                    map[coord]rune
 	currentPosition            coord
@@ -129,13 +186,10 @@ func createKeyCollector(areaMap map[coord]rune, startingPosition coord) *keyColl
 }
 
 func (kc *keyCollector) getNeighbors(visited map[coordVisited]int) []coord {
-	movements := [4]coord{
-		{-1, 0}, {1, 0}, {0, 1}, {0, -1},
-	}
+	currentNeighbors := kc.currentPosition.getNeighbors()
 
 	neighbors := make([]coord, 0)
-	for _, m := range movements {
-		neighbor := kc.currentPosition.add(m)
+	for _, neighbor := range currentNeighbors {
 		visited := kc.visitedSinceLastKey[neighbor]
 		if visited {
 			continue
@@ -177,15 +231,17 @@ func (kc *keyCollector) copy(newPosition coord) *keyCollector {
 }
 
 type areaDefinition struct {
-	areaMap       map[coord]rune
-	startingPoint coord
-	keysInMap     int
+	areaMap                 map[coord]rune
+	startingPoint           coord
+	keysInMap               int
+	keysAsBitRepresentation int
 }
 
 func createAreaDefinition(lines []string) areaDefinition {
 	areaMap := map[coord]rune{}
 	var keys int
 	var startingPoint coord
+	var keysAsBitRepresentation int
 	for n, line := range lines {
 		for m, v := range line {
 			if v == '#' {
@@ -193,6 +249,8 @@ func createAreaDefinition(lines []string) areaDefinition {
 			}
 			if unicode.IsLower(v) {
 				keys++
+				shift := v - 'a'
+				keysAsBitRepresentation |= 1 << shift
 			}
 			if v == '@' {
 				startingPoint = coord{m, n}
@@ -200,5 +258,10 @@ func createAreaDefinition(lines []string) areaDefinition {
 			areaMap[coord{m, n}] = v
 		}
 	}
-	return areaDefinition{areaMap: areaMap, startingPoint: startingPoint, keysInMap: keys}
+	return areaDefinition{
+		areaMap:                 areaMap,
+		startingPoint:           startingPoint,
+		keysInMap:               keys,
+		keysAsBitRepresentation: keysAsBitRepresentation,
+	}
 }
