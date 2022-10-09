@@ -143,9 +143,11 @@ type graph struct {
 }
 
 func createGraph(areaMap map[coord]rune) *graph {
-	graph := graph{}
+	graph := graph{
+		graph: map[rune]map[rune]int{},
+	}
 	for coord, symbol := range areaMap {
-		if !unicode.IsLetter(symbol) || symbol != '@' {
+		if !unicode.IsLetter(symbol) && symbol != '@' {
 			continue
 		}
 		coordNodes := graph.findCoordNodesInGraph(areaMap, coord)
@@ -176,6 +178,10 @@ func (g graph) findCoordNodesInGraph(areaMap map[coord]rune, currentCoord coord)
 			break
 		}
 		for _, neighbor := range current.coord.getNeighbors() {
+			if _, ok := visited[neighbor]; ok {
+				continue
+			}
+			visited[neighbor] = struct{}{}
 			symbol, ok := areaMap[neighbor]
 			if !ok {
 				continue

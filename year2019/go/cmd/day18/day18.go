@@ -11,7 +11,7 @@ func main() {
 	lines := createLines("day18")
 
 	areaDefinition := createAreaDefinition(lines)
-	keyPathFinder := pathPriorityFinder{}
+	keyPathFinder := pathGraphFinder{}
 
 	steps, err := keyPathFinder.findShortestPath(areaDefinition)
 
