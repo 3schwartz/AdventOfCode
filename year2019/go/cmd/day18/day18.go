@@ -35,6 +35,18 @@ func createLines(fileName string) []string {
 
 type pathFinder struct{}
 
+func (pf pathFinder) findBitwiseKeyShift(key rune, currentKeys int) int {
+	amountToShift := key - 'a'
+	keyBit := 1 << amountToShift
+	currentKeys |= keyBit
+	return currentKeys
+}
+
+type coordVisited struct {
+	coord     coord
+	keysAsBit int
+}
+
 func (pf pathFinder) findShortestPath(areaDefinition areaDefinition) (*keyCollector, error) {
 	keyCollector := createKeyCollector(areaDefinition.areaMap, areaDefinition.startingPoint)
 
@@ -45,11 +57,18 @@ func (pf pathFinder) findShortestPath(areaDefinition areaDefinition) (*keyCollec
 		index:    1,
 	}
 
+	visited := map[coordVisited]int{}
+
 	heap.Init(&pq)
 
 	for pq.Len() > 0 {
 		item := heap.Pop(&pq).(*Item)
 		collector := item.value
+
+		if previous, ok := visited[coordVisited{collector.currentPosition, collector.keysFoundBitRepresentation}]; ok && previous < collector.steps {
+			continue
+		}
+		visited[coordVisited{collector.currentPosition, collector.keysFoundBitRepresentation}] = collector.steps
 
 		current := collector.areaMap[collector.currentPosition]
 
@@ -61,6 +80,7 @@ func (pf pathFinder) findShortestPath(areaDefinition areaDefinition) (*keyCollec
 			collector.keysFound[unicode.ToUpper(current)] = true
 			collector.keysFoundCount++
 			collector.visitedSinceLastKey = map[coord]bool{}
+			collector.keysFoundBitRepresentation = pf.findBitwiseKeyShift(current, collector.keysFoundBitRepresentation)
 		}
 
 		if collector.keysFoundCount == areaDefinition.keysInMap {
@@ -69,7 +89,7 @@ func (pf pathFinder) findShortestPath(areaDefinition areaDefinition) (*keyCollec
 
 		collector.areaMap[collector.currentPosition] = '.'
 
-		neighbors := collector.getNeighbors()
+		neighbors := collector.getNeighbors(visited)
 		for _, neighbor := range neighbors {
 			copied := collector.copy(neighbor)
 			heap.Push(&pq, &Item{
@@ -91,12 +111,13 @@ func (c coord) add(other coord) coord {
 }
 
 type keyCollector struct {
-	areaMap             map[coord]rune
-	currentPosition     coord
-	steps               int
-	visitedSinceLastKey map[coord]bool
-	keysFoundCount      int
-	keysFound           map[rune]bool
+	areaMap                    map[coord]rune
+	currentPosition            coord
+	steps                      int
+	visitedSinceLastKey        map[coord]bool
+	keysFoundCount             int
+	keysFound                  map[rune]bool
+	keysFoundBitRepresentation int
 }
 
 func createKeyCollector(areaMap map[coord]rune, startingPosition coord) *keyCollector {
@@ -107,7 +128,7 @@ func createKeyCollector(areaMap map[coord]rune, startingPosition coord) *keyColl
 	}
 }
 
-func (kc *keyCollector) getNeighbors() []coord {
+func (kc *keyCollector) getNeighbors(visited map[coordVisited]int) []coord {
 	movements := [4]coord{
 		{-1, 0}, {1, 0}, {0, 1}, {0, -1},
 	}
@@ -145,12 +166,13 @@ func (kc *keyCollector) copy(newPosition coord) *keyCollector {
 	visitedCopy[kc.currentPosition] = true
 
 	return &keyCollector{
-		areaMap:             areaMapCopy,
-		currentPosition:     newPosition,
-		steps:               kc.steps + 1,
-		visitedSinceLastKey: visitedCopy,
-		keysFoundCount:      kc.keysFoundCount,
-		keysFound:           keysFoundCopy,
+		areaMap:                    areaMapCopy,
+		currentPosition:            newPosition,
+		steps:                      kc.steps + 1,
+		visitedSinceLastKey:        visitedCopy,
+		keysFoundCount:             kc.keysFoundCount,
+		keysFound:                  keysFoundCopy,
+		keysFoundBitRepresentation: kc.keysFoundBitRepresentation,
 	}
 }
 
