@@ -118,3 +118,19 @@ cpu: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz
 |---------------------------------------	|-----------------:	|--------------------:	|---------------------:	|-------------------------------------------:	|
 | Ratio-8 | 6246 | 179_402 ns/op |  15_509 B/op | 15 allocs/op |
 | Optimum-8 | 358 |  3_142_936 ns/op | 217_322 B/op	| 212 allocs/op |
+
+## Day 18
+### Part 1
+#### Go
+goos: windows
+goarch: amd64
+pkg: advent/cmd/day18
+cpu: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz
+Benchmark_findPath/priority:_day18_test1-8                 74326             15810 ns/op            8197 B/op        138 allocs/op
+Benchmark_findPath/graph:_day18_test1-8                   147038              7432 ns/op            2972 B/op         34 allocs/op
+Benchmark_findPath/priority:_day18_test2-8                   880           1387014 ns/op          744620 B/op       4133 allocs/op
+Benchmark_findPath/graph:_day18_test2-8                    21504             48975 ns/op           18771 B/op        154 allocs/op
+Benchmark_findPath/priority:_day18_test3-8                   392           2602726 ns/op         1414987 B/op       7631 allocs/op
+Benchmark_findPath/graph:_day18_test3-8                    25068             47732 ns/op           17724 B/op        151 allocs/op
+Benchmark_findPath/priority:_day18_test5-8                    82          13601543 ns/op         7704622 B/op      42584 allocs/op
+Benchmark_findPath/graph:_day18_test5-8                    22935             48925 ns/op           16042 B/op        162 allocs/op

@@ -27,7 +27,9 @@ func Benchmark_findPath(b *testing.B) {
 		for _, d := range data {
 			pathFinder := d.createFunc()
 			b.Run(fmt.Sprintf("%s: %s", d.name, v), func(b *testing.B) {
-				blackhole, _ = pathFinder.findShortestPath(areaDefinition)
+				for i := 0; i < b.N; i++ {
+					blackhole, _ = pathFinder.findShortestPath(areaDefinition)
+				}
 			})
 		}
 	}
