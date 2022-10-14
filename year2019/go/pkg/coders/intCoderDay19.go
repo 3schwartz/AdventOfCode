@@ -4,9 +4,21 @@ import (
 	"fmt"
 )
 
+type Coord struct {
+	X int
+	Y int
+}
+
+func (c Coord) FindNeighbors() map[Coord]struct{} {
+	neighbors := map[Coord]struct{}{}
+	neighbors[Coord{c.X + 1, c.Y}] = struct{}{}
+	neighbors[Coord{c.X, c.Y + 1}] = struct{}{}
+	neighbors[Coord{c.X + 1, c.Y + 1}] = struct{}{}
+	return neighbors
+}
+
 type BeamPoint struct {
-	X      int
-	Y      int
+	Coord
 	Pulled int
 }
 
@@ -14,15 +26,28 @@ type TractorBeamIntCoder struct {
 	IntCoder
 }
 
-func (tb *TractorBeamIntCoder) FindPointsAffected(codesInput []int, out chan<- int) {
+func (tb *TractorBeamIntCoder) FindPointsAffected(codesInput []int, out chan<- BeamPoint, size int) {
 	defer func() {
 		close(out)
 	}()
-	for x := 0; x < 50; x++ {
-		for y := 0; y < 50; y++ {
+	for x := 0; x < size; x++ {
+		for y := 0; y < size; y++ {
 			codes := tb.generateCodes(codesInput)
 			tb.pointAffected(codes, x, y, out)
 		}
+	}
+}
+
+func (tb *TractorBeamIntCoder) FindNeighborsAffected(
+	codesInput []int,
+	neighbors map[Coord]struct{},
+	out chan<- BeamPoint) {
+	defer func() {
+		close(out)
+	}()
+	for neighbor := range neighbors {
+		codes := tb.generateCodes(codesInput)
+		tb.pointAffected(codes, neighbor.X, neighbor.Y, out)
 	}
 }
 
@@ -34,7 +59,7 @@ func (tb *TractorBeamIntCoder) generateCodes(codesInput []int) map[int]int {
 	return codes
 }
 
-func (tb *TractorBeamIntCoder) pointAffected(codes map[int]int, x int, y int, out chan<- int) {
+func (tb *TractorBeamIntCoder) pointAffected(codes map[int]int, x int, y int, out chan<- BeamPoint) {
 	defer func() {
 		tb.idx = 0
 		tb.relativeBase = 0
@@ -64,7 +89,10 @@ optLoop:
 		case 4:
 			output := codes[tb.getIdxFromMode(codes, execution, 1)]
 			tb.idx += 2
-			out <- output
+			out <- BeamPoint{
+				Coord:  Coord{x, y},
+				Pulled: output,
+			}
 			return
 		case 5:
 			if codes[tb.getIdxFromMode(codes, execution, 1)] != 0 {
