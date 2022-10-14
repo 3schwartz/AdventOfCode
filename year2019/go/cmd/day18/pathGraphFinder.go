@@ -54,26 +54,13 @@ func (vrk visitedRobotKey) getKeyFromIndex(index int) (rune, error) {
 	}
 }
 
-func (vrk visitedRobotKey) createRobotGoToFromVisitedAtIndex(index int, nodes map[rune]int) ([]robotGoTo, error) {
-	goTos := make([]robotGoTo, 0)
-	for key, value := range nodes {
-		goTo, err := vrk.createRobotGoToAtIndex(index, key, value)
-		if err != nil {
-			return goTos, err
-		}
-		goTos = append(goTos, goTo)
-	}
-	return goTos, nil
-}
-
-func (vrk visitedRobotKey) createRobotGoToAtIndex(index int, update rune, steps int) (robotGoTo, error) {
-	goTo := robotGoTo{
-		first:  vrk.first,
-		second: vrk.second,
-		third:  vrk.third,
-		fourth: vrk.fourth,
-		steps:  steps,
-		index:  index,
+func (vrk visitedRobotKey) createVisitedRobotKeyFromIndex(index int, update rune, keys int) (visitedRobotKey, error) {
+	goTo := visitedRobotKey{
+		first:               vrk.first,
+		second:              vrk.second,
+		third:               vrk.third,
+		fourth:              vrk.fourth,
+		keysCollectedAsBits: keys,
 	}
 	switch index {
 	case 0:
@@ -90,40 +77,6 @@ func (vrk visitedRobotKey) createRobotGoToAtIndex(index int, update rune, steps 
 	return goTo, nil
 }
 
-type robotGoTo struct {
-	first  rune
-	second rune
-	third  rune
-	fourth rune
-	steps  int
-	index  int
-}
-
-func (rgt robotGoTo) createVisitedRobotKey(keys int) visitedRobotKey {
-	return visitedRobotKey{
-		first:               rgt.first,
-		second:              rgt.second,
-		third:               rgt.third,
-		fourth:              rgt.fourth,
-		keysCollectedAsBits: keys,
-	}
-}
-
-func (rgt robotGoTo) getNextKey() (rune, error) {
-	switch rgt.index {
-	case 0:
-		return rgt.first, nil
-	case 1:
-		return rgt.second, nil
-	case 2:
-		return rgt.third, nil
-	case 3:
-		return rgt.fourth, nil
-	default:
-		return 0, fmt.Errorf("index not known: %d", rgt.index)
-	}
-}
-
 type item[T any] struct {
 	item  T
 	steps int
@@ -138,65 +91,65 @@ type priority struct {
 func (pf pathGraphFinder) findShortestPathWithRobots(definition areaDefinition) (int, error) {
 	graph := createGraph(definition.areaMap)
 	visited := map[visitedRobotKey]int{}
-	visitedKey := createVisitedKeyFromAreMap(definition)
-	visited[visitedKey] = 0
+	initVisitedKey := createVisitedKeyFromAreMap(definition)
+	visited[initVisitedKey] = 0
 
-	priorityQueue := make(graphPriorityQueue[visitedRobotKey], 1)
-	priorityQueue[0] = &item[visitedRobotKey]{
-		item:  visitedKey,
-		steps: 0,
-		index: 1,
+	priorityQueue := make(map[int]map[visitedRobotKey]struct{}, 1)
+	priorityQueue[0] = map[visitedRobotKey]struct{}{
+		initVisitedKey: {},
 	}
 
-	heap.Init(&priorityQueue)
+	nodesCache := map[visitedKey]map[rune]int{}
 
-	nodesCache := map[visitedRobotKey][]robotGoTo{}
-	for priorityQueue.Len() > 0 {
-		itemFromQueue := heap.Pop(&priorityQueue).(*item[visitedRobotKey])
-		if definition.keysAsBitRepresentation == itemFromQueue.item.keysCollectedAsBits {
-			return itemFromQueue.steps, nil
-		}
-		currentVisitedKey := itemFromQueue.item
-
-		if visitedSteps, ok := visited[currentVisitedKey]; ok && visitedSteps < itemFromQueue.steps {
+	currentSteps := -1
+	for len(priorityQueue) > 0 {
+		currentSteps++
+		states, ok := priorityQueue[currentSteps]
+		if !ok {
 			continue
 		}
-		robotToGos, ok := nodesCache[currentVisitedKey]
-		if !ok {
-			robotToGos = make([]robotGoTo, 0)
-			for i := 0; i < 4; i++ {
-				key, err := itemFromQueue.item.getKeyFromIndex(i)
-				if err != nil {
-					return 0, err
-				}
-				nodesFromKey := pf.findEdges(graph, itemFromQueue.item.keysCollectedAsBits, key)
-				goTos, err := currentVisitedKey.createRobotGoToFromVisitedAtIndex(i, nodesFromKey)
-				if err != nil {
-					return 0, err
-				}
-				robotToGos = append(robotToGos, goTos...)
+		delete(priorityQueue, currentSteps)
+		for currentVisitedKey, _ := range states {
+			if definition.keysAsBitRepresentation == currentVisitedKey.keysCollectedAsBits {
+				return currentSteps, nil
 			}
-			nodesCache[currentVisitedKey] = robotToGos
-		}
-		for _, node := range robotToGos {
-			nextKey, err := node.getNextKey()
-			if err != nil {
-				return 0, err
-			}
-			shift := nextKey - 'a'
-			keysBitsNext := itemFromQueue.item.keysCollectedAsBits
-			keysBitsNext |= 1 << shift
-			nextSteps := itemFromQueue.steps + node.steps
 
-			nextVisitedKey := node.createVisitedRobotKey(keysBitsNext)
-			if oldSteps, ok := visited[nextVisitedKey]; ok && oldSteps < nextSteps {
+			if visitedSteps, ok := visited[currentVisitedKey]; ok && visitedSteps < currentSteps {
 				continue
 			}
-			visited[nextVisitedKey] = nextSteps
-			heap.Push(&priorityQueue, &item[visitedRobotKey]{
-				item:  nextVisitedKey,
-				steps: nextSteps,
-			})
+
+			for i := 0; i < 4; i++ {
+				key, err := currentVisitedKey.getKeyFromIndex(i)
+				if err != nil {
+					return 0, err
+				}
+				cacheKey := visitedKey{key, currentVisitedKey.keysCollectedAsBits}
+				nodes, ok := nodesCache[cacheKey]
+				if !ok {
+					nodes = pf.findEdges(graph, currentVisitedKey.keysCollectedAsBits, key)
+					nodesCache[cacheKey] = nodes
+				}
+
+				for nextKey, steps := range nodes {
+					shift := nextKey - 'a'
+					keysBitsNext := currentVisitedKey.keysCollectedAsBits
+					keysBitsNext |= 1 << shift
+					nextSteps := currentSteps + steps
+
+					nextVisitedKey, _ := currentVisitedKey.createVisitedRobotKeyFromIndex(i, nextKey, keysBitsNext)
+					if oldSteps, ok := visited[nextVisitedKey]; ok && oldSteps < nextSteps {
+						continue
+					}
+					visited[nextVisitedKey] = nextSteps
+
+					statesAtStep, ok := priorityQueue[nextSteps]
+					if !ok {
+						statesAtStep = make(map[visitedRobotKey]struct{}, 1)
+					}
+					statesAtStep[nextVisitedKey] = struct{}{}
+					priorityQueue[nextSteps] = statesAtStep
+				}
+			}
 		}
 	}
 	return 0, errors.New("not able to find optimal")
