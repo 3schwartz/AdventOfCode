@@ -95,22 +95,3 @@ func Test_givenSplit_whenMoreRobots_thenCorrectCount(t *testing.T) {
 		})
 	}
 }
-
-func Test_givenNoSplit_whenMoreRobots_thenCorrectCount(t *testing.T) {
-	// Arrange
-	lines := createLines("day18_test6")
-	areaDefinition := createAreaDefinition(lines)
-	areaDefinitionWithRobots := areaDefinition.createRobots()
-	keyPathFinder := pathGraphFinder{}
-
-	// Act
-	steps, err := keyPathFinder.findShortestPathWithRobots(areaDefinitionWithRobots)
-
-	// Assert
-	if err != nil {
-		t.Error(err)
-	}
-	if steps != 8 {
-		t.Errorf("wrong number of steps: %d", steps)
-	}
-}

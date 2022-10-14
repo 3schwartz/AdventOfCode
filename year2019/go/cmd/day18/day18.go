@@ -20,6 +20,16 @@ func main() {
 	}
 
 	fmt.Printf("Part 1: %d\n", steps)
+
+	areaDefinitionWithRobots := areaDefinition.createRobots()
+
+	steps, err = keyPathFinder.findShortestPathWithRobots(areaDefinitionWithRobots)
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Part 2: %d\n", steps)
 }
 
 type pathFinder interface {
