@@ -44,6 +44,18 @@ func (c coord) add(other coord) coord {
 	return coord{c.x + other.x, c.y + other.y}
 }
 
+func (c coord) getDiagonals() [4]coord {
+	movements := [4]coord{
+		{-1, -1}, {1, -1}, {-1, 1}, {1, 1},
+	}
+
+	diagonals := [4]coord{}
+	for i, m := range movements {
+		diagonals[i] = c.add(m)
+	}
+	return diagonals
+}
+
 func (c coord) getNeighbors() [4]coord {
 	movements := [4]coord{
 		{-1, 0}, {1, 0}, {0, 1}, {0, -1},
@@ -89,5 +101,25 @@ func createAreaDefinition(lines []string) areaDefinition {
 		startingPoint:           startingPoint,
 		keysInMap:               keys,
 		keysAsBitRepresentation: keysAsBitRepresentation,
+	}
+}
+
+func (ad areaDefinition) createRobots() areaDefinition {
+	newAreaMap := make(map[coord]rune, len(ad.areaMap))
+	for key, value := range ad.areaMap {
+		newAreaMap[key] = value
+	}
+	for i, d := range ad.startingPoint.getDiagonals() {
+		newAreaMap[d] = rune(i) + '0'
+	}
+	for _, n := range ad.startingPoint.getNeighbors() {
+		delete(newAreaMap, n)
+	}
+	delete(newAreaMap, ad.startingPoint)
+	return areaDefinition{
+		areaMap:                 newAreaMap,
+		startingPoint:           ad.startingPoint,
+		keysInMap:               ad.keysInMap,
+		keysAsBitRepresentation: ad.keysAsBitRepresentation,
 	}
 }

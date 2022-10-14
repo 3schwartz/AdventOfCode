@@ -49,5 +49,68 @@ func Test_testGraphCorrectSteps(t *testing.T) {
 			}
 		})
 	}
+}
 
+func Test_givenSplit_whenMoreRobots_thenCorrectCount(t *testing.T) {
+	data := []struct {
+		name     string
+		fileName string
+		expected int
+	}{
+		{"6",
+			"day18_test6",
+			8,
+		},
+		{"7",
+			"day18_test7",
+			24,
+		},
+		{"8",
+			"day18_test8",
+			32,
+		},
+		{"9",
+			"day18_test9",
+			72,
+		},
+	}
+	for _, d := range data {
+		t.Run(d.name, func(t *testing.T) {
+			// Arrange
+			lines := createLines(d.fileName)
+			areaDefinition := createAreaDefinition(lines)
+			areaDefinitionWithRobots := areaDefinition.createRobots()
+			keyPathFinder := pathGraphFinder{}
+
+			// Act
+			steps, err := keyPathFinder.findShortestPathWithRobots(areaDefinitionWithRobots)
+
+			// Assert
+			if err != nil {
+				t.Error(err)
+			}
+			if steps != d.expected {
+				t.Errorf("wrong steps: %d, expected: %d", steps, d.expected)
+			}
+		})
+	}
+}
+
+func Test_givenNoSplit_whenMoreRobots_thenCorrectCount(t *testing.T) {
+	// Arrange
+	lines := createLines("day18_test6")
+	areaDefinition := createAreaDefinition(lines)
+	areaDefinitionWithRobots := areaDefinition.createRobots()
+	keyPathFinder := pathGraphFinder{}
+
+	// Act
+	steps, err := keyPathFinder.findShortestPathWithRobots(areaDefinitionWithRobots)
+
+	// Assert
+	if err != nil {
+		t.Error(err)
+	}
+	if steps != 8 {
+		t.Errorf("wrong number of steps: %d", steps)
+	}
 }

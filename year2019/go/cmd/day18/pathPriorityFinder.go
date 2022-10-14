@@ -27,8 +27,8 @@ func (pf pathPriorityFinder) findBitwiseKeyShift(key rune, currentKeys int) int 
 func (pf pathPriorityFinder) findShortestPath(areaDefinition areaDefinition) (int, error) {
 	keyCollector := createKeyCollector(areaDefinition.areaMap, areaDefinition.startingPoint)
 
-	pq := make(PriorityQueue, 1)
-	pq[0] = &Item{
+	pq := make(PriorityQueue[keyPriorityCollector], 1)
+	pq[0] = &Item[keyPriorityCollector]{
 		value:    keyCollector,
 		priority: keyCollector.steps,
 		index:    1,
@@ -39,7 +39,7 @@ func (pf pathPriorityFinder) findShortestPath(areaDefinition areaDefinition) (in
 	heap.Init(&pq)
 
 	for pq.Len() > 0 {
-		item := heap.Pop(&pq).(*Item)
+		item := heap.Pop(&pq).(*Item[keyPriorityCollector])
 		collector := item.value
 
 		if previous, ok := visited[coordVisited{collector.currentPosition, collector.keysFoundBitRepresentation}]; ok && previous < collector.steps {
@@ -69,7 +69,7 @@ func (pf pathPriorityFinder) findShortestPath(areaDefinition areaDefinition) (in
 		neighbors := collector.getNeighbors(visited)
 		for _, neighbor := range neighbors {
 			copied := collector.copy(neighbor)
-			heap.Push(&pq, &Item{
+			heap.Push(&pq, &Item[keyPriorityCollector]{
 				value:    copied,
 				priority: copied.steps,
 			})

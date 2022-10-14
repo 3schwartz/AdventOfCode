@@ -21,5 +21,4 @@ func TestShift(t *testing.T) {
 	if found != expected {
 		t.Errorf("wrong output: %d, expected: %d", found, expected)
 	}
-
 }
