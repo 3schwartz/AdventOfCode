@@ -1,6 +1,7 @@
 package main
 
 import (
+	"advent/pkg/collections"
 	"os"
 	"strings"
 	"testing"
@@ -26,6 +27,11 @@ func Test_examples(t *testing.T) {
 	}
 }
 
+type queueElement struct {
+	coord coord
+	steps int
+}
+
 type position struct {
 	xy   coord
 	name string
@@ -41,6 +47,14 @@ func (c coord) getShifts() []coord {
 		{-1, 0}, {1, 0}, {0, -1}, {0, 1},
 	}
 	return shifts[:]
+}
+
+func (c coord) getNeighbors() []coord {
+	neighbors := make([]coord, 0)
+	for _, shift := range c.getShifts() {
+		neighbors = append(neighbors, c.add(shift))
+	}
+	return neighbors
 }
 
 func (c coord) add(other coord) coord {
@@ -70,6 +84,35 @@ func createMazeGraph(inputMazeMap mazeMap) mazeGraph {
 
 func (mg *mazeGraph) findNodes(inputMazeMap mazeMap, mazeCoord coord) map[string]int {
 	nodes := make(map[string]int)
+	visited := make(map[coord]struct{})
+	queue := collections.CreateQueue[queueElement]()
+
+	queue.Append(queueElement{coord: mazeCoord, steps: 0})
+
+	visited[mazeCoord] = struct{}{}
+
+	for {
+		current, hasMoreElements := queue.TryDequeue()
+		if !hasMoreElements {
+			break
+		}
+		for _, neighbor := range current.coord.getNeighbors() {
+			_, ok := visited[neighbor]
+			if ok {
+				continue
+			}
+			visited[neighbor] = struct{}{}
+			symbol, ok := inputMazeMap[neighbor]
+			if !ok {
+				continue
+			}
+			if symbol == "." {
+				queue.Append(queueElement{neighbor, current.steps + 1})
+				continue
+			}
+			nodes[symbol] = current.steps + 1
+		}
+	}
 	return nodes
 }
 
@@ -89,7 +132,7 @@ func (mm *mazeMap) getNeighbors(linesP *[]string, currentCoord coord) []coord {
 	for _, shift := range shifts {
 		xShift := shift.x + currentCoord.x
 		yShift := shift.y + currentCoord.y
-		if xShift < 0 || xShift > rows || yShift < 0 || yShift > columns {
+		if xShift < 0 || xShift >= rows || yShift < 0 || yShift >= columns {
 			continue
 		}
 		neighbors = append(neighbors, currentCoord.add(shift))
