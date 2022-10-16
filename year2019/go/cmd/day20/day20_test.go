@@ -2,29 +2,67 @@ package main
 
 import (
 	"advent/pkg/collections"
+	"fmt"
+	"math"
 	"os"
 	"strings"
 	"testing"
 	"unicode"
 )
 
-func Test_examples(t *testing.T) {
+func Test_stringJoinOfBytes(t *testing.T) {
 	// Arrange
-	f, err := os.ReadFile("../../../data/day20_test1_data.txt")
-	if err != nil {
-		panic(err)
-	}
-	lines := strings.Split(string(f), "\r\n")
-	newMazeMap := createMazeMap(lines)
-	newMazeGraph := createMazeGraph(newMazeMap)
+	input := "ab"
 
 	// Act
-	shortestPath := newMazeGraph.findShortestPathBetweenNodes("AA", "ZZ")
+
+	actual := string([]byte{input[1], input[0]})
 
 	// Assert
-	if shortestPath != 23 {
-		t.Errorf("wrong path found: %d", shortestPath)
+	if actual != "ba" {
+		t.Error(actual)
 	}
+}
+
+func Test_examples(t *testing.T) {
+	data := []struct {
+		fileName string
+		expected int
+	}{
+		{
+			fileName: "_test1",
+			expected: 23,
+		},
+		{
+			fileName: "_test2",
+			expected: 58,
+		},
+	}
+	for _, d := range data {
+		t.Run(d.fileName, func(t *testing.T) {
+			// Arrange
+			f, err := os.ReadFile(fmt.Sprintf("../../../data/day20%s_data.txt", d.fileName))
+			if err != nil {
+				panic(err)
+			}
+			lines := strings.Split(string(f), "\r\n")
+			newMazeMap := createMazeMap(lines)
+			newMazeGraph := createMazeGraph(newMazeMap)
+
+			// Act
+			shortestPath := newMazeGraph.findShortestPathBetweenNodes("AA", "ZZ")
+
+			// Assert
+			if shortestPath != d.expected {
+				t.Errorf("wrong path found: %d", shortestPath)
+			}
+		})
+	}
+}
+
+type pathQueueElement struct {
+	from  string
+	steps int
 }
 
 type queueElement struct {
@@ -70,12 +108,15 @@ func createMazeGraph(inputMazeMap mazeMap) mazeGraph {
 			continue
 		}
 		coordNodes := newMazeGraph.findNodes(inputMazeMap, mazeCoord)
+		if mazeSymbol[1] < mazeSymbol[0] {
+			mazeSymbol = string([]byte{mazeSymbol[1], mazeSymbol[0]})
+		}
 		currentNodes, ok := newMazeGraph[mazeSymbol]
 		if !ok {
 			newMazeGraph[mazeSymbol] = coordNodes
 			continue
 		}
-		for node, steps := range currentNodes {
+		for node, steps := range coordNodes {
 			currentNodes[node] = steps
 		}
 	}
@@ -110,14 +151,50 @@ func (mg *mazeGraph) findNodes(inputMazeMap mazeMap, mazeCoord coord) map[string
 				queue.Append(queueElement{neighbor, current.steps + 1})
 				continue
 			}
-			nodes[symbol] = current.steps + 1
+			if symbol[1] < symbol[0] {
+				symbol = string([]byte{symbol[1], symbol[0]})
+			}
+			nodes[symbol] = current.steps + 1 - 2
 		}
 	}
 	return nodes
 }
 
-func (mg *mazeGraph) findShortestPathBetweenNodes(from string, to string) int {
-	return 0
+func (mg mazeGraph) findShortestPathBetweenNodes(from string, to string) int {
+
+	distance := math.MaxInt32
+	queue := collections.CreateQueue[pathQueueElement]()
+	queue.Append(pathQueueElement{
+		from:  from,
+		steps: 0})
+
+	for {
+		current, hasMoreElements := queue.TryDequeue()
+		if !hasMoreElements {
+			break
+		}
+		nodes, ok := mg[current.from]
+		if !ok {
+			continue
+		}
+		for nodePort, nodeSteps := range nodes {
+			nextSteps := current.steps + nodeSteps
+			if nextSteps >= distance {
+				continue
+			}
+			if nodePort == "ZZ" {
+				distance = nextSteps
+				continue
+			}
+
+			queue.Append(pathQueueElement{
+				from:  nodePort,
+				steps: nextSteps + 1,
+			})
+		}
+	}
+
+	return distance
 }
 
 type mazeMap map[coord]string
@@ -150,7 +227,6 @@ func (mm *mazeMap) findPosition(linesP *[]string, currentCoord coord, neighbors 
 
 	var coordOut coord
 
-	var sumSpaces int
 	var borderToDot bool
 	var neighborLetterCoord coord
 	var neighborLetter string
@@ -158,9 +234,6 @@ func (mm *mazeMap) findPosition(linesP *[]string, currentCoord coord, neighbors 
 		symbol := lines[neighbor.x][neighbor.y]
 		if symbol == '.' {
 			borderToDot = true
-		}
-		if symbol == ' ' {
-			sumSpaces++
 		}
 		if unicode.IsLetter(rune(symbol)) {
 			neighborLetterCoord = coord{neighbor.x, neighbor.y}
@@ -171,12 +244,12 @@ func (mm *mazeMap) findPosition(linesP *[]string, currentCoord coord, neighbors 
 		secondLetter = currentLetter
 		firstLetter = neighborLetter
 		coordOut = currentCoord
-	}
-	if sumSpaces == 3 {
+	} else {
 		secondLetter = neighborLetter
 		firstLetter = currentLetter
 		coordOut = neighborLetterCoord
 	}
+
 	return position{coordOut, firstLetter + secondLetter}
 }
 

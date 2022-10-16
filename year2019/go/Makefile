@@ -64,6 +64,9 @@ test17:
 test18:
 	go test ./cmd/day18
 
+test20:
+	go test ./cmd/day20
+
 # Benchmarks
 bench3:
 	go test ./cmd/day3 -v -bench=. -benchmem -run=^a
