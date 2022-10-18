@@ -25,7 +25,7 @@ func Benchmark_findPath(b *testing.B) {
 			queueType: mazeGraph.findShortestPathBetweenNodesUsingPriorityMap,
 		},
 	}
-	for _, fileName := range []string{"_test1", "_test2"} {
+	for _, fileName := range []string{"_test1", "_test2", ""} {
 		lines := readLines(fileName)
 		newMazeMap := createMazeMap(lines)
 		newMazeGraph := createMazeGraph(newMazeMap)

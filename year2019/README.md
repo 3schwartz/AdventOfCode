@@ -143,7 +143,12 @@ goos: windows
 goarch: amd64
 pkg: advent/cmd/day20
 cpu: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz
-Benchmark_findPath/Queue:__test1-8                805958              1531 ns/op             479 B/op          8 allocs/op
-Benchmark_findPath/PriorityQueue:__test1-8       1000000              1707 ns/op             412 B/op         14 allocs/op
-Benchmark_findPath/Queue:__test2-8                 69220             16543 ns/op           13187 B/op         12 allocs/op
-Benchmark_findPath/PriorityQueue:__test2-8         48312             24379 ns/op            5649 B/op        121 allocs/op
+Benchmark_findPath/Queue:__test1-8                        759_590                1_568 ns/op             479 B/op            8 allocs/op
+Benchmark_findPath/PriorityQueue:__test1-8                627_960                1_813 ns/op             412 B/op           14 allocs/op
+Benchmark_findPath/PriorityMapping:__test1-8              317_323                3_419 ns/op            1752 B/op           18 allocs/op
+Benchmark_findPath/Queue:__test2-8                         67_452               16_658 ns/op          13_248 B/op           12 allocs/op
+Benchmark_findPath/PriorityQueue:__test2-8                 45_734               25_826 ns/op           5_641 B/op          121 allocs/op
+Benchmark_findPath/PriorityMapping:__test2-8               47_875               25_069 ns/op           7_066 B/op           66 allocs/op
+Benchmark_findPath/Queue:_-8                                   1        14_001_311_500 ns/op   7_772_855_576 B/op          239 allocs/op
+Benchmark_findPath/PriorityQueue:_-8                           1        81_714_675_200 ns/op  11_518_860_688 B/op  180_699_007 allocs/op
+Benchmark_findPath/PriorityMapping:_-8                       674             1_732_848 ns/op         300_731 B/op        1_482 allocs/op
