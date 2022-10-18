@@ -20,7 +20,23 @@ func main() {
 	movement := createInput(input)
 	damage := intCoder.ReportDust(codes, movement)
 
-	fmt.Printf("Part 1: %d", damage[len(damage)-1])
+	fmt.Printf("Part 1: %d\n", damage[len(damage)-1])
+
+	inputSecond := []string{
+		"NOT C J",
+		"NOT B T",
+		"OR T J",
+		"AND D J",
+		"AND H J",
+		"NOT A T",
+		"OR T J",
+		"RUN",
+	}
+	movementSecond := createInput(inputSecond)
+
+	damageSecond := intCoder.ReportDust(codes, movementSecond)
+
+	fmt.Printf("Part 2: %d\n", damageSecond[len(damageSecond)-1])
 }
 
 func createInput(input []string) []int {

@@ -9,11 +9,11 @@ import (
 func main() {
 	lines := readLines("")
 	newMazeMap := createMazeMap(lines)
-	// newMazeGraph := createMazeGraph(newMazeMap)
+	newMazeGraph := createMazeGraph(newMazeMap)
 
-	// shortestPath := newMazeGraph.findShortestPathBetweenNodes("AA", "ZZ")
+	shortestPath := newMazeGraph.findShortestPathBetweenNodesUsingPriorityMap("AA", "ZZ")
 
-	// fmt.Printf("Part 1: %d\n", shortestPath)
+	fmt.Printf("Part 1: %d\n", shortestPath)
 
 	newDebtMazeGraph := createDebtMazeMap(newMazeMap)
 
