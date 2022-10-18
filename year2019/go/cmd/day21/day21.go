@@ -20,6 +20,7 @@ func main() {
 	movement := createInput(input)
 	damage := intCoder.ReportDust(codes, movement)
 
+	print(damage)
 	fmt.Printf("Part 1: %d\n", damage[len(damage)-1])
 
 	inputSecond := []string{
@@ -36,7 +37,26 @@ func main() {
 
 	damageSecond := intCoder.ReportDust(codes, movementSecond)
 
+	print(damageSecond)
 	fmt.Printf("Part 2: %d\n", damageSecond[len(damageSecond)-1])
+}
+
+func print(damage []int) {
+	for _, d := range damage {
+		switch d {
+		case 35:
+			fmt.Print("#")
+		case 64:
+			fmt.Print("@")
+		case 46:
+			fmt.Print(".")
+		case 10:
+			fmt.Print("\n")
+		default:
+			fmt.Print(d)
+		}
+	}
+	fmt.Println()
 }
 
 func createInput(input []string) []int {
