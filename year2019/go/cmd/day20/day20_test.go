@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -22,6 +23,49 @@ func (pf pathFinder) String() string {
 		return "PriorityMapping"
 	default:
 		return "Unknown"
+	}
+}
+
+func Test_ifelse(t *testing.T) {
+	// Arrange
+	data := []struct {
+		input  int
+		expect int
+	}{
+		{
+			input:  1,
+			expect: 0,
+		},
+		{
+			input:  0,
+			expect: 1,
+		},
+	}
+	for _, d := range data {
+		t.Run(fmt.Sprintf("%d", d.input), func(t *testing.T) {
+			// Act
+			actual := d.input ^ 1
+
+			// Assert
+			if actual != d.expect {
+				t.Error(actual)
+			}
+		})
+	}
+}
+
+func Test_givenDebt_WhenFindPath_ThenCorrect(t *testing.T) {
+	// Arrange
+	lines := readLines("_test3")
+	newMazeMap := createMazeMap(lines)
+	newMazeGraph := createDebtMazeMap(newMazeMap)
+
+	// Act
+	shortestPath := newMazeGraph.findShortestPathBetweenNodesUsingPriorityMap("AA", "ZZ")
+
+	// Assert
+	if shortestPath != 396 {
+		t.Errorf("wrong path found: %d", shortestPath)
 	}
 }
 

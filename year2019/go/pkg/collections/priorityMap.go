@@ -43,3 +43,7 @@ func (pm *priorityMap[T]) TryDequeue() (contains bool, priority int, items map[T
 	}
 	return true, current, items
 }
+
+func (pm *priorityMap[T]) Reset() {
+	pm.priorityState = 0
+}
