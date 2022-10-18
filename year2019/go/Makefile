@@ -88,3 +88,6 @@ bench14:
 
 bench18:
 	go test ./cmd/day18 -bench=. -benchmem -run=^a		
+
+bench20:
+	go test ./cmd/day20 -bench=. -benchmem -run=^a			

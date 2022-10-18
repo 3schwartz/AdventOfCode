@@ -4,18 +4,69 @@ import (
 	"testing"
 )
 
-func Test_examples(t *testing.T) {
+type pathFinder int64
+
+const (
+	Queue pathFinder = iota
+	PriorityQueue
+	PriorityMapping
+)
+
+func (pf pathFinder) String() string {
+	switch pf {
+	case Queue:
+		return "Queue"
+	case PriorityQueue:
+		return "PriorityQueue"
+	case PriorityMapping:
+		return "PriorityMapping"
+	default:
+		return "Unknown"
+	}
+}
+
+func Test_givenPriorityQueue_WhenTestExamples_ThenCorrect(t *testing.T) {
 	data := []struct {
-		fileName string
-		expected int
+		name      pathFinder
+		fileName  string
+		expected  int
+		queueType func(mazeGraph, string, string) int
 	}{
 		{
-			fileName: "_test1",
-			expected: 23,
+			name:      Queue,
+			fileName:  "_test1",
+			expected:  23,
+			queueType: mazeGraph.findShortestPathBetweenNodes,
 		},
 		{
-			fileName: "_test2",
-			expected: 58,
+			name:      Queue,
+			fileName:  "_test2",
+			expected:  58,
+			queueType: mazeGraph.findShortestPathBetweenNodes,
+		},
+		{
+			name:      PriorityQueue,
+			fileName:  "_test1",
+			expected:  23,
+			queueType: mazeGraph.findShortestPathBetweenNodesUsingPriorityQueue,
+		},
+		{
+			name:      PriorityQueue,
+			fileName:  "_test2",
+			expected:  58,
+			queueType: mazeGraph.findShortestPathBetweenNodesUsingPriorityQueue,
+		},
+		{
+			name:      PriorityMapping,
+			fileName:  "_test1",
+			expected:  23,
+			queueType: mazeGraph.findShortestPathBetweenNodesUsingPriorityMap,
+		},
+		{
+			name:      PriorityMapping,
+			fileName:  "_test2",
+			expected:  58,
+			queueType: mazeGraph.findShortestPathBetweenNodesUsingPriorityMap,
 		},
 	}
 	for _, d := range data {
@@ -26,7 +77,7 @@ func Test_examples(t *testing.T) {
 			newMazeGraph := createMazeGraph(newMazeMap)
 
 			// Act
-			shortestPath := newMazeGraph.findShortestPathBetweenNodes("AA", "ZZ")
+			shortestPath := d.queueType(newMazeGraph, "AA", "ZZ")
 
 			// Assert
 			if shortestPath != d.expected {

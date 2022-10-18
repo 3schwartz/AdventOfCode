@@ -134,3 +134,16 @@ Benchmark_findPath/priority:_day18_test3-8                   392           26027
 Benchmark_findPath/graph:_day18_test3-8                    25068             47732 ns/op           17724 B/op        151 allocs/op
 Benchmark_findPath/priority:_day18_test5-8                    82          13601543 ns/op         7704622 B/op      42584 allocs/op
 Benchmark_findPath/graph:_day18_test5-8                    22935             48925 ns/op           16042 B/op        162 allocs/op
+
+## Day 20
+### Part 1
+#### Go
+
+goos: windows
+goarch: amd64
+pkg: advent/cmd/day20
+cpu: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz
+Benchmark_findPath/Queue:__test1-8                805958              1531 ns/op             479 B/op          8 allocs/op
+Benchmark_findPath/PriorityQueue:__test1-8       1000000              1707 ns/op             412 B/op         14 allocs/op
+Benchmark_findPath/Queue:__test2-8                 69220             16543 ns/op           13187 B/op         12 allocs/op
+Benchmark_findPath/PriorityQueue:__test2-8         48312             24379 ns/op            5649 B/op        121 allocs/op
