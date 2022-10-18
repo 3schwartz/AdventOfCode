@@ -1,6 +1,7 @@
 package main
 
 import (
+	"advent/pkg/collections"
 	"container/heap"
 	"errors"
 	"fmt"
@@ -75,12 +76,6 @@ func (vrk visitedRobotKey) createVisitedRobotKeyFromIndex(index int, update rune
 		return goTo, fmt.Errorf("index not known: %d", index)
 	}
 	return goTo, nil
-}
-
-type item[T any] struct {
-	item  T
-	steps int
-	index int
 }
 
 type priority struct {
@@ -162,39 +157,39 @@ func (pf pathGraphFinder) findShortestPath(definition areaDefinition) (int, erro
 	start := definition.areaMap[definition.startingPoint]
 	visited[visitedKey{start, 0}] = 0
 
-	priorityQueue := make(graphPriorityQueue[priority], 1)
-	priorityQueue[0] = &item[priority]{
-		item: priority{
+	priorityQueue := make(collections.PriorityQueue[priority], 1)
+	priorityQueue[0] = &collections.Item[priority]{
+		Item: priority{
 			key: start,
 		},
-		steps: 0,
-		index: 1,
+		Priority: 0,
+		Index:    1,
 	}
 	heap.Init(&priorityQueue)
 
 	nodesCache := map[visitedKey]map[rune]int{}
 
 	for priorityQueue.Len() > 0 {
-		itemFromQueue := heap.Pop(&priorityQueue).(*item[priority])
-		if definition.keysAsBitRepresentation == itemFromQueue.item.keysBits {
-			return itemFromQueue.steps, nil
+		itemFromQueue := heap.Pop(&priorityQueue).(*collections.Item[priority])
+		if definition.keysAsBitRepresentation == itemFromQueue.Item.keysBits {
+			return itemFromQueue.Priority, nil
 		}
-		currentVisitedKey := visitedKey{itemFromQueue.item.key, itemFromQueue.item.keysBits}
-		if visitedSteps, ok := visited[currentVisitedKey]; ok && visitedSteps < itemFromQueue.steps {
+		currentVisitedKey := visitedKey{itemFromQueue.Item.key, itemFromQueue.Item.keysBits}
+		if visitedSteps, ok := visited[currentVisitedKey]; ok && visitedSteps < itemFromQueue.Priority {
 			continue
 		}
 
 		nodes, ok := nodesCache[currentVisitedKey]
 		if !ok {
-			nodes = pf.findEdges(graph, itemFromQueue.item.keysBits, itemFromQueue.item.key)
+			nodes = pf.findEdges(graph, itemFromQueue.Item.keysBits, itemFromQueue.Item.key)
 			nodesCache[currentVisitedKey] = nodes
 		}
 		for nextKey, steps := range nodes {
 			shift := nextKey - 'a'
-			keysBitsNext := itemFromQueue.item.keysBits
+			keysBitsNext := itemFromQueue.Item.keysBits
 			keysBitsNext |= 1 << shift
 
-			nextSteps := itemFromQueue.steps + steps
+			nextSteps := itemFromQueue.Priority + steps
 
 			nextVisitedKey := visitedKey{nextKey, keysBitsNext}
 
@@ -204,12 +199,12 @@ func (pf pathGraphFinder) findShortestPath(definition areaDefinition) (int, erro
 
 			visited[nextVisitedKey] = nextSteps
 
-			heap.Push(&priorityQueue, &item[priority]{
-				item: priority{
+			heap.Push(&priorityQueue, &collections.Item[priority]{
+				Item: priority{
 					key:      nextKey,
 					keysBits: keysBitsNext,
 				},
-				steps: nextSteps,
+				Priority: nextSteps,
 			})
 		}
 	}
@@ -224,46 +219,48 @@ func (pf pathGraphFinder) findEdges(graph *graph, keys int, key rune) map[rune]i
 	}
 	optimal[key] = 0
 
-	priorityQueue := make(graphPriorityQueue[priority], 1)
-	priorityQueue[0] = &item[priority]{
-		item: priority{
+	priorityQueue := make(collections.PriorityQueue[priority], 1)
+	priorityQueue[0] = &collections.Item[priority]{
+		Item: priority{
 			key: key,
 		},
-		steps: 0,
+		Priority: 0,
 	}
+
+	heap.Init(&priorityQueue)
 
 	newKeys := map[rune]struct{}{}
 	for priorityQueue.Len() > 0 {
-		itemFromQueue := heap.Pop(&priorityQueue).(*item[priority])
+		itemFromQueue := heap.Pop(&priorityQueue).(*collections.Item[priority])
 
-		if unicode.IsLower(itemFromQueue.item.key) {
-			if containsKey := keys & (1 << (itemFromQueue.item.key - 'a')); containsKey == 0 {
-				newKeys[itemFromQueue.item.key] = struct{}{}
+		if unicode.IsLower(itemFromQueue.Item.key) {
+			if containsKey := keys & (1 << (itemFromQueue.Item.key - 'a')); containsKey == 0 {
+				newKeys[itemFromQueue.Item.key] = struct{}{}
 				continue
 			}
 		}
 
-		if visited, ok := optimal[itemFromQueue.item.key]; ok && visited < itemFromQueue.steps {
+		if visited, ok := optimal[itemFromQueue.Item.key]; ok && visited < itemFromQueue.Priority {
 			continue
 		}
 
-		for nextKey, steps := range graph.graph[itemFromQueue.item.key] {
+		for nextKey, steps := range graph.graph[itemFromQueue.Item.key] {
 			if unicode.IsUpper(nextKey) {
 				if nextContainsKey := keys & (1 << (unicode.ToLower(nextKey) - 'a')); nextContainsKey == 0 {
 					continue
 				}
 			}
-			nextSteps := itemFromQueue.steps + steps
+			nextSteps := itemFromQueue.Priority + steps
 			if currentOptimal, ok := optimal[nextKey]; ok && currentOptimal < nextSteps {
 				continue
 			}
 
 			optimal[nextKey] = nextSteps
-			heap.Push(&priorityQueue, &item[priority]{
-				item: priority{
+			heap.Push(&priorityQueue, &collections.Item[priority]{
+				Item: priority{
 					key: nextKey,
 				},
-				steps: nextSteps,
+				Priority: nextSteps,
 			})
 		}
 	}
@@ -332,35 +329,4 @@ func (g graph) findCoordNodesInGraph(areaMap map[coord]rune, currentCoord coord)
 	}
 
 	return nodes
-}
-
-type graphPriorityQueue[T any] []*item[T]
-
-func (pq graphPriorityQueue[T]) Len() int { return len(pq) }
-
-func (pq graphPriorityQueue[T]) Less(i, j int) bool {
-	return pq[i].steps < pq[j].steps
-}
-
-func (pq graphPriorityQueue[T]) Swap(i, j int) {
-	pq[i], pq[j] = pq[j], pq[i]
-	pq[i].index = i
-	pq[j].index = j
-}
-
-func (pq *graphPriorityQueue[T]) Push(x any) {
-	n := len(*pq)
-	item := x.(*item[T])
-	item.index = n
-	*pq = append(*pq, item)
-}
-
-func (pq *graphPriorityQueue[T]) Pop() any {
-	old := *pq
-	n := len(old)
-	item := old[n-1]
-	old[n-1] = nil  // avoid memory leak
-	item.index = -1 // for safety
-	*pq = old[0 : n-1]
-	return item
 }
