@@ -30,16 +30,33 @@ func Test_testData(t *testing.T) {
 
 func Test_dealStack(t *testing.T) {
 	// Arrange
-	input := [10]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-	expected := [10]int{9, 8, 7, 6, 5, 4, 3, 2, 1, 0}
+	data := []struct {
+		name     string
+		input    [10]int
+		expected [10]int
+	}{
+		{
+			name:     "front",
+			input:    [10]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+			expected: [10]int{9, 8, 7, 6, 5, 4, 3, 2, 1, 0},
+		},
+		{
+			name:     "back",
+			input:    [10]int{9, 8, 7, 6, 5, 4, 3, 2, 1, 0},
+			expected: [10]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+		},
+	}
+	for _, d := range data {
+		t.Run(fmt.Sprintf("Stack: %s", d.name), func(t *testing.T) {
+			// Act
+			actual := stack(d.input[:])
 
-	// Act
-	actual := stack(input[:])
-
-	// Assert
-	ok := equals(actual, expected[:])
-	if !ok {
-		t.Error(actual)
+			// Assert
+			ok := equals(actual, d.expected[:])
+			if !ok {
+				t.Error(actual)
+			}
+		})
 	}
 }
 

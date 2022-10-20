@@ -61,7 +61,8 @@ func stack(input []int) []int {
 	output := make([]int, len(input))
 	shift := len(input) - 1
 	for i := 0; i < len(input); i++ {
-		output[i] = -1*input[i] + shift
+		idx := -1*i + shift
+		output[idx] = input[i]
 	}
 	return output
 }
@@ -81,11 +82,7 @@ func cut(input []int, cut int) []int {
 	length := len(input)
 	output := make([]int, length)
 	shift := cut
-	// if cut < 0 {
-	// 	shift += length
-	// }
 	for i := 0; i < length; i++ {
-		// idx := (i + shift) % length
 		idx := modulo(i-shift, length)
 		output[idx] = input[i]
 	}
