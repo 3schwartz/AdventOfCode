@@ -13,6 +13,21 @@ func equals(actual []int, expected []int) bool {
 	return ok
 }
 
+func Test_testData(t *testing.T) {
+	// Arrange
+	lines := parseData("day22_test1_data")
+	expected := [10]int{9, 2, 5, 8, 1, 4, 7, 0, 3, 6}
+
+	// Act
+	actual := iterateLines(lines, 10)
+
+	// Assert
+	ok := equals(actual, expected[:])
+	if !ok {
+		t.Error(actual)
+	}
+}
+
 func Test_dealStack(t *testing.T) {
 	// Arrange
 	input := [10]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
@@ -28,35 +43,33 @@ func Test_dealStack(t *testing.T) {
 	}
 }
 
-func stack(input []int) []int {
-	output := make([]int, len(input))
-	shift := len(input) - 1
-	for i := 0; i < len(input); i++ {
-		output[i] = -1*input[i] + shift
-	}
-	return output
-}
-
 func Test_cutCards(t *testing.T) {
 	// Arrange
 	data := []struct {
 		cut      int
+		input    [10]int
 		expected [10]int
 	}{
 		{
 			cut:      3,
+			input:    [10]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
 			expected: [10]int{3, 4, 5, 6, 7, 8, 9, 0, 1, 2},
 		},
 		{
 			cut:      -4,
+			input:    [10]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
 			expected: [10]int{6, 7, 8, 9, 0, 1, 2, 3, 4, 5},
 		},
+		{
+			cut:      -4,
+			input:    [10]int{9, 8, 7, 6, 5, 4, 3, 2, 1, 0},
+			expected: [10]int{3, 2, 1, 0, 9, 8, 7, 6, 5, 4},
+		},
 	}
-	input := [10]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 	for _, d := range data {
 		t.Run(fmt.Sprintf("Cut: %d", d.cut), func(t *testing.T) {
 			// Act
-			actual := cut(input[:], d.cut)
+			actual := cut(d.input[:], d.cut)
 
 			// Assert
 			ok := equals(actual, d.expected[:])
@@ -67,25 +80,10 @@ func Test_cutCards(t *testing.T) {
 	}
 }
 
-func cut(input []int, cut int) []int {
-	output := make([]int, len(input))
-	length := len(input)
-	shift := cut
-	if cut < 0 {
-		shift += length
-	}
-	modulo := length
-	for i := 0; i < len(input); i++ {
-		output[i] = (input[i] + shift) % modulo
-	}
-	return output
-}
-
 func Test_dealIncrement(t *testing.T) {
 	// Arrange
 	input := [10]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 	expected := [10]int{0, 7, 4, 1, 8, 5, 2, 9, 6, 3}
-	// {0,-6,-2,2,-4,0,4,-2,2,6}
 
 	// Act
 	actual := increment(input[:], 3)
@@ -95,15 +93,4 @@ func Test_dealIncrement(t *testing.T) {
 	if !ok {
 		t.Error(actual)
 	}
-}
-
-func increment(input []int, inc int) []int {
-	output := make([]int, len(input))
-	shift := len(input)
-	// multiplier := inc
-	modulo := inc
-	for i := 0; i < len(input); i++ {
-		output[i] = input[i] + shift%modulo
-	}
-	return output
 }
