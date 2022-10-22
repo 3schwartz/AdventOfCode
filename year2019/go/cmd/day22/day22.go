@@ -8,6 +8,14 @@ import (
 	"strings"
 )
 
+var cutSize int
+var incSize int
+
+func init() {
+	cutSize = len("cut ")
+	incSize = len("deal with increment ")
+}
+
 func main() {
 	lines := parseData("day22_data")
 	shuffler := deckShuffler{}
@@ -60,8 +68,6 @@ func (dms deckModuloShuffler) shuffle(shuffleAmount int) deckModuloShuffler {
 }
 
 func createDeckModuloShuffler(lines []string, deckSize int) deckModuloShuffler {
-	cutSize := len("cut ")
-	incSize := len("deal with increment ")
 	dms := deckModuloShuffler{}
 
 	increment, offset := 1, 0
@@ -135,8 +141,6 @@ func (d deckShuffler) findIndex(deck []int, valueAtIndex int) int {
 }
 
 func (d deckShuffler) iterateLines(lines []string, size int) []int {
-	cutSize := len("cut ")
-	incSize := len("deal with increment ")
 	input := d.helper.initializeArray(size)
 
 	for _, line := range lines {
