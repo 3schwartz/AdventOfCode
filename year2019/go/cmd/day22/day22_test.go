@@ -17,9 +17,10 @@ func Test_testData(t *testing.T) {
 	// Arrange
 	lines := parseData("day22_test1_data")
 	expected := [10]int{9, 2, 5, 8, 1, 4, 7, 0, 3, 6}
+	shuffler := deckShuffler{}
 
 	// Act
-	actual := iterateLines(lines, 10)
+	actual := shuffler.iterateLines(lines, 10)
 
 	// Assert
 	ok := equals(actual, expected[:])
@@ -46,10 +47,11 @@ func Test_dealStack(t *testing.T) {
 			expected: [10]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
 		},
 	}
+	shuffler := deckShuffler{}
 	for _, d := range data {
 		t.Run(fmt.Sprintf("Stack: %s", d.name), func(t *testing.T) {
 			// Act
-			actual := stack(d.input[:])
+			actual := shuffler.stack(d.input[:])
 
 			// Assert
 			ok := equals(actual, d.expected[:])
@@ -83,10 +85,11 @@ func Test_cutCards(t *testing.T) {
 			expected: [10]int{3, 2, 1, 0, 9, 8, 7, 6, 5, 4},
 		},
 	}
+	shuffler := deckShuffler{}
 	for _, d := range data {
 		t.Run(fmt.Sprintf("Cut: %d", d.cut), func(t *testing.T) {
 			// Act
-			actual := cut(d.input[:], d.cut)
+			actual := shuffler.cut(d.input[:], d.cut)
 
 			// Assert
 			ok := equals(actual, d.expected[:])
@@ -101,9 +104,10 @@ func Test_dealIncrement(t *testing.T) {
 	// Arrange
 	input := [10]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 	expected := [10]int{0, 7, 4, 1, 8, 5, 2, 9, 6, 3}
+	shuffler := deckShuffler{}
 
 	// Act
-	actual := increment(input[:], 3)
+	actual := shuffler.increment(input[:], 3)
 
 	// Assert
 	ok := equals(actual, expected[:])

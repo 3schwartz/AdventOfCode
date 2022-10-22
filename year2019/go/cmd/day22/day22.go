@@ -9,10 +9,11 @@ import (
 
 func main() {
 	lines := parseData("day22_data")
+	shuffler := deckShuffler{}
 
-	output := iterateLines(lines, 10007)
+	output := shuffler.iterateLines(lines, 10007)
 
-	fmt.Printf("Part 1: %d", output[2019])
+	fmt.Printf("Part 1: %d", shuffler.findIndex(output, 2019))
 }
 
 func parseData(fileName string) []string {
@@ -26,10 +27,21 @@ func parseData(fileName string) []string {
 	return lines
 }
 
-func iterateLines(lines []string, size int) []int {
+type deckShuffler struct{}
+
+func (d deckShuffler) findIndex(deck []int, valueAtIndex int) int {
+	for i, card := range deck {
+		if card == valueAtIndex {
+			return i
+		}
+	}
+	return 0
+}
+
+func (d deckShuffler) iterateLines(lines []string, size int) []int {
 	cutSize := len("cut ")
 	incSize := len("deal with increment ")
-	input := initializeArray(size)
+	input := d.initializeArray(size)
 
 	for _, line := range lines {
 		if strings.Contains(line, "cut") {
@@ -37,7 +49,7 @@ func iterateLines(lines []string, size int) []int {
 			if err != nil {
 				panic(err)
 			}
-			input = cut(input, cutInput)
+			input = d.cut(input, cutInput)
 			continue
 		}
 		if strings.Contains(line, "deal with increment") {
@@ -45,11 +57,11 @@ func iterateLines(lines []string, size int) []int {
 			if err != nil {
 				panic(err)
 			}
-			input = increment(input, incInput)
+			input = d.increment(input, incInput)
 			continue
 		}
 		if strings.Contains(line, "deal into new stack") {
-			input = stack(input)
+			input = d.stack(input)
 			continue
 		}
 		panic(line)
@@ -57,7 +69,7 @@ func iterateLines(lines []string, size int) []int {
 	return input
 }
 
-func stack(input []int) []int {
+func (s deckShuffler) stack(input []int) []int {
 	output := make([]int, len(input))
 	shift := len(input) - 1
 	for i := 0; i < len(input); i++ {
@@ -67,18 +79,18 @@ func stack(input []int) []int {
 	return output
 }
 
-func increment(input []int, inc int) []int {
+func (s deckShuffler) increment(input []int, inc int) []int {
 	length := len(input)
 	output := make([]int, length)
 	idx := 0
 	for i := 0; i < length; i++ {
 		output[idx] = input[i]
-		idx = (idx + inc) % length
+		idx = modulo(idx+inc, length)
 	}
 	return output
 }
 
-func cut(input []int, cut int) []int {
+func (s deckShuffler) cut(input []int, cut int) []int {
 	length := len(input)
 	output := make([]int, length)
 	shift := cut
@@ -89,7 +101,7 @@ func cut(input []int, cut int) []int {
 	return output
 }
 
-func initializeArray(size int) []int {
+func (s deckShuffler) initializeArray(size int) []int {
 	input := make([]int, size)
 	for i := 0; i < size; i++ {
 		input[i] = i
