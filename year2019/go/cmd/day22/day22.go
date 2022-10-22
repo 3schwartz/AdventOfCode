@@ -49,8 +49,8 @@ func (dms deckModuloShuffler) shuffle(shuffleAmount int) deckModuloShuffler {
 
 	incrementInverse := (1 - dms.increment) % dms.deckSize
 	incrementInverse = dms.helper.moduloInverse(incrementInverse, dms.deckSize-2, dms.deckSize)
-	offset := dms.offset * (1 - increment) * incrementInverse
-	offset = dms.helper.modulo(offset, dms.deckSize)
+
+	offset := dms.calculateFinalGeometricOffset(dms.offset, 1-increment, incrementInverse, dms.deckSize)
 
 	return deckModuloShuffler{
 		offset:    offset,
@@ -81,9 +81,7 @@ func createDeckModuloShuffler(lines []string, deckSize int) deckModuloShuffler {
 				panic(err)
 			}
 			inverse := dms.helper.moduloInverse(incInput, deckSize-2, deckSize)
-			// increment *= inverse
-			// increment = dms.helper.modulo(increment, deckSize)
-			increment = dms.helper.mulmod(increment, inverse, deckSize)
+			increment = dms.helper.multiplyThenModulo(increment, inverse, deckSize)
 			continue
 		}
 		if strings.Contains(line, "deal into new stack") {
@@ -99,6 +97,28 @@ func createDeckModuloShuffler(lines []string, deckSize int) deckModuloShuffler {
 	dms.offset = offset
 	dms.deckSize = deckSize
 	return dms
+}
+
+func (dms deckModuloShuffler) calculateFinalGeometricOffset(a, b, c, mod int) int {
+	x := new(big.Int)
+	x.SetInt64(int64(a))
+
+	y := new(big.Int)
+	y.SetInt64(int64(b))
+
+	z := new(big.Int)
+	z.SetInt64(int64(c))
+
+	res := new(big.Int)
+	res.Mul(x, y)
+	res.Mul(res, z)
+
+	cards := new(big.Int)
+	cards.SetInt64(int64(mod))
+	modRes := new(big.Int)
+	modRes.Mod(res, cards)
+
+	return int(modRes.Int64())
 }
 
 type deckShuffler struct {
@@ -145,7 +165,7 @@ func (d deckShuffler) iterateLines(lines []string, size int) []int {
 	return input
 }
 
-func (s deckShuffler) stack(input []int) []int {
+func (d deckShuffler) stack(input []int) []int {
 	output := make([]int, len(input))
 	shift := len(input) - 1
 	for i := 0; i < len(input); i++ {
@@ -191,7 +211,7 @@ func (csh cardShufflerHelper) modulo(in int, mod int) int {
 	return (in%mod + mod) % mod
 }
 
-func (csh cardShufflerHelper) mulmod(a, b, mod int) int {
+func (csh cardShufflerHelper) multiplyThenModulo(a, b, mod int) int {
 	res := 0
 	for b > 0 {
 		if csh.modulo(b, 2) == 1 {
