@@ -12,11 +12,21 @@ import (
 func main() {
 	codes := read.ReadData("day23")
 	intCodes := coders.ParseIntCodes(codes)
-	// Part1(intCodes)
+	Part1(intCodes)
+
+	fmt.Println("#########################################")
+
 	Part2(intCodes)
 
 }
 
+///
+/// Not consistent. Shift between solution
+/// NAT High Multiple Throttle: 0, Coord: X: 32887, Y: 13758
+/// and
+/// NAT High Multiple Throttle: 0, Coord: X: 32887, Y: 13756
+/// and
+/// NAT High Multiple Throttle: 0, Coord: X: 32887, Y: 13757
 func Part2(intCodes []int) {
 	manager, notify := createAddressManager()
 	manager.activateNAT()
