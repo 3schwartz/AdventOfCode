@@ -1,18 +1,18 @@
 package collections
 
-type queue[T any] struct {
+type Queue[T any] struct {
 	bucket []T
 }
 
-func CreateQueue[T any]() *queue[T] {
-	return &queue[T]{}
+func CreateQueue[T any]() *Queue[T] {
+	return &Queue[T]{}
 }
 
-func (q *queue[T]) Append(element T) {
+func (q *Queue[T]) Append(element T) {
 	q.bucket = append(q.bucket, element)
 }
 
-func (q *queue[T]) TryDequeue() (T, bool) {
+func (q *Queue[T]) TryDequeue() (T, bool) {
 	if len(q.bucket) == 0 {
 		var dummy T
 		return dummy, false

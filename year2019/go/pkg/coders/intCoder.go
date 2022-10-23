@@ -11,6 +11,10 @@ type Coordinate struct {
 	y int
 }
 
+func (c Coordinate) String() string {
+	return fmt.Sprintf("X: %d, Y: %d", c.x, c.y)
+}
+
 func ParseIntCodes(codes []string) []int {
 	intCodes := make([]int, len(codes))
 	for i, code := range codes {
