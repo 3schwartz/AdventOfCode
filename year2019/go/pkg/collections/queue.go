@@ -23,3 +23,7 @@ func (q *Queue[T]) TryDequeue() (T, bool) {
 	q.bucket = q.bucket[1:]
 	return value, true
 }
+
+func (q *Queue[T]) Len() int {
+	return len(q.bucket)
+}

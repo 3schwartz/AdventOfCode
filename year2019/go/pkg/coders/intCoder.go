@@ -15,6 +15,10 @@ func (c Coordinate) String() string {
 	return fmt.Sprintf("X: %d, Y: %d", c.x, c.y)
 }
 
+func (c Coordinate) IsEmpty() bool {
+	return c.x == 0 && c.y == 0
+}
+
 func ParseIntCodes(codes []string) []int {
 	intCodes := make([]int, len(codes))
 	for i, code := range codes {
