@@ -23,6 +23,9 @@ func main() {
 
 	for out := range notify {
 		fmt.Printf("Address: %d, Coord: %s\n", out.address, out.coord)
+		if out.address == 255 {
+			close(notify)
+		}
 	}
 
 	cancel()
