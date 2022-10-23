@@ -29,31 +29,35 @@ func Part2(intCodes []int) {
 		go coder.RunNetwork(intCodes, ctx)
 	}
 
-	var throttleLast bool
+	var throttleLast int
 	for out := range notify {
 		if out.address == 255 {
 			fmt.Printf("NAT Received: %d, Coord: %s\n", out.address, out.coord)
-			throttleLast = false
+			throttleLast = 0
 			continue
 		}
 		if out.address == 0 && out.coord.IsEmpty() {
 			fmt.Printf("NAT Empty Throttle: %d, Coord: %s\n", out.address, out.coord)
-			throttleLast = false
+			throttleLast = 0
 			continue
 		}
-		if out.address == 0 && !out.coord.IsEmpty() && !throttleLast {
+		if out.address == 0 && !out.coord.IsEmpty() && throttleLast == 0 {
 			fmt.Printf("NAT Throttle: %d, Coord: %s\n", out.address, out.coord)
-			throttleLast = true
+			throttleLast += 1
 			continue
 		}
-		if out.address == 0 && !out.coord.IsEmpty() && throttleLast {
-			fmt.Printf("NAT Multiple Throttle: %d, Coord: %s\n", out.address, out.coord)
-			throttleLast = true
+		if out.address == 0 && !out.coord.IsEmpty() && 0 < throttleLast && throttleLast < 50 {
+			fmt.Printf("NAT Multiple: %d, Coord: %s\n", out.address, out.coord)
+			throttleLast += 1
 			continue
+		}
+		if out.address == 0 && !out.coord.IsEmpty() && throttleLast >= 50 {
+			fmt.Printf("NAT High Multiple Throttle: %d, Coord: %s\n", out.address, out.coord)
+			break
 		}
 
 		fmt.Printf("Address: %d, Coord: %s\n", out.address, out.coord)
-		throttleLast = false
+		throttleLast = 0
 	}
 }
 
@@ -129,6 +133,10 @@ func (am *addressManager) applyNATUpdate(address int, coord coders.Coordinate) {
 }
 
 func (am *addressManager) read(address int) (bool, coders.Coordinate) {
+	if am.nat == 1 && address != 0 {
+		return false, coders.Coordinate{}
+	}
+
 	am.l.Lock()
 	defer am.l.Unlock()
 	queue, ok := am.addresses[address]
@@ -153,12 +161,12 @@ func (am *addressManager) applyNATRead(address int) {
 	if !ok {
 		queue = collections.CreateQueue[coders.Coordinate]()
 		am.addresses[0] = queue
-		return
 	}
 	if queue.Len() > 0 {
 		return
 	}
 
 	queue.Append(am.natCoordinate)
+	am.nat = am.nat | (1 << 0)
 	am.notify <- addressUpdate{address: 0, coord: am.natCoordinate}
 }
