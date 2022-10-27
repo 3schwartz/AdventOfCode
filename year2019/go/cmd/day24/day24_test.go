@@ -1,8 +1,10 @@
 package main
 
-import "testing"
+import (
+	"testing"
+)
 
-func Test_testData(t *testing.T) {
+func Test_testDataPart1(t *testing.T) {
 	// Arrange
 	lines := readMap("day24_test_data")
 
@@ -17,4 +19,19 @@ func Test_testData(t *testing.T) {
 		t.Error(biodiversity)
 	}
 
+}
+
+func Test_testDataPart2(t *testing.T) {
+	// Arrange
+	lines := readMap("day24_test_data")
+
+	// Act
+	initialDebtMap := initializeDebtMap(lines)
+	debtMapAfterTime := initialDebtMap.letTimeGo(10)
+	bugCount := debtMapAfterTime.getBugCount()
+
+	// Assert
+	if bugCount != 99 {
+		t.Error(bugCount)
+	}
 }
