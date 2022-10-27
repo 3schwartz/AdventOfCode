@@ -30,79 +30,32 @@ func (c coord) add(other coord) coord {
 
 type bugMap map[coord]struct{}
 
-func (bm bugMap) neighborsInMapCount(neighbors []coord) int {
-	var sum int
-	for _, neighbor := range neighbors {
-		_, ok := bm[neighbor]
-		if ok {
-			sum++
-		}
-	}
-	return sum
-}
-
-func (bm bugMap) findBiodiversity() int {
-	var sum int
-	var pow float64
-	for i := 0; i < 5; i++ {
-		for j := 0; j < 5; j++ {
-			_, ok := bm[coord{i, j}]
-			if ok {
-				sum += int(math.Pow(2, pow))
-			}
-			pow++
-		}
-	}
-	return sum
-}
-
-type bitTranslator struct {
-	toBitFromCoord map[coord]int
-	toCoordFromBit map[int]coord
-}
-
-func createBitTranslator() *bitTranslator {
-	return &bitTranslator{
-		toBitFromCoord: make(map[coord]int),
-		toCoordFromBit: make(map[int]coord),
-	}
-}
-
-func (bt *bitTranslator) addTranslation(c coord, b int) {
-	bt.toBitFromCoord[c] = b
-	bt.toCoordFromBit[b] = c
-}
-
-func main() {
-	f, err := os.ReadFile("../../../data/day24_data.txt")
-	if err != nil {
-		panic(err)
-	}
-	lines := strings.Split(string(f), "\r\n")
-
+func initializeBugMap(lines []string) (bugMap, int64) {
 	currentBugMap := make(bugMap)
-	translator := createBitTranslator()
-	visited := map[int64]struct{}{}
-
 	var bit int
 	var bugmapAsBits int64
 	for r, line := range lines {
 		for c, e := range line {
 			bit++
 			currentCoord := coord{r, c}
-			translator.addTranslation(currentCoord, bit)
 			if e == '#' {
 				currentBugMap[currentCoord] = struct{}{}
 			}
 			bugmapAsBits = bugmapAsBits | (1 << bit)
 		}
 	}
+	return currentBugMap, bugmapAsBits
+}
+
+func (bm bugMap) findNextDublicate(bugmapAsBits int64) bugMap {
+	visited := map[int64]struct{}{}
 	visited[bugmapAsBits] = struct{}{}
+	currentBugMap := bm
 
 	for {
 		var newBugmapAsBit int64
+		var bit int
 		newBugMap := make(bugMap)
-		bit = 0
 		for i := 0; i < 5; i++ {
 			for j := 0; j < 5; j++ {
 				bit++
@@ -130,8 +83,51 @@ func main() {
 		}
 		visited[newBugmapAsBit] = struct{}{}
 	}
+	return currentBugMap
+}
+
+func (bm bugMap) neighborsInMapCount(neighbors []coord) int {
+	var sum int
+	for _, neighbor := range neighbors {
+		_, ok := bm[neighbor]
+		if ok {
+			sum++
+		}
+	}
+	return sum
+}
+
+func (bm bugMap) findBiodiversity() int {
+	var sum int
+	var pow float64
+	for i := 0; i < 5; i++ {
+		for j := 0; j < 5; j++ {
+			_, ok := bm[coord{i, j}]
+			if ok {
+				sum += int(math.Pow(2, pow))
+			}
+			pow++
+		}
+	}
+	return sum
+}
+
+func main() {
+	lines := readMap("day24_data")
+
+	initialBugMap, bugmapAsBits := initializeBugMap(lines)
+	currentBugMap := initialBugMap.findNextDublicate(bugmapAsBits)
 
 	biodiversity := currentBugMap.findBiodiversity()
 
 	fmt.Printf("Part 1: %d", biodiversity)
+}
+
+func readMap(fileName string) []string {
+	f, err := os.ReadFile(fmt.Sprintf("../../../data/%s.txt", fileName))
+	if err != nil {
+		panic(err)
+	}
+	lines := strings.Split(string(f), "\r\n")
+	return lines
 }
