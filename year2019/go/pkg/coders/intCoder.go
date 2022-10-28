@@ -58,6 +58,14 @@ func (ic IntCoder) FindOptimalOutput(codesInput []int, optimalValue int) (int, e
 	return 0, fmt.Errorf("no noun and verb found for optimal value: %d", optimalValue)
 }
 
+func (ic *IntCoder) GenerateCodes(codesInput []int) map[int]int {
+	codes := make(map[int]int, len(codesInput))
+	for i, v := range codesInput {
+		codes[i] = v
+	}
+	return codes
+}
+
 func (ic *IntCoder) RunWithInput(codesInput []int, input int) int {
 	codes := make(map[int]int, len(codesInput))
 	for i, v := range codesInput {

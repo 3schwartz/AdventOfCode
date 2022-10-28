@@ -32,7 +32,7 @@ func (tb *TractorBeamIntCoder) FindPointsAffected(codesInput []int, out chan<- B
 	}()
 	for x := 0; x < size; x++ {
 		for y := 0; y < size; y++ {
-			codes := tb.generateCodes(codesInput)
+			codes := tb.GenerateCodes(codesInput)
 			tb.pointAffected(codes, x, y, out)
 		}
 	}
@@ -46,17 +46,9 @@ func (tb *TractorBeamIntCoder) FindNeighborsAffected(
 		close(out)
 	}()
 	for neighbor := range neighbors {
-		codes := tb.generateCodes(codesInput)
+		codes := tb.GenerateCodes(codesInput)
 		tb.pointAffected(codes, neighbor.X, neighbor.Y, out)
 	}
-}
-
-func (tb *TractorBeamIntCoder) generateCodes(codesInput []int) map[int]int {
-	codes := make(map[int]int, len(codesInput))
-	for i, v := range codesInput {
-		codes[i] = v
-	}
-	return codes
 }
 
 func (tb *TractorBeamIntCoder) pointAffected(codes map[int]int, x int, y int, out chan<- BeamPoint) {
