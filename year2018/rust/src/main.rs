@@ -11,7 +11,7 @@ fn main() -> std::io::Result<()> {
 
     println!("The full path is {}", fullPath.display());
 
-    let file = match fs::read_to_string("../data/day1_data.txt") {
+    let file = match fs::read_to_string(fullPath) {
         Err(why) => panic!("couldn't open file: {}", why),
         Ok(file) => file
     };
