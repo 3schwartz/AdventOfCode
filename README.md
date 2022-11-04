@@ -23,3 +23,8 @@ Languages touched this year
 - C#
 - Python
 - C++
+
+## 2018
+
+Languages touched this year
+- Rust
