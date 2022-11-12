@@ -51,7 +51,7 @@ fn is_unique(fabrics: &HashMap<(i32, i32), i32>, pixel_start_row: i32, pixel_len
     true
 }
 
-fn find_pixel_definitions(s: &str) -> (String, Vec<&str>, Vec<&str>) {
+fn find_pixel_definitions(s: &str) -> (i32, Vec<&str>, Vec<&str>) {
         let claim_fabric_definition: Vec<&str> = s.split(" @ ")
             .collect();
         let definition_split: Vec<&str> = claim_fabric_definition[1]
@@ -62,7 +62,9 @@ fn find_pixel_definitions(s: &str) -> (String, Vec<&str>, Vec<&str>) {
         let pixel_length: Vec<&str> = definition_split[1].split("x")
             .collect();
 
-        let id = claim_fabric_definition[0].replace("#", "");
+        let id = claim_fabric_definition[0].replace("#", "")
+            .parse()
+            .expect("couldn't parse id");
 
         return (id, pixel_start, pixel_length)
 }
