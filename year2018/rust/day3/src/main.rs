@@ -7,8 +7,8 @@ fn main() {
 
     let mut fabrics = HashMap::new();
 
-    for s in lines {
-        let (id, pixel_start, pixel_length) = find_pixel_definitions(s);
+    for s in lines.clone() {
+        let (_, pixel_start, pixel_length) = find_pixel_definitions(s);
         let (pixel_start_column, pixel_start_row, pixel_length_row, pixel_length_column) = 
             find_pixels(pixel_start, pixel_length);                
         
@@ -26,7 +26,29 @@ fn main() {
         }
     }
 
-    println!("Part 1 {}", sum)
+    println!("Part 1 {}", sum);
+
+    for s in lines.clone() {
+        let (id, pixel_start, pixel_length) = find_pixel_definitions(s);
+        let (pixel_start_column, pixel_start_row, pixel_length_row, pixel_length_column) = 
+            find_pixels(pixel_start, pixel_length);
+        
+        if is_unique(&fabrics, pixel_start_row, pixel_length_row, pixel_start_column, pixel_length_column) {
+            println!("Part 2: {}", id)
+        }
+    }
+    
+}
+
+fn is_unique(fabrics: &HashMap<(i32, i32), i32>, pixel_start_row: i32, pixel_length_row: i32, pixel_start_column: i32, pixel_length_column: i32) -> bool {
+    for r in pixel_start_row..pixel_start_row+pixel_length_row {
+        for j in pixel_start_column..pixel_start_column+pixel_length_column {
+            if *fabrics.get(&(r,j)).expect("key should exists") > 1 {
+                return false
+            }
+        }
+    }
+    true
 }
 
 fn find_pixel_definitions(s: &str) -> (String, Vec<&str>, Vec<&str>) {
