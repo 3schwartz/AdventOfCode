@@ -16,7 +16,7 @@ Languages touched this year
 Languages touched this year
 - Python
 
-## 2019
+## 2019 - completed
 
 Languages touched this year
 - Go
