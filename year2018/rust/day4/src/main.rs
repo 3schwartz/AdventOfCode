@@ -33,19 +33,8 @@ fn main() {
             },
             'w' => {
                 let entry = guard_map.entry(current_id).or_insert(HashMap::new());
-                let mut first_minute = last_minute;
 
-                if last_minute >= minute {
-                    for h in last_minute..= 60 {
-                        entry.entry(h)
-                            .and_modify(|counter| *counter += 1)
-                            .or_insert(1);
-                    }
-                    first_minute = 0;
-
-                }
-
-                for h in first_minute..minute {
+                for h in last_minute..minute {
                     entry.entry(h)
                         .and_modify(|counter| *counter += 1)
                         .or_insert(1);
