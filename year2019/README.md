@@ -122,6 +122,8 @@ cpu: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz
 ## Day 18
 ### Part 1
 #### Go
+
+````
 goos: windows
 goarch: amd64
 pkg: advent/cmd/day18
@@ -134,11 +136,13 @@ Benchmark_findPath/priority:_day18_test3-8                   392           26027
 Benchmark_findPath/graph:_day18_test3-8                    25068             47732 ns/op           17724 B/op        151 allocs/op
 Benchmark_findPath/priority:_day18_test5-8                    82          13601543 ns/op         7704622 B/op      42584 allocs/op
 Benchmark_findPath/graph:_day18_test5-8                    22935             48925 ns/op           16042 B/op        162 allocs/op
+````
 
 ## Day 20
 ### Part 1
 #### Go
 
+````
 goos: windows
 goarch: amd64
 pkg: advent/cmd/day20
@@ -152,3 +156,4 @@ Benchmark_findPath/PriorityMapping:__test2-8               47_875               
 Benchmark_findPath/Queue:_-8                                    1       14_001_311_500 ns/op   7_772_855_576 B/op          239 allocs/op
 Benchmark_findPath/PriorityQueue:_-8                            1       81_714_675_200 ns/op  11_518_860_688 B/op  180_699_007 allocs/op
 Benchmark_findPath/PriorityMapping:_-8                        674            1_732_848 ns/op         300_731 B/op        1_482 allocs/op
+````
