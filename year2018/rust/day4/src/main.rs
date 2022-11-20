@@ -49,9 +49,27 @@ fn main() {
     let id_max = find_max_id(&guard_map);
     let max_minute = find_max_minute(id_max, &guard_map);
 
-    println!("Part 1: {}", id_max * max_minute)
+    println!("Part 1: {}", id_max * max_minute);
 
+    let (id_freq_max, minute_max_freq) = find_max_frequency(&guard_map);
 
+    println!("Part 2: {}", id_freq_max * minute_max_freq)
+}
+
+fn find_max_frequency(guard_map : &HashMap<i32, HashMap<i16, i32>>) -> (i32, i32) {
+    let mut id_max = 0;
+    let mut minute_asleep_count_max = 0;
+    let mut minute_max: i16 = 0;
+    for (id, guard) in guard_map {
+        for (minute, count) in guard {
+            if *count > minute_asleep_count_max {
+                minute_asleep_count_max = *count;
+                id_max = *id;
+                minute_max = *minute;
+            }
+        }
+    }
+    (id_max, minute_max as i32)
 }
 
 fn print_lines(lines : &Vec<&str>) -> () {
