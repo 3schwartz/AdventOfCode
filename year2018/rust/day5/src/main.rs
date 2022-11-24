@@ -1,4 +1,4 @@
-use std::{fs, ptr};
+use std::{fs};
 
 fn main() {
     let input = fs::read_to_string("../../data/day5_data.txt")
@@ -17,10 +17,7 @@ fn get_polymer_length(polymer: &str) -> i32 {
         first.append(c);
     }
 
-    let result = match first.react(){
-        (None, _) => panic!("Didn't work"),
-        (Some(unit), _) => unit,
-    };
+    let result = first.react();
 
     let length = result.get_length();
     length
@@ -47,7 +44,8 @@ struct ReactState{
 impl Unit {
     fn new (character: char) -> Box<Self> {
         Box::new(Self {
-            character, next: None })
+            character, 
+            next: None })
     }
 
     fn append(self: &mut Box<Self>, character: char) {
@@ -71,44 +69,48 @@ impl Unit {
         }
     }
 
-    fn react_loop(self: Box<Self>) -> Box<Unit> {
+    fn react(self: Box<Self>) -> Box<Unit> {
         let mut last_length = self.get_length();
-        
+        let mut to_evaluate = self;
         loop {
-
-            let new_length = .get_length();
+            to_evaluate = to_evaluate.react_loop();
+            let new_length = to_evaluate.get_length();
             if new_length == last_length {
                 break;
             }
-        }
+        };
+        return to_evaluate;
     }
 
-    fn react(self: &mut Box<Self>) -> (Option<Box<Unit>>, bool) {
-        let mut temp_unit: Option<&Unit> = None;
-        let mut last_unit: Option<(Box<Unit>, Box<Unit>)> = None;
-        // let mut first_unit = self;
-        let mut unit_to_evaluate = self;
-        let mut is_first = true;
+    fn react_loop(self: Box<Self>) -> Box<Unit> {
+        let mut last_unit: Option<&Box<Unit>> = None;
+        let first = self;
         
         loop {
-            match unit_to_evaluate.match_next(unit_to_evaluate.next) {
-                (Some(ref mut next), true) => {
-                    match last_unit {
-                        Some((first, last)) => {
-                            last.next = Some(*next);
-                            return 
+            let mut to_evaluate = match last_unit {
+                Some(unit) => unit,
+                None => &first,
+            };
+            let next_options = to_evaluate.next.take();
+
+            match to_evaluate.match_next(next_options) {
+                (Some(next), true) => {
+                    let to_return: Box<Unit> = match last_unit {
+                        Some(last) => {
+                            last.next = Some(next);
+                            first
                         },
-                        None => todo!(),
-                    }
-                    last_unit = Some(&unit_to_evaluate);
-
+                        None => next,
+                    };
+                    return to_return;
                 },
-                (Some(next), false) => todo!(),
-                (None, _) => todo!(),
+                (Some(next), false) => {
+                    to_evaluate.next = Some(next);
+                    last_unit = Some(to_evaluate);
+                },
+                (None, _) => return first,
             }
-
         }
-        
         // let match_next = self.match_next(self.next);
 
         // let next_temp = self.next.take();
