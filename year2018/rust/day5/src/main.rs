@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, ptr};
 
 fn main() {
     let input = fs::read_to_string("../../data/day5_data.txt")
@@ -38,6 +38,12 @@ struct Unit {
     next: Option<Box<Unit>>,
 }
 
+struct ReactState{
+    first: Option<Box<Unit>>,
+    last: Option<Box<Unit>>,
+    current: Option<Box<Unit>>
+}
+
 impl Unit {
     fn new (character: char) -> Box<Self> {
         Box::new(Self {
@@ -55,26 +61,75 @@ impl Unit {
         temp_next.next = Some(Unit::new(character));
     }
 
-    fn react(mut self) -> (Option<Box<Unit>>, bool) {
-        let next_temp = self.next.take();
-        match next_temp {
-            Some(next) if (self.characters_match(&next)) => {
-                match next.next {
-                    Some(new_next) => (new_next.react().0, true),
-                    None => (None, true),
-                }
+    fn match_next(&self, next : Option<Box<Unit>>) -> (Option<Box<Unit>>, bool) {
+        match next {
+            Some(other) if self.characters_match(&other) => {
+                return (other.next, true)
             },
-            Some(next) => {
-                let new_next = next.react();
-                self.next = new_next.0;
-                
-                match new_next.1 {
-                    true => self.react(),
-                    false => (Some(Box::new(self)), false),
-                }
-            },
-            None => (Some(Box::new(self)), false)
+            Some(other) => (Some(other), false),
+            None => (None, false),
         }
+    }
+
+    fn react_loop(self: Box<Self>) -> Box<Unit> {
+        let mut last_length = self.get_length();
+        
+        loop {
+
+            let new_length = .get_length();
+            if new_length == last_length {
+                break;
+            }
+        }
+    }
+
+    fn react(self: &mut Box<Self>) -> (Option<Box<Unit>>, bool) {
+        let mut temp_unit: Option<&Unit> = None;
+        let mut last_unit: Option<(Box<Unit>, Box<Unit>)> = None;
+        // let mut first_unit = self;
+        let mut unit_to_evaluate = self;
+        let mut is_first = true;
+        
+        loop {
+            match unit_to_evaluate.match_next(unit_to_evaluate.next) {
+                (Some(ref mut next), true) => {
+                    match last_unit {
+                        Some((first, last)) => {
+                            last.next = Some(*next);
+                            return 
+                        },
+                        None => todo!(),
+                    }
+                    last_unit = Some(&unit_to_evaluate);
+
+                },
+                (Some(next), false) => todo!(),
+                (None, _) => todo!(),
+            }
+
+        }
+        
+        // let match_next = self.match_next(self.next);
+
+        // let next_temp = self.next.take();
+        // match next_temp {
+        //     Some(next) if (self.characters_match(&next)) => {
+        //         match next.next {
+        //             Some(new_next) => (new_next.react().0, true),
+        //             None => (None, true),
+        //         }
+        //     },
+        //     Some(next) => {
+        //         let new_next = next.react();
+        //         self.next = new_next.0;
+                
+        //         match new_next.1 {
+        //             true => self.react(),
+        //             false => (Some(Box::new(self)), false),
+        //         }
+        //     },
+        //     None => (Some(Box::new(self)), false)
+        // }
     }
 
     fn characters_match(&self, other : &Unit) -> bool {
