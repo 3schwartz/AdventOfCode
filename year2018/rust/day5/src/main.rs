@@ -1,11 +1,17 @@
-
+use std::fs;
 
 fn main() {
-    let input = "dabAcCaCBAcCcaDA";
-    let mut chars = input.chars();
+    let input = fs::read_to_string("../../data/day5_data.txt")
+        .expect("couldn't open file");
+    let length = get_polymer_length(input.trim());
+    println!("Part 1: {}", length)
+}
+
+fn get_polymer_length(polymer: &str) -> i32 {
+    let mut chars = polymer.chars();
     let c = chars.next().unwrap();
     
-    let mut first = UnitP::new(c);
+    let mut first = Unit::new(c);
 
     for c in chars {
         first.append(c);
@@ -17,68 +23,61 @@ fn main() {
     };
 
     let length = result.get_length();
-
-    println!("Part 1: {}", length)
-
+    length
 }
 
-struct UnitP {
+#[test]
+fn test_get_polymer_length() {
+    let input = "dabAcCaCBAcCcaDA";
+    let length = get_polymer_length(input);
+    assert_eq!(length, 10);
+}
+
+struct Unit {
     character: char,
-    next: Option<Box<UnitP>>,
+    next: Option<Box<Unit>>,
 }
 
-impl UnitP {
-    fn new (character: char) -> Self {
-        Self {
-            character, next: None }
+impl Unit {
+    fn new (character: char) -> Box<Self> {
+        Box::new(Self {
+            character, next: None })
     }
 
-    fn append(&mut self, character: char) {
-        match &mut self.next {
-            Some(next) => {
-                next.append(character);
-            },
-            None => {
-                self.next = Some(Box::new(UnitP::new(character)));
-            },
+    fn append(self: &mut Box<Self>, character: char) {
+        let mut temp_next = self;
+
+        while let Some(ref mut next) = temp_next.next
+        {
+            temp_next = next;
         }
+
+        temp_next.next = Some(Unit::new(character));
     }
 
-    fn react(mut self) -> (Option<Box<UnitP>>, bool) {
-        let next_temp = self.next;
+    fn react(mut self) -> (Option<Box<Unit>>, bool) {
+        let next_temp = self.next.take();
         match next_temp {
             Some(next) if (self.characters_match(&next)) => {
-                    match next.next {
-                        Some(new_next) => (new_next.react().0, true),
-                        None => (None, true),
-                    }
-                },
-            Some(next) => {
-                let foo = next.react();
-
-                if foo.1 {
-                    self.next = foo.0;
-                    return self.react();
+                match next.next {
+                    Some(new_next) => (new_next.react().0, true),
+                    None => (None, true),
                 }
-
-                return (Some(Box::new(self)), false);
-
-
-                // match next.react() {
-                //     (new_next, true) => {
-                //         self.next = new_next;
-                //         return self.react();
-                //     },
-                //     (_, false) => {
-                //         return (Some(Box::new(self)), false)
-                //     }
-                // }
+            },
+            Some(next) => {
+                let new_next = next.react();
+                self.next = new_next.0;
+                
+                match new_next.1 {
+                    true => self.react(),
+                    false => (Some(Box::new(self)), false),
+                }
             },
             None => (Some(Box::new(self)), false)
         }
     }
 
-    fn characters_match(&self, other : &UnitP) -> bool {
+    fn characters_match(&self, other : &Unit) -> bool {
         (other.character.is_ascii_lowercase() && self.character.is_ascii_uppercase() ||
         other.character.is_ascii_uppercase() && self.character.is_ascii_lowercase()) &&
             self.character.to_ascii_lowercase() == other.character.to_ascii_lowercase()
