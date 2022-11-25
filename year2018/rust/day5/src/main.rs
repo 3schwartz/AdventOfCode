@@ -1,4 +1,4 @@
-use std::{fs};
+use std::{fs, rc::Rc, cell::{RefCell}};
 
 fn main() {
     let input = fs::read_to_string("../../data/day5_data.txt")
@@ -14,12 +14,12 @@ fn get_polymer_length(polymer: &str) -> i32 {
     let mut first = Unit::new(c);
 
     for c in chars {
-        first.append(c);
+        Unit::append(&first, c);
     }
 
-    let result = first.react();
+    let result = Unit::react(first);
 
-    let length = result.get_length();
+    let length = result.borrow().get_length();
     length
 }
 
@@ -32,35 +32,30 @@ fn test_get_polymer_length() {
 
 struct Unit {
     character: char,
-    next: Option<Box<Unit>>,
-}
-
-struct ReactState{
-    first: Option<Box<Unit>>,
-    last: Option<Box<Unit>>,
-    current: Option<Box<Unit>>
+    next: Option<Rc<RefCell<Unit>>>,
 }
 
 impl Unit {
-    fn new (character: char) -> Box<Self> {
-        Box::new(Self {
+    fn new (character: char) -> Rc<RefCell<Self>> {
+        Rc::new(RefCell::new(Self {
             character, 
-            next: None })
+            next: None }))
     }
 
-    fn append(self: &mut Box<Self>, character: char) {
-        let mut temp_next = self;
+    fn append(first : &Rc<RefCell<Self>>, character: char) {
+        let mut temp_next = first;
 
-        while let Some(ref mut next) = temp_next.next
+        while let Some(ref next) = temp_next.borrow().next
         {
             temp_next = next;
         }
+        let borrowed = temp_next.borrow_mut();
 
-        temp_next.next = Some(Unit::new(character));
+        borrowed.next = Some(Unit::new(character));
     }
 
-    fn match_next(&self, next : Option<Box<Unit>>) -> (Option<Box<Unit>>, bool) {
-        match next {
+    fn match_next(self: Rc<Self>) -> (Option<Rc<Unit>>, bool) {
+        match self.next {
             Some(other) if self.characters_match(&other) => {
                 return (other.next, true)
             },
@@ -69,33 +64,41 @@ impl Unit {
         }
     }
 
-    fn react(self: Box<Self>) -> Box<Unit> {
-        let mut last_length = self.get_length();
-        let mut to_evaluate = self;
+    fn react(initial: Rc<RefCell<Self>>) -> Rc<RefCell<Self>> {
+        let mut last_length : i32;
+        {
+            last_length = initial.borrow().get_length();
+        };
+
+        let mut to_evaluate = initial;
         loop {
-            to_evaluate = to_evaluate.react_loop();
-            let new_length = to_evaluate.get_length();
+            to_evaluate = Unit::react_loop(to_evaluate);
+            let mut new_length : i32;
+            {
+                new_length = to_evaluate.borrow().get_length();
+            }
             if new_length == last_length {
                 break;
             }
+            last_length = new_length;
         };
         return to_evaluate;
     }
 
-    fn react_loop(self: Box<Self>) -> Box<Unit> {
-        let mut last_unit: Option<&Box<Unit>> = None;
-        let first = self;
-        
+    fn react_loop(to_evaluate: Rc<RefCell<Self>>) -> Rc<RefCell<Self>> {
+        let mut last_unit: Option<Rc<Unit>> = None;
+        let first = Rc::clone(&to_evaluate);
+        let current = Rc::clone(&to_evaluate);
+ 
         loop {
-            let mut to_evaluate = match last_unit {
-                Some(unit) => unit,
-                None => &first,
-            };
-            let next_options = to_evaluate.next.take();
-
-            match to_evaluate.match_next(next_options) {
+            // let to_evaluate = match &last_unit {
+            //     Some(unit) => unit,
+            //     None => &Rc::clone(&first),
+            // };
+            let loop_current = Rc::clone(&current);
+            match loop_current.match_next() {
                 (Some(next), true) => {
-                    let to_return: Box<Unit> = match last_unit {
+                    let to_return: Rc<Unit> = match last_unit {
                         Some(last) => {
                             last.next = Some(next);
                             first
@@ -105,8 +108,8 @@ impl Unit {
                     return to_return;
                 },
                 (Some(next), false) => {
-                    to_evaluate.next = Some(next);
-                    last_unit = Some(to_evaluate);
+                    loop_current.next = Some(next);
+                    last_unit = Some(loop_current);
                 },
                 (None, _) => return first,
             }
