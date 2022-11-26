@@ -31,13 +31,13 @@ struct Unit {
     next: u32,
 }
 struct Polymer{
-    polymer: HashMap<u32,Box<Unit>>,
+    polymer: HashMap<u32,Unit>,
     start: u32
 }
 
 impl Polymer{
     fn new (chars : Chars) -> Polymer {
-        let mut polymer: HashMap<u32, Box<Unit>> = HashMap::new();
+        let mut polymer: HashMap<u32, Unit> = HashMap::new();
         let mut idx: u32 = 0;
         for c in chars {
             polymer.insert(idx, Unit::new(c, idx, idx + 1));
@@ -53,10 +53,8 @@ impl Polymer{
         let mut current_length = self.polymer.len();
 
         loop {
-            let new_length = self.polymer.len();
-
             self.react_loop();
-
+            let new_length = self.length();
             if new_length == current_length {
                 break;
             }
@@ -64,17 +62,17 @@ impl Polymer{
         }
     }
 
-    fn get(&self, idx: &u32) -> Option<&Box<Unit>> {
+    fn get(&self, idx: &u32) -> Option<&Unit> {
         self.polymer.get(idx)
     }
 
-    fn remove(&mut self, idx: &u32) {
-        self.polymer.remove(idx);
-    }
+    // fn remove(&mut self, idx: &u32) {
+    //     self.polymer.remove(idx);
+    // }
 
     fn react_loop(&mut self) {
-        let mut current = self.get(&self.start);
-        let mut last : Option<&Box<Unit>> = None;
+        let mut current = self.polymer.get(&self.start);
+        let mut last : Option<&Unit> = None;
 
         loop {
             match current {
@@ -126,13 +124,13 @@ impl Polymer{
 }
 
 impl Unit {
-    fn new (character: char, id: u32, next: u32) -> Box<Self> {
-        Box::new(Self {
+    fn new (character: char, id: u32, next: u32) -> Self {
+        Self {
             character, id, next
-        })
+        }
     }
 
-    fn characters_match(self: &Box<Self>, next: &Unit) -> bool {
+    fn characters_match(&self, next: &Unit) -> bool {
         (self.character.is_ascii_lowercase() && next.character.is_ascii_uppercase() ||
          self.character.is_ascii_uppercase() && next.character.is_ascii_lowercase()) &&
          self.character.to_ascii_lowercase() == next.character.to_ascii_lowercase()
