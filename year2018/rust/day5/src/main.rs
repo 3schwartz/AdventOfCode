@@ -53,7 +53,10 @@ impl Polymer{
         let mut current_length = self.polymer.len();
 
         loop {
-            self.react_loop();
+            let to_remove = self.react_loop();
+            for id in to_remove {
+                self.remove(&id);
+            }
             let new_length = self.length();
             if new_length == current_length {
                 break;
@@ -66,13 +69,14 @@ impl Polymer{
         self.polymer.get(idx)
     }
 
-    // fn remove(&mut self, idx: &u32) {
-    //     self.polymer.remove(idx);
-    // }
+    fn remove(&mut self, idx: &u32) {
+        self.polymer.remove(idx);
+    }
 
-    fn react_loop(&mut self) {
+    fn react_loop(&mut self) -> Vec<u32> {
         let mut current = self.polymer.get(&self.start);
         let mut last : Option<&Unit> = None;
+        let mut to_remove = Vec::<u32>::new();
 
         loop {
             match current {
@@ -81,45 +85,33 @@ impl Polymer{
                         .map_or(false, |f| this.characters_match(f));
                     
                     if match_next {
-                        // self.polymer.remove(&this.id);
-                        // self.polymer.remove(&this.next);
+                        to_remove.push(this.id);
+                        to_remove.push(this.next);
                         match last {
                             Some(last_unit) => {
                                 let next = self.polymer.get(&this.next)
                                     .map_or(last_unit.next + 1, |f| f.next);
-                                self.polymer.insert(last_unit.id, Unit::new(last_unit.character, last_unit.id, next));
+                                self.polymer.insert(last_unit.id, last_unit.new_next(next));
                             },
                             None => {
                                 self.start = self.polymer.get(&this.next)
-                                    .map_or(self.start + 1, |f| f.id)
+                                    .map_or(self.start + 1, |f| f.next)
                             },
                         }
                         break;
-                    }
+                    };
 
                     last = current;
                     current = self.get(&this.next)
                 },
                 None => break,
             }
-        }
-        
+        };
+        return to_remove;
     }
 
     fn length(&self) -> usize {
-        // self.polymer.len();
-        let mut idx = self.start;
-        let mut sum = 0;
-        loop {
-            match self.polymer.get(&idx) {
-                Some(temp) => {
-                    sum += 1;
-                    idx = temp.next;
-                },
-                None => break,
-            }
-        };
-        return sum;
+        self.polymer.len()
     }
 }
 
@@ -128,6 +120,12 @@ impl Unit {
         Self {
             character, id, next
         }
+    }
+
+    fn new_next(&self, next: u32) -> Unit {
+        Unit::new(
+            self.character, self.id, next
+        )
     }
 
     fn characters_match(&self, next: &Unit) -> bool {
