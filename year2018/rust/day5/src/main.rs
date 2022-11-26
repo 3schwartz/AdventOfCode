@@ -64,11 +64,7 @@ impl Polymer{
         }
     }
 
-    fn get_start(&mut self) -> Option<&Unit> {
-        self.polymer.get(&self.start)
-    }
-
-    fn get(&mut self, idx: &u32) -> Option<&Unit> {
+    fn get(&self, idx: &u32) -> Option<&Unit> {
         self.polymer.get(idx)
     }
 
@@ -78,18 +74,18 @@ impl Polymer{
 
     fn react_loop(&mut self) {
         // let polymer = &mut self.polymer;
-        let current = self.get_start();
-        let mut last : Option<&Unit> = None;
+        let mut current = self.get(&self.start);
+        let mut last : Option<&mut Unit> = None;
 
         loop {
             match current {
                 Some(this) => {
                     let match_next = self.get(&this.next)
-                        .map_or(false, |f| self.characters_match(this, f));
+                        .map_or(false, |f| this.characters_match(f));
                     
                     if match_next {
-                        self.remove(&this.id);
-                        self.remove(&this.next);
+                        // self.remove(&this.id);
+                        // self.remove(&this.next);
                         match last {
                             Some(last_unit) => {
                                 last_unit.next = self.polymer.get(&this.next)
@@ -112,12 +108,6 @@ impl Polymer{
         
     }
 
-    fn characters_match(&mut self, current: &Unit, next: &Unit) -> bool {
-        (current.character.is_ascii_lowercase() && next.character.is_ascii_uppercase() ||
-        current.character.is_ascii_uppercase() && next.character.is_ascii_lowercase()) &&
-        current.character.to_ascii_lowercase() == next.character.to_ascii_lowercase()
-    }
-
     fn length(self) -> usize {
         self.polymer.len()
     }
@@ -128,5 +118,11 @@ impl Unit {
         Self {
             character, id, next
         }
+    }
+
+    fn characters_match(&self, next: &Unit) -> bool {
+        (self.character.is_ascii_lowercase() && next.character.is_ascii_uppercase() ||
+         self.character.is_ascii_uppercase() && next.character.is_ascii_lowercase()) &&
+         self.character.to_ascii_lowercase() == next.character.to_ascii_lowercase()
     }
 }
