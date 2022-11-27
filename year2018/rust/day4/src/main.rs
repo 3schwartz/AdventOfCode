@@ -1,15 +1,13 @@
-use std::{fs, collections::HashMap, os, env};
+use std::{fs, collections::HashMap};
 
 fn main() {
-    let p =  env::current_dir().expect("msg");
-    println!("{}", p.display());
     let file: String = fs::read_to_string("../../data/day4_data.txt")
         .expect("couldn't open file");
     let lines = file.split("\r\n");
     let mut lines_iter : Vec<&str> = lines.collect();
 
     sort_lines(&mut lines_iter);
-    // print_lines(&lines_iter);
+    print_lines(&lines_iter);
 
     let mut current_id = -1;
     let mut last_minute = -1;
