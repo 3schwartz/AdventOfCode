@@ -11,7 +11,8 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--manifest-path=${fileDirname}\\..\\Cargo.toml"
+                    "--manifest-path=${fileDirname}\\..\\Cargo.toml",
+                    "--release"
                 ]
             },
             "args": [],
