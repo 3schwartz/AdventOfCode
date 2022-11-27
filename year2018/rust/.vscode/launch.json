@@ -15,7 +15,7 @@
                 ]
             },
             "args": [],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${fileDirname}\\..\\"
         },
         {
             "type": "lldb",
@@ -29,7 +29,7 @@
                 ]
             },
             "args": [],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${fileDirname}\\..\\"
         }
     ]
 }
