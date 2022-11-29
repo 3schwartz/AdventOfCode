@@ -2,7 +2,7 @@ use std::{fs};
 use std::collections::HashSet;
 
 fn main() {
-    let file = match fs::read_to_string("../../data/day1_data.txt") {
+    let file = match fs::read_to_string("../data/day1_data.txt") {
         Err(why) => panic!("couldn't open file: {}", why),
         Ok(file) => file
     };

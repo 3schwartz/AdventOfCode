@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::fs;
-use std::str::{Split};
+use std::str::Split;
 
 fn main() {
-    let file = match fs::read_to_string("../../data/day2_data.txt")  {
+    let file = match fs::read_to_string("../data/day2_data.txt")  {
         Err(why) => panic!("couldn't open file {}", why),
         Ok(file) => file
     };
