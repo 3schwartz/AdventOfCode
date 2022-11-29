@@ -5,6 +5,7 @@ struct Unit {
     id: u32,
     next: u32,
 }
+
 pub struct Polymer{
     polymer: HashMap<u32,Unit>,
     start: u32
