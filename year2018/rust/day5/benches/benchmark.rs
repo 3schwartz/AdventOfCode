@@ -4,7 +4,10 @@ use day5::value;
 
 pub fn simple_benchmark(c: &mut Criterion) {
     let input = "dabAcCaCBAcCcaDA";
-    c.bench_function("Simple", |b| b.iter(|| black_box(simple::get_polymer_length(input))));
+    c.bench_function("Simple", |b| b.iter(|| {
+        let mut polymer = simple::Polymer::new(&input);
+        black_box(polymer.find_polymer_length());
+    }));
 }
 
 pub fn value_benchmark(c: &mut Criterion) {

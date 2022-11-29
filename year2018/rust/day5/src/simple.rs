@@ -1,5 +1,9 @@
 use std::{collections::{HashMap, HashSet}, fs::File, io::Write};
 
+pub trait LengthFinder {
+    fn find_polymer_length(&self) -> usize;
+}
+
 struct Unit {
     character: char,
     id: u32,
@@ -9,6 +13,22 @@ struct Unit {
 pub struct PolymerImprover{
     initial_polymer: String,
     unique_units: HashSet<char>
+}
+
+impl LengthFinder for PolymerImprover {
+    fn find_polymer_length(&self) -> usize {
+        let mut min_length = usize::MAX;
+        for c in &self.unique_units {
+            let temp = self.initial_polymer
+                .replace(&[c.to_ascii_lowercase(), c.to_ascii_uppercase()], "");
+            let mut polymer = Polymer::new(&temp);
+            let length = polymer.find_polymer_length();
+            if length < min_length {
+                min_length = length;
+            };
+        }
+        min_length
+    }
 }
 
 impl PolymerImprover{
@@ -33,20 +53,6 @@ impl PolymerImprover{
             initial_polymer: input,
             unique_units: chars_unique
         }
-    }
-
-    pub fn find_polymer_length(&self) -> usize {
-        let mut min_length = usize::MAX;
-        for c in &self.unique_units {
-            let temp = self.initial_polymer
-                .replace(&[c.to_ascii_lowercase(), c.to_ascii_uppercase()], "");
-            let mut polymer = Polymer::new(&temp);
-            let length = polymer.find_polymer_length();
-            if length < min_length {
-                min_length = length;
-            };
-        }
-        min_length
     }
 }
 

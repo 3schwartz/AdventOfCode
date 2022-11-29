@@ -1,6 +1,7 @@
 use std::fs;
 
 use day5::simple;
+use day5::simple::LengthFinder;
 
 fn main() {
     let input = fs::read_to_string("../data/day5_data.txt")

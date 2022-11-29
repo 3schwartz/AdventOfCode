@@ -11,12 +11,12 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--manifest-path=${fileDirname}\\..\\Cargo.toml",
+                    "--manifest-path=${fileDirname}\\..\\..\\Cargo.toml",
                     "--release"
                 ]
             },
             "args": [],
-            "cwd": "${fileDirname}\\..\\"
+            "cwd": "${workspaceFolder}"
         },
         {
             "type": "lldb",
@@ -30,7 +30,7 @@
                 ]
             },
             "args": [],
-            "cwd": "${fileDirname}\\..\\"
+            "cwd": "${workspaceFolder}"
         }
     ]
 }

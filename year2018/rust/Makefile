@@ -1,7 +1,7 @@
 # TEST
 
 test5:
-	cargo test --manifest-path=./day5/Cargo.toml --no-fail-fast
+	cargo test --manifest-path=./day5/Cargo.toml --no-fail-fast --release
 .PHONY:test5
 
 # BENCH
