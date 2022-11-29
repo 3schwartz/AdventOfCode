@@ -15,21 +15,15 @@
 #### Rust
 
 ```
-Simple                  time:   [1.6260 µs 1.6419 µs 1.6584 µs]
-                        change: [-3.8302% -1.5297% +0.9886%] (p = 0.21 > 0.05)
+All/Simple - All        time:   [3.7360 s 4.0107 s 4.3430 s]
+                        change: [-8.5298% +1.1140% +11.829%] (p = 0.84 > 0.05)
                         No change in performance detected.
-Found 4 outliers among 100 measurements (4.00%)
-  2 (2.00%) high mild
-  2 (2.00%) high severe
-slope  [1.6260 µs 1.6584 µs] R^2            [0.8360279 0.8353723]
-mean   [1.6429 µs 1.6975 µs] std. dev.      [73.885 ns 200.17 ns]
-median [1.6053 µs 1.6753 µs] med. abs. dev. [50.455 ns 100.27 ns]
+mean   [3.7360 s 4.3430 s] std. dev.      [177.41 ms 687.27 ms]
+median [3.6148 s 4.3179 s] med. abs. dev. [41.832 ms 816.61 ms]
 
-Value                   time:   [1.4974 µs 1.5104 µs 1.5248 µs]
-Found 9 outliers among 100 measurements (9.00%)
-  6 (6.00%) high mild
-  3 (3.00%) high severe
-slope  [1.4974 µs 1.5248 µs] R^2            [0.7941627 0.7923550]
-mean   [1.5227 µs 1.5747 µs] std. dev.      [89.691 ns 173.46 ns]
-median [1.5114 µs 1.5272 µs] med. abs. dev. [56.492 ns 91.484 ns]
+All/Value - All         time:   [4.1732 s 4.4632 s 4.7286 s]
+                        change: [-11.387% -1.3553% +8.8693%] (p = 0.81 > 0.05)
+                        No change in performance detected.
+mean   [4.1732 s 4.7286 s] std. dev.      [225.44 ms 557.32 ms]
+median [3.9195 s 4.8863 s] med. abs. dev. [88.877 ms 745.28 ms]
 ```
