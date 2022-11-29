@@ -1,11 +1,9 @@
 pub mod simple;
 pub mod value;
 
-use std::fs;
-
 #[test]
 fn test_part2() {
-    let input = fs::read_to_string("../../data/day5_part2_data.txt")
+    let input = std::fs::read_to_string("../../data/day5_part2_data.txt")
         .expect("couldn't open file");
 
     let polymer = simple::PolymerImprover::new(input);
@@ -17,8 +15,9 @@ fn test_part2() {
 #[test]
 fn test_part1_with_write_of_part2() {
     let path = "../../data/day5_part2_data.txt";
-    let input = fs::read_to_string("../../data/day5_data.txt")
+    let input = std::fs::read_to_string("../../data/day5_data.txt")
             .expect("couldn't open file");
+
     let mut polymer = simple::Polymer::new(&input);
     let length = polymer.find_polymer_length();
     

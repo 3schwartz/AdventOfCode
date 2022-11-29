@@ -23,6 +23,18 @@ impl PolymerImprover{
         }
     }
 
+    pub fn new_from_vector(chars: Vec<char>) -> Self {
+        let mut chars_unique = HashSet::new();
+        for c in &chars {
+            chars_unique.insert(*c);
+        }
+        let input = chars.iter().collect();
+        Self {
+            initial_polymer: input,
+            unique_units: chars_unique
+        }
+    }
+
     pub fn find_polymer_length(&self) -> usize {
         let mut min_length = usize::MAX;
         for c in &self.unique_units {
@@ -65,6 +77,16 @@ impl Polymer{
             write!(file, "{}", unit.character).expect("Unable to write");
             idx = unit.next;
         }
+    }
+
+    pub fn write_to_chars(&self) -> Vec<char> {
+        let mut idx = self.start;
+        let mut chars = Vec::new();
+        while let Some(unit) = self.get(&idx) {
+            chars.push(unit.character);
+            idx = unit.next;
+        };
+        chars
     }
 
     pub fn find_polymer_length(&mut self) -> usize {
