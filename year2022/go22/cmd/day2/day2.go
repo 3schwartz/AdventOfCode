@@ -14,122 +14,111 @@ func main() {
 	input := readData()
 	rounds := strings.Split(input, "\r\n")
 
-	totalSum := 0
+	simpleSum := 0
+	complexSum := 0
 	for _, round := range rounds {
-		game := createGameRound(round)
-		choiceScore := game.getChoiceScore()
-		winScore := game.getWinScore()
-		totalSum += choiceScore + winScore
-	}
-	fmt.Printf("Part 1: %d\n", totalSum)
+		simpleGame := createRound(round, Simple)
+		simpleChoiceScore := simpleGame.getChoiceScore()
+		simpleWinScore := simpleGame.getWinScore()
+		simpleSum += simpleChoiceScore + simpleWinScore
 
-	totalSumComplex := 0
-	for _, round := range rounds {
-		game := createGameComplexRound(round)
-		choiceScore := game.getChoiceScore()
-		winScore := game.getWinScore()
-		totalSumComplex += choiceScore + winScore
+		complexGame := createRound(round, Complex)
+		complexChoiceScore := complexGame.getChoiceScore()
+		complexWinScore := complexGame.getWinScore()
+		complexSum += complexChoiceScore + complexWinScore
+
 	}
-	fmt.Printf("Part 2: %d\n", totalSumComplex)
+	fmt.Printf("Part 1: %d\n", simpleSum)
+	fmt.Printf("Part 2: %d\n", complexSum)
+}
+
+type GameType int
+
+const (
+	Simple GameType = iota
+	Complex
+)
+
+type game interface {
+	getChoiceScore() int
+	getWinScore() int
+}
+
+func createRound(input string, gameType GameType) game {
+	cards := strings.Split(input, " ")
+	p1 := symbolLookup(cards[0])
+	p2 := symbolLookup(cards[1])
+	switch gameType {
+	case Complex:
+		return gameComplexRound{
+			p1: p1,
+			p2: p2,
+		}
+	default:
+		return gameRound{
+			p1: p1,
+			p2: p2,
+		}
+	}
+}
+
+func symbolLookup(symbol string) int {
+	switch symbol {
+	case "A", "X":
+		return 1
+	case "B", "Y":
+		return 2
+	default: // C || "Z"
+		return 3
+	}
 }
 
 // X: loose
 // Y: draw
 // Z: win
 type gameComplexRound struct {
-	p1 string
-	p2 string
-}
-
-func createGameComplexRound(input string) gameComplexRound {
-	cards := strings.Split(input, " ")
-	return gameComplexRound{
-		p1: cards[0],
-		p2: cards[1],
-	}
+	p1 int
+	p2 int
 }
 
 func (g gameComplexRound) getChoiceScore() int {
 	// Draw
-	if g.p2 == "Y" {
-		return g.getChoiceScoreFromPlayer(g.p1)
+	if g.p2 == 2 {
+		return g.p1
 	}
 	// Loose
-	if g.p2 == "X" {
-		switch g.p1 {
-		case "A":
-			return 3
-		case "B":
-			return 1
-		case "C":
-			return 2
-		}
+	if g.p2 == 1 {
+		return modulo(g.p1+1, 3) + 1
 	}
 	// Win
-	switch g.p1 {
-	case "A":
-		return 2
-	case "B":
-		return 3
-	default: // case "C":
-		return 1
-	}
+	return g.p1%3 + 1
 }
 
 func (g gameComplexRound) getWinScore() int {
-	switch g.p2 {
-	case "X":
-		return 0
-	case "Y":
-		return 3
-	default: //case "Z":
-		return 6
-	}
+	return (g.p2 - 1) * 3
 }
 
-func (g gameComplexRound) getChoiceScoreFromPlayer(choice string) int {
-	switch choice {
-	case "A":
-		return 1
-	case "B":
-		return 2
-	default: //case "C":
-		return 3
-	}
+func modulo(in int, mod int) int {
+	return (in%mod + mod) % mod
 }
 
 type gameRound struct {
-	p1 string
-	p2 string
+	p1 int
+	p2 int
 }
 
 func (g gameRound) getWinScore() int {
-	if g.p1 == "A" && g.p2 == "X" || g.p1 == "B" && g.p2 == "Y" || g.p1 == "C" && g.p2 == "Z" {
+	if g.p1 == g.p2 {
 		return 3
 	}
-	if g.p1 == "A" && g.p2 == "Y" || g.p1 == "B" && g.p2 == "Z" || g.p1 == "C" && g.p2 == "X" {
+	if g.p1%3+1 == g.p2 {
 		return 6
 	}
 	return 0
 }
 
 func (g gameRound) getChoiceScore() int {
-	switch g.p2 {
-	case "X":
-		return 1
-	case "Y":
-		return 2
-	default: //case "Z":
-		return 3
-	}
-}
-
-func createGameRound(input string) gameRound {
-	cards := strings.Split(input, " ")
-	return gameRound{
-		p1: cards[0],
-		p2: cards[1],
-	}
+	return g.p2
 }
 
 func readData() string {
