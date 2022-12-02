@@ -88,7 +88,7 @@ func (g gameComplexRound) getChoiceScore() int {
 	}
 	// Loose
 	if g.p2 == 1 {
-		return modulo(g.p1+1, 3) + 1
+		return (g.p1+1)%3 + 1
 	}
 	// Win
 	return g.p1%3 + 1
@@ -96,10 +96,6 @@ func (g gameComplexRound) getChoiceScore() int {
 
 func (g gameComplexRound) getWinScore() int {
 	return (g.p2 - 1) * 3
-}
-
-func modulo(in int, mod int) int {
-	return (in%mod + mod) % mod
 }
 
 type gameRound struct {

@@ -1,34 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 )
-
-func Test_modulo(t *testing.T) {
-	// Arrange
-	data := []struct {
-		input    int
-		expected int
-	}{
-		{1, 3},
-		{2, 1},
-		{3, 2},
-	}
-	for _, d := range data {
-		t.Run(fmt.Sprintf("%d", d.input), func(t *testing.T) {
-			// Act
-			actual := modulo(d.input+1, 3) + 1
-			if diff := cmp.Diff(d.expected, actual); diff != "" {
-				t.Error(diff)
-			}
-		})
-	}
-
-}
 
 func Test_part1(t *testing.T) {
 	// Arrange
