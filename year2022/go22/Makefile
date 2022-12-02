@@ -19,5 +19,5 @@ test: build-only
 	go test ./...
 
 # Tests
-test1:
-	go test ./cmd/day1 -v
+test2:
+	go test ./cmd/day2 -v
