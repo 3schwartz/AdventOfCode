@@ -4,6 +4,10 @@ This repository contains my solutions to [Advent of Code](https://adventofcode.c
 
 I must admit - to some of the solutions I used Google to see how some other brilliant programmer did it :-)
 
+## 2022
+
+- Go
+
 ## 2021 - completed
 
 Languages touched this year

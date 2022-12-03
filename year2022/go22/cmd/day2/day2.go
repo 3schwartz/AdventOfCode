@@ -118,11 +118,6 @@ func (g gameRound) getChoiceScore() int {
 }
 
 func readData() string {
-	path, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(path)
 	f, err := os.ReadFile("../../../data/day2_data.txt")
 	if err != nil {
 		panic(err)

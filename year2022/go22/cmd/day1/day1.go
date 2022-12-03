@@ -64,11 +64,6 @@ func (p picnic) getSortedElfCalorieSums(elves []elf) []int {
 }
 
 func readData() string {
-	path, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(path)
 	f, err := os.ReadFile("../../../data/day1_data.txt")
 	if err != nil {
 		panic(err)
