@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	input := io.ReadData(7)
+	input := io.ReadData("7")
 
 	root := createGraph(input)
 	sum := root.findSumCountBelow(100_000)

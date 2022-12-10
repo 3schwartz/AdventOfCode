@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	input := io.ReadData(6)
+	input := io.ReadData("6")
 	lastSequence := sequence{}
 	for i, signal := range input {
 		lastSequence = lastSequence.incSequence(signal)

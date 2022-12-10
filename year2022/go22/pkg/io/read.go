@@ -5,8 +5,8 @@ import (
 	"os"
 )
 
-func ReadData(day int) string {
-	f, err := os.ReadFile(fmt.Sprintf("../../../data/day%d_data.txt", day))
+func ReadData(file string) string {
+	f, err := os.ReadFile(fmt.Sprintf("../../../data/day%s_data.txt", file))
 	if err != nil {
 		panic(err)
 	}

@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	input := io.ReadData(5)
+	input := io.ReadData("5")
 
 	part1(input)
 	part2(input)

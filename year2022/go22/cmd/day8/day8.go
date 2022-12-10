@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	input := io.ReadData(8)
+	input := io.ReadData("8")
 	scannedTreeGrid := createTreeGrid(input)
 	visibleTrees := scannedTreeGrid.getVisibleTrees()
 

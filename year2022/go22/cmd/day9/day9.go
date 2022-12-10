@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	input := io.ReadData(9)
+	input := io.ReadData("9")
 
 	tailVisitedCount := findTailVisitedCount(input)
 

@@ -30,3 +30,6 @@ test8:
 
 test9:
 	go test ./cmd/day9 -v
+
+test10:
+	go test ./cmd/day10 -v	
