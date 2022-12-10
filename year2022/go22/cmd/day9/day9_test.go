@@ -8,9 +8,35 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+func Test_findTailVisitedLargeRobeSimple(t *testing.T) {
+	// Arrange
+	input := readData("")
+
+	// Act
+	tailVisitedCount := findTailVisitedLargeRobe(input)
+
+	// Assert
+	if diff := cmp.Diff(tailVisitedCount, 1); diff != "" {
+		t.Error(diff)
+	}
+}
+
+func Test_findTailVisitedLargeRobe(t *testing.T) {
+	// Arrange
+	input := readData("2")
+
+	// Act
+	tailVisitedCount := findTailVisitedLargeRobe(input)
+
+	// Assert
+	if diff := cmp.Diff(tailVisitedCount, 36); diff != "" {
+		t.Error(diff)
+	}
+}
+
 func Test_findTailVisited(t *testing.T) {
 	// Arrange
-	input := readData(9)
+	input := readData("")
 
 	// Act
 	tailVisitedCount := findTailVisitedCount(input)
@@ -21,8 +47,8 @@ func Test_findTailVisited(t *testing.T) {
 	}
 }
 
-func readData(day int) string {
-	f, err := os.ReadFile(fmt.Sprintf("../../../data/day%d_test_data.txt", day))
+func readData(suffix string) string {
+	f, err := os.ReadFile(fmt.Sprintf("../../../data/day9_test%s_data.txt", suffix))
 	if err != nil {
 		panic(err)
 	}
