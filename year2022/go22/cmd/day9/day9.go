@@ -3,7 +3,6 @@ package main
 import (
 	"advent2022/pkg/io"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 )
@@ -17,33 +16,12 @@ func main() {
 
 	largeTailVisitedCount := findTailVisitedLargeRobe(input)
 
-	fmt.Printf("Part 2: %d\n", largeTailVisitedCount)
+	fmt.Printf("Part 2: %d\n", largeTailVisitedCount.size())
 }
 
 type coord2d struct {
 	x int
 	y int
-}
-
-func (c coord2d) getMoveCount(count string) int {
-	moveCount, err := strconv.Atoi(count)
-	if err != nil {
-		panic(err)
-	}
-	return moveCount
-}
-
-func (c coord2d) getMovement(move string) coord2d {
-	switch move {
-	case "R":
-		return coord2d{1, 0}
-	case "L":
-		return coord2d{-1, 0}
-	case "U":
-		return coord2d{0, 1}
-	default: // D
-		return coord2d{0, -1}
-	}
 }
 
 func (c coord2d) add(other coord2d) coord2d {
@@ -52,6 +30,12 @@ func (c coord2d) add(other coord2d) coord2d {
 
 func (c coord2d) subtract(other coord2d) coord2d {
 	return coord2d{c.x - other.x, c.y - other.y}
+}
+
+func (c coord2d) findMove(other coord2d) coord2d {
+	difference := c.subtract(other)
+	move := coord2d{difference.x / 2, difference.y / 2}
+	return move
 }
 
 func (c coord2d) isNeighbor(other coord2d) bool {
@@ -71,18 +55,45 @@ func (c coord2d) isInAdjacentLine(other coord2d) bool {
 	return difference.x*difference.y == 0
 }
 
-func findTailVisitedLargeRobe(input string) int {
+type tailVisited map[coord2d]struct{}
+
+func (t tailVisited) size() int {
+	return len(t)
+}
+
+func (t tailVisited) getMoveCount(count string) int {
+	moveCount, err := strconv.Atoi(count)
+	if err != nil {
+		panic(err)
+	}
+	return moveCount
+}
+
+func (t tailVisited) getMovement(move string) coord2d {
+	switch move {
+	case "R":
+		return coord2d{1, 0}
+	case "L":
+		return coord2d{-1, 0}
+	case "U":
+		return coord2d{0, 1}
+	default: // D
+		return coord2d{0, -1}
+	}
+}
+
+func findTailVisitedLargeRobe(input string) tailVisited {
 	knots := [10]coord2d{}
 	for i := 0; i < 10; i++ {
 		knots[i] = coord2d{}
 	}
-	tailVisited := map[coord2d]struct{}{}
+	tailVisited := make(tailVisited)
 	tailVisited[knots[9]] = struct{}{}
 	for _, line := range strings.Split(input, "\r\n") {
 		parts := strings.Split(line, " ")
 
-		movement := knots[0].getMovement(parts[0])
-		count := knots[0].getMoveCount(parts[1])
+		movement := tailVisited.getMovement(parts[0])
+		count := tailVisited.getMoveCount(parts[1])
 
 		for i := 0; i < count; i++ {
 			knots[0] = knots[0].add(movement)
@@ -94,9 +105,7 @@ func findTailVisitedLargeRobe(input string) int {
 					break
 				}
 				if knots[j-1].isInAdjacentLine(knots[j]) {
-					foo := knots[j-1].subtract(knots[j])
-					move = coord2d{foo.x / 2, foo.y / 2}
-
+					move = knots[j-1].findMove(knots[j])
 					knots[j] = knots[j].add(move)
 					diagonalMove.x = 0
 					diagonalMove.y = 0
@@ -114,57 +123,18 @@ func findTailVisitedLargeRobe(input string) int {
 		}
 	}
 
-	print(tailVisited)
-
-	return len(tailVisited)
-}
-
-func print(tails map[coord2d]struct{}) {
-	rotated := map[coord2d]struct{}{}
-	for key := range tails {
-		rotated[coord2d{-key.y, key.x}] = struct{}{}
-
-	}
-	minX := math.MaxInt
-	minY := math.MaxInt
-	maxX := math.MinInt
-	maxY := math.MinInt
-	for c := range rotated {
-		if c.x > maxX {
-			maxX = c.x
-		}
-		if c.x < minX {
-			minX = c.x
-		}
-		if c.y > maxY {
-			maxY = c.y
-		}
-		if c.y < minY {
-			minY = c.y
-		}
-	}
-	for x := minX; x <= maxX; x++ {
-		for y := minY; y <= maxY; y++ {
-			_, ok := rotated[coord2d{x, y}]
-			if ok {
-				fmt.Print("#")
-				continue
-			}
-			fmt.Print(".")
-		}
-		fmt.Print("\n")
-	}
+	return tailVisited
 }
 
 func findTailVisitedCount(input string) int {
 	last := coord2d{}
 	tail := coord2d{}
-	tailVisited := map[coord2d]struct{}{}
+	tailVisited := make(tailVisited)
 	tailVisited[tail] = struct{}{}
 	for _, line := range strings.Split(input, "\r\n") {
 		parts := strings.Split(line, " ")
-		movement := last.getMovement(parts[0])
-		count := last.getMoveCount(parts[1])
+		movement := tailVisited.getMovement(parts[0])
+		count := tailVisited.getMoveCount(parts[1])
 		for i := 0; i < count; i++ {
 			move := last.add(movement)
 			if !move.isNeighbor(tail) {
