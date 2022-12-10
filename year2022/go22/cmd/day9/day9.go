@@ -3,6 +3,7 @@ package main
 import (
 	"advent2022/pkg/io"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -61,15 +62,9 @@ func (c coord2d) isNeighbor(other coord2d) bool {
 	return false
 }
 
-func (c coord2d) isDiagonal(other coord2d) bool {
-	neighbors := [9]coord2d{{-1, -1}, {1, 1}, {-1, 1}, {1, -1}}
-	for _, neighbor := range neighbors {
-		shift := c.add(neighbor)
-		if shift == other {
-			return true
-		}
-	}
-	return false
+func (c coord2d) isInAdjacentLine(other coord2d) bool {
+	difference := c.subtract(other)
+	return difference.x*difference.y == 0
 }
 
 func findTailVisitedLargeRobe(input string) int {
@@ -81,34 +76,74 @@ func findTailVisitedLargeRobe(input string) int {
 	tailVisited[knots[9]] = struct{}{}
 	for _, line := range strings.Split(input, "\r\n") {
 		parts := strings.Split(line, " ")
-		last := knots[0]
 
-		movement := last.getMovement(parts[0])
-		count := last.getMoveCount(parts[1])
+		movement := knots[0].getMovement(parts[0])
+		count := knots[0].getMoveCount(parts[1])
 
 		for i := 0; i < count; i++ {
-			knots[0] = last.add(movement)
-			innerLast := last
-			difference := knots[0].subtract(last)
+			knots[0] = knots[0].add(movement)
+			diagonalMove := coord2d{}
+
 			for j := 1; j < 10; j++ {
-				if !knots[j-1].isNeighbor(knots[j]) {
-					if innerLast.isDiagonal(knots[j]) {
-						temp := knots[j]
-						knots[j] = innerLast
-						innerLast = temp
-						difference = knots[j].subtract(innerLast)
-						continue
-					}
-					knots[j] = knots[j].add(difference)
+				if knots[j-1].isNeighbor(knots[j]) {
+					break
+				}
+				if diagonalMove.x != 0 && diagonalMove.y != 0 {
+					knots[j] = knots[j].add(diagonalMove)
 					continue
 				}
-				break
+				if knots[j-1].isInAdjacentLine(knots[j]) {
+					knots[j] = knots[j].add(movement)
+					continue
+				}
+				last := knots[j-1].subtract(movement)
+				diagonalMove = last.subtract(knots[j])
+				knots[j] = last
 			}
 			tailVisited[knots[9]] = struct{}{}
-			last = knots[0]
 		}
 	}
+
+	print(tailVisited)
+
 	return len(tailVisited)
+}
+
+func print(tails map[coord2d]struct{}) {
+	rotated := map[coord2d]struct{}{}
+	for key := range tails {
+		rotated[coord2d{-key.y, key.x}] = struct{}{}
+
+	}
+	minX := math.MaxInt
+	minY := math.MaxInt
+	maxX := math.MinInt
+	maxY := math.MinInt
+	for c := range rotated {
+		if c.x > maxX {
+			maxX = c.x
+		}
+		if c.x < minX {
+			minX = c.x
+		}
+		if c.y > maxY {
+			maxY = c.y
+		}
+		if c.y < minY {
+			minY = c.y
+		}
+	}
+	for x := minX; x <= maxX; x++ {
+		for y := minY; y <= maxY; y++ {
+			_, ok := rotated[coord2d{x, y}]
+			if ok {
+				fmt.Print("#")
+				continue
+			}
+			fmt.Print(".")
+		}
+		fmt.Print("\n")
+	}
 }
 
 func findTailVisitedCount(input string) int {
