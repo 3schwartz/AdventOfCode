@@ -13,7 +13,11 @@ func main() {
 
 	tailVisitedCount := findTailVisitedCount(input)
 
-	fmt.Printf("Part 1: %d", tailVisitedCount)
+	fmt.Printf("Part 1: %d\n", tailVisitedCount)
+
+	largeTailVisitedCount := findTailVisitedLargeRobe(input)
+
+	fmt.Printf("Part 2: %d\n", largeTailVisitedCount)
 }
 
 type coord2d struct {
@@ -83,20 +87,26 @@ func findTailVisitedLargeRobe(input string) int {
 		for i := 0; i < count; i++ {
 			knots[0] = knots[0].add(movement)
 			diagonalMove := coord2d{}
+			move := movement
 
 			for j := 1; j < 10; j++ {
 				if knots[j-1].isNeighbor(knots[j]) {
 					break
 				}
+				if knots[j-1].isInAdjacentLine(knots[j]) {
+					foo := knots[j-1].subtract(knots[j])
+					move = coord2d{foo.x / 2, foo.y / 2}
+
+					knots[j] = knots[j].add(move)
+					diagonalMove.x = 0
+					diagonalMove.y = 0
+					continue
+				}
 				if diagonalMove.x != 0 && diagonalMove.y != 0 {
 					knots[j] = knots[j].add(diagonalMove)
 					continue
 				}
-				if knots[j-1].isInAdjacentLine(knots[j]) {
-					knots[j] = knots[j].add(movement)
-					continue
-				}
-				last := knots[j-1].subtract(movement)
+				last := knots[j-1].subtract(move)
 				diagonalMove = last.subtract(knots[j])
 				knots[j] = last
 			}
