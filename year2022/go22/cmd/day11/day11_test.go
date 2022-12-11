@@ -13,10 +13,10 @@ func Test_correctMonkeyBusiness(t *testing.T) {
 	monkeys := createMonkeys(input)
 
 	// Act
-	monkeyBusiness := findMonkeyBusiness(monkeys, 20, false)
+	monkeyBusiness := findMonkeyBusiness(monkeys, 20, true)
 
 	// Assert
-	if diff := cmp.Diff(monkeyBusiness, 10605); diff != "" {
+	if diff := cmp.Diff(monkeyBusiness, int64(10605)); diff != "" {
 		t.Error(diff)
 	}
 }
@@ -27,7 +27,7 @@ func Test_correctMonkeyBusinessNoWorry(t *testing.T) {
 	monkeys := createMonkeys(input)
 
 	// Act
-	monkeyBusiness := findMonkeyBusiness(monkeys, 10_000, true)
+	monkeyBusiness := findMonkeyBusiness(monkeys, 10_000, false)
 
 	// Assert
 	if diff := cmp.Diff(monkeyBusiness, int64(2713310158)); diff != "" {
