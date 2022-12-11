@@ -22,15 +22,15 @@ func main() {
 	fmt.Printf("Part 2: %d\n", monkeyBusiness)
 }
 
-func findLeastCommonMultiple(monkeys []*monkey) int64 {
-	lcm := int64(1)
+func findLeastCommonMultiple(monkeys []*monkey) int {
+	lcm := 1
 	for _, m := range monkeys {
 		lcm *= m.modulo
 	}
 	return lcm
 }
 
-func findMonkeyBusiness(monkeys []*monkey, times int, worry bool) int64 {
+func findMonkeyBusiness(monkeys []*monkey, times int, worry bool) int {
 	lcm := findLeastCommonMultiple(monkeys)
 	for i := 0; i < times; i++ {
 		for _, monkey := range monkeys {
@@ -69,11 +69,11 @@ func createMonkeys(input string) []*monkey {
 }
 
 type monkey struct {
-	items          *collections.Queue[int64]
-	operation      func(int64) int64
-	sendFunc       func(int64) int
-	itemsInspected int64
-	modulo         int64
+	items          *collections.Queue[int]
+	operation      func(int) int
+	sendFunc       func(int) int
+	itemsInspected int
+	modulo         int
 }
 
 func createMonkey(section string) *monkey {
@@ -86,7 +86,7 @@ func createMonkey(section string) *monkey {
 	}
 }
 
-func createSendNext(lines []string) (func(item int64) int, int64) {
+func createSendNext(lines []string) (func(item int) int, int) {
 	testLine := lines[0]
 	trueLine := lines[1]
 	falseLine := lines[2]
@@ -102,16 +102,15 @@ func createSendNext(lines []string) (func(item int64) int, int64) {
 	if err != nil {
 		panic(err)
 	}
-	divideByInt64 := int64(divideBy)
-	return func(x int64) int {
-		if x%divideByInt64 == 0 {
+	return func(x int) int {
+		if x%divideBy == 0 {
 			return trueSend
 		}
 		return falseSend
-	}, divideByInt64
+	}, divideBy
 }
 
-func createMonkeyOperation(line string) func(int64) int64 {
+func createMonkeyOperation(line string) func(int) int {
 	operation := strings.Split(line[23:], " ")
 	useOperationNumber := true
 	operationNumber, err := strconv.Atoi(operation[1])
@@ -121,34 +120,33 @@ func createMonkeyOperation(line string) func(int64) int64 {
 	if err != nil && operation[1] == "old" {
 		useOperationNumber = false
 	}
-	operationNumberInt64 := int64(operationNumber)
-	operationFunc := func() func(int64) int64 {
+	operationFunc := func() func(int) int {
 		switch operation[0] {
 		case "+":
-			return func(x int64) int64 {
+			return func(x int) int {
 				if useOperationNumber {
-					return x + operationNumberInt64
+					return x + operationNumber
 				}
 				return x + x
 			}
 		case "-":
-			return func(x int64) int64 {
+			return func(x int) int {
 				if useOperationNumber {
-					return x - operationNumberInt64
+					return x - operationNumber
 				}
 				return 0
 			}
 		case "*":
-			return func(x int64) int64 {
+			return func(x int) int {
 				if useOperationNumber {
-					return x * operationNumberInt64
+					return x * operationNumber
 				}
 				return x * x
 			}
 		default: // "/"
-			return func(x int64) int64 {
+			return func(x int) int {
 				if useOperationNumber {
-					return x / operationNumberInt64
+					return x / operationNumber
 				}
 				return 1
 			}
@@ -157,14 +155,14 @@ func createMonkeyOperation(line string) func(int64) int64 {
 	return operationFunc
 }
 
-func createMonkeyQueue(line string) *collections.Queue[int64] {
-	items := collections.CreateQueue[int64]()
+func createMonkeyQueue(line string) *collections.Queue[int] {
+	items := collections.CreateQueue[int]()
 	for _, sItem := range strings.Split(strings.Split(line, "items: ")[1], ", ") {
 		item, err := strconv.Atoi(sItem)
 		if err != nil {
 			panic(err)
 		}
-		items.Append(int64(item))
+		items.Append(item)
 	}
 	return items
 }
