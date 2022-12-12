@@ -35,10 +35,11 @@ func createHeightMap(input string) (heightMap, coord) {
 	var start coord
 	for x, line := range strings.Split(input, "\r\n") {
 		for y, height := range line {
-			areaHeightMap[coord{x, y}] = height
 			if height == 'S' {
 				start = coord{x, y}
+				height = 'a'
 			}
+			areaHeightMap[coord{x, y}] = height
 		}
 	}
 	return areaHeightMap, start
@@ -49,10 +50,11 @@ func createHeightMapWithStartingPoints(input string) (heightMap, []coord) {
 	startingPoints := make([]coord, 0)
 	for x, line := range strings.Split(input, "\r\n") {
 		for y, height := range line {
-			areaHeightMap[coord{x, y}] = height
 			if height == 'S' || height == 'a' {
 				startingPoints = append(startingPoints, coord{x, y})
+				height = 'a'
 			}
+			areaHeightMap[coord{x, y}] = height
 		}
 	}
 	return areaHeightMap, startingPoints
@@ -67,7 +69,7 @@ func multipleShortestPath(input string) int {
 	stepsMin := math.MaxInt
 	visited := map[coord]struct{}{}
 	for _, start := range startingPoints {
-		steps := findShortestPath(areaHeightMap, start, visited)
+		steps := findShortestPath(areaHeightMap, start, true)
 		if steps < stepsMin && steps != 0 {
 			stepsMin = steps
 		}
@@ -78,14 +80,16 @@ func multipleShortestPath(input string) int {
 
 func singleShortestPath(input string) int {
 	areaHeightMap, start := createHeightMap(input)
-	steps := findShortestPath(areaHeightMap, start, map[coord]struct{}{})
+	steps := findShortestPath(areaHeightMap, start, false)
 	return steps
 }
 
-func findShortestPath(areaHeightMap heightMap, start coord, visitedBefore map[coord]struct{}) int {
+func findShortestPath(areaHeightMap heightMap, start coord, multiple bool) int {
+	fmt.Printf("Start: x: %d, y: %d\n", start.x, start.y)
 	queue := collections.CreatePriorityMap[coord]()
 	queue.Append(start, 0, make(map[coord]struct{}))
 	adjacent := areaHeightMap.getAdjacent()
+	var visitedFirst bool
 
 	for queue.Len() > 0 {
 		success, priority, item := queue.TryDequeue()
@@ -98,15 +102,13 @@ func findShortestPath(areaHeightMap heightMap, start coord, visitedBefore map[co
 			if !ok {
 				continue
 			}
-			if currentHeight == 'S' {
-				currentHeight = 'a'
+			if multiple && currentHeight == 'a' && visitedFirst {
+				continue
 			}
-			if len(visitedBefore) > 0 && currentHeight == 'a' {
-				_, ok := visitedBefore[currentCoord]
-				if ok {
-					continue
-				}
+			if currentHeight == 'a' {
+				visitedFirst = true
 			}
+
 			for _, adj := range adjacent {
 				_, hasVisited := visited[currentCoord]
 				if hasVisited {
