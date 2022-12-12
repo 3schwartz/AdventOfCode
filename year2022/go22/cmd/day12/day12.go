@@ -4,19 +4,29 @@ import (
 	"advent2022/pkg/collections"
 	"advent2022/pkg/io"
 	"fmt"
-	"math"
 	"strings"
 )
 
 func main() {
 	input := io.ReadData("12")
-	steps := singleShortestPath(input)
+	steps := shortestPath(input, false)
 
 	fmt.Printf("Part 1: %d\n", steps)
 
-	minSteps := multipleShortestPath(input)
+	minSteps := shortestPath(input, true)
 
 	fmt.Printf("Part 2: %d\n", minSteps)
+}
+
+func shortestPath(input string, multiple bool) int {
+	areaHeightMap, start := createHeightMap(input, multiple)
+	steps := areaHeightMap.findShortestPath(start)
+	return steps
+}
+
+type priority struct {
+	position coord
+	steps    int
 }
 
 type coord struct {
@@ -30,27 +40,12 @@ func (c coord) add(other coord) coord {
 
 type heightMap map[coord]rune
 
-func createHeightMap(input string) (heightMap, coord) {
-	areaHeightMap := make(heightMap)
-	var start coord
-	for x, line := range strings.Split(input, "\r\n") {
-		for y, height := range line {
-			if height == 'S' {
-				start = coord{x, y}
-				height = 'a'
-			}
-			areaHeightMap[coord{x, y}] = height
-		}
-	}
-	return areaHeightMap, start
-}
-
-func createHeightMapWithStartingPoints(input string) (heightMap, []coord) {
+func createHeightMap(input string, multiple bool) (heightMap, []coord) {
 	areaHeightMap := make(heightMap)
 	startingPoints := make([]coord, 0)
 	for x, line := range strings.Split(input, "\r\n") {
 		for y, height := range line {
-			if height == 'S' || height == 'a' {
+			if height == 'S' || multiple && height == 'a' {
 				startingPoints = append(startingPoints, coord{x, y})
 				height = 'a'
 			}
@@ -64,76 +59,48 @@ func (h heightMap) getAdjacent() [4]coord {
 	return [4]coord{{0, 1}, {0, -1}, {1, 0}, {-1, 0}}
 }
 
-func multipleShortestPath(input string) int {
-	areaHeightMap, startingPoints := createHeightMapWithStartingPoints(input)
-	stepsMin := math.MaxInt
-	visited := map[coord]struct{}{}
-	for _, start := range startingPoints {
-		steps := findShortestPath(areaHeightMap, start, true)
-		if steps < stepsMin && steps != 0 {
-			stepsMin = steps
-		}
-		visited[start] = struct{}{}
+func (h heightMap) findShortestPath(starts []coord) int {
+	queue := collections.CreateQueue[priority]()
+	visited := make(map[coord]struct{})
+	for _, c := range starts {
+		queue.Append(priority{position: c, steps: 0})
 	}
-	return stepsMin
-}
-
-func singleShortestPath(input string) int {
-	areaHeightMap, start := createHeightMap(input)
-	steps := findShortestPath(areaHeightMap, start, false)
-	return steps
-}
-
-func findShortestPath(areaHeightMap heightMap, start coord, multiple bool) int {
-	fmt.Printf("Start: x: %d, y: %d\n", start.x, start.y)
-	queue := collections.CreatePriorityMap[coord]()
-	queue.Append(start, 0, make(map[coord]struct{}))
-	adjacent := areaHeightMap.getAdjacent()
-	var visitedFirst bool
+	adjacent := h.getAdjacent()
 
 	for queue.Len() > 0 {
-		success, priority, item := queue.TryDequeue()
-		if !success {
+		item, ok := queue.TryDequeue()
+		if !ok {
 			break
 		}
-		steps := priority + 1
-		for currentCoord, visited := range item {
-			currentHeight, ok := areaHeightMap[currentCoord]
+		_, hasVisited := visited[item.position]
+		if hasVisited {
+			continue
+		}
+		visited[item.position] = struct{}{}
+		steps := item.steps + 1
+		currentCoord := item.position
+		currentHeight, ok := h[currentCoord]
+		if !ok {
+			continue
+		}
+		for _, adj := range adjacent {
+			var isEnd bool
+			neighborCoord := currentCoord.add(adj)
+			neighborHeight, ok := h[neighborCoord]
 			if !ok {
 				continue
 			}
-			if multiple && currentHeight == 'a' && visitedFirst {
+			if neighborHeight == 'E' {
+				neighborHeight = 'z'
+				isEnd = true
+			}
+			if currentHeight < neighborHeight-rune(1) {
 				continue
 			}
-			if currentHeight == 'a' {
-				visitedFirst = true
+			if isEnd {
+				return steps
 			}
-
-			for _, adj := range adjacent {
-				_, hasVisited := visited[currentCoord]
-				if hasVisited {
-					continue
-				}
-				var isEnd bool
-				neighborCoord := currentCoord.add(adj)
-				neighborHeight, ok := areaHeightMap[neighborCoord]
-				if !ok {
-					continue
-				}
-				if neighborHeight == 'E' {
-					neighborHeight = 'z'
-					isEnd = true
-				}
-				if currentHeight < neighborHeight-rune(1) {
-					continue
-				}
-				if isEnd {
-					return steps
-				}
-				visitedCopy := queue.CopyVisited(visited)
-				visitedCopy[currentCoord] = struct{}{}
-				queue.Append(neighborCoord, steps, visitedCopy)
-			}
+			queue.Append(priority{position: neighborCoord, steps: steps})
 		}
 	}
 	return 0

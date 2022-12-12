@@ -12,7 +12,7 @@ func Test_part2(t *testing.T) {
 	input := io.ReadData("12_test")
 
 	// Act
-	actual := multipleShortestPath(input)
+	actual := shortestPath(input, true)
 
 	// Assert
 	if diff := cmp.Diff(actual, 29); diff != "" {
@@ -25,7 +25,7 @@ func Test_part1(t *testing.T) {
 	input := io.ReadData("12_test")
 
 	// Act
-	actual := singleShortestPath(input)
+	actual := shortestPath(input, false)
 
 	// Assert
 	if diff := cmp.Diff(actual, 31); diff != "" {
