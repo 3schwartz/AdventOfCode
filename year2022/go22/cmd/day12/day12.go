@@ -3,7 +3,6 @@ package main
 import (
 	"advent2022/pkg/collections"
 	"advent2022/pkg/io"
-	"container/heap"
 	"fmt"
 	"strings"
 )
@@ -44,70 +43,52 @@ func (h heightMap) getAdjacent() [4]coord {
 	return [4]coord{{0, 1}, {0, -1}, {1, 0}, {-1, 0}}
 }
 
-type state struct {
-	position coord
-	visited  map[coord]struct{}
-}
-
-func (s state) copy(newPosition coord, oldVisited coord) state {
-	visited := make(map[coord]struct{})
-	for v := range s.visited {
-		visited[v] = struct{}{}
-	}
-	visited[oldVisited] = struct{}{}
-	return state{position: newPosition, visited: visited}
-}
-
 func findShortestPath(input string) int {
 	areaHeightMap, start := createHeightMap(input)
 
-	priorityQueue := make(collections.PriorityQueue[state], 1)
-	priorityQueue[0] = &collections.Item[state]{
-		Item: state{
-			position: start,
-			visited:  make(map[coord]struct{}),
-		},
-		Priority: 0,
-	}
+	queue := collections.CreatePriorityMap[coord]()
+	queue.Append(start, 0, make(map[coord]struct{}))
 	adjacent := areaHeightMap.getAdjacent()
-	heap.Init(&priorityQueue)
 
-	for priorityQueue.Len() > 0 {
-		itemFromQueue := heap.Pop(&priorityQueue).(*collections.Item[state])
-		steps := itemFromQueue.Priority + 1
-		currentCoord := itemFromQueue.Item.position
-		currentHeight, ok := areaHeightMap[currentCoord]
-		if !ok {
-			continue
+	for queue.Len() > 0 {
+		success, priority, item := queue.TryDequeue()
+		if !success {
+			break
 		}
-		if currentHeight == 'S' {
-			currentHeight = 'a'
-		}
-		for _, adj := range adjacent {
-			_, hasVisited := itemFromQueue.Item.visited[currentCoord]
-			if hasVisited {
-				continue
-			}
-			var isEnd bool
-			neighborCoord := currentCoord.add(adj)
-			neighborHeight, ok := areaHeightMap[neighborCoord]
+		steps := priority + 1
+		for currentCoord, visited := range item {
+			currentHeight, ok := areaHeightMap[currentCoord]
 			if !ok {
 				continue
 			}
-			if neighborHeight == 'E' {
-				neighborHeight = 'z'
-				isEnd = true
+			if currentHeight == 'S' {
+				currentHeight = 'a'
 			}
-			if currentHeight < neighborHeight-rune(1) {
-				continue
+			for _, adj := range adjacent {
+				_, hasVisited := visited[currentCoord]
+				if hasVisited {
+					continue
+				}
+				var isEnd bool
+				neighborCoord := currentCoord.add(adj)
+				neighborHeight, ok := areaHeightMap[neighborCoord]
+				if !ok {
+					continue
+				}
+				if neighborHeight == 'E' {
+					neighborHeight = 'z'
+					isEnd = true
+				}
+				if currentHeight < neighborHeight-rune(1) {
+					continue
+				}
+				if isEnd {
+					return steps
+				}
+				visitedCopy := queue.CopyVisited(visited)
+				visitedCopy[currentCoord] = struct{}{}
+				queue.Append(neighborCoord, steps, visitedCopy)
 			}
-			if isEnd {
-				return steps
-			}
-			heap.Push(&priorityQueue, &collections.Item[state]{
-				Item:     itemFromQueue.Item.copy(neighborCoord, currentCoord),
-				Priority: steps,
-			})
 		}
 	}
 	return 0
