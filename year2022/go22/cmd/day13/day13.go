@@ -17,10 +17,11 @@ func main() {
 		second, _ := createElement(parts[1])
 		compare := first.compare(second)
 		if compare == 1 {
+			fmt.Printf("Index: %d\n", i+1)
 			sum += i + 1
 		}
 	}
-	fmt.Printf("Part 1: %d", sum)
+	fmt.Printf("Part 1: %d\n", sum)
 }
 
 type element struct {
@@ -39,7 +40,7 @@ func createElement(line string) (element, int) {
 		if elm == ',' || elm == '[' {
 			c.isList = true
 			child, iReturn := createElement(line[i:])
-			if iReturn == 0 {
+			if !child.isValue && !child.isList {
 				continue
 			}
 			c.children = append(c.children, child)
@@ -51,10 +52,11 @@ func createElement(line string) (element, int) {
 		}
 		c.isValue = true
 		c.value = int(elm - '0')
+		if line[i] == '0' {
+			c.value = 10
+			i++
+		}
 		break
-	}
-	if !c.isValue && len(c.children) == 0 && !c.isList {
-		i--
 	}
 	return c, i
 }
