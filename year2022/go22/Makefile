@@ -39,3 +39,6 @@ test11:
 
 test12:
 	go test ./cmd/day12 -v			
+
+test13:
+	go test ./cmd/day13 -v				
