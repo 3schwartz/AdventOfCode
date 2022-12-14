@@ -39,7 +39,7 @@ func Test_group(t *testing.T) {
 	compare := first.compare(second)
 
 	// Assert
-	if compare != -1 {
+	if compare != 1 {
 		t.Error(compare)
 	}
 }
