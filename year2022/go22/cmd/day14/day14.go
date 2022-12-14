@@ -15,6 +15,11 @@ func main() {
 	sand := getSandCount(cave, yMax)
 
 	fmt.Printf("Part 1: %d\n", sand)
+
+	cave, yMax = createCave(input)
+	sand = getFillCount(cave, yMax)
+
+	fmt.Printf("Part 2: %d\n", sand)
 }
 
 func getCoords(in string) (int, int) {
@@ -91,4 +96,36 @@ func getSandCount(cave map[coord]struct{}, yMax int) int {
 		}
 		sand++
 	}
+}
+
+func getFillCount(cave map[coord]struct{}, yMax int) int {
+	sand := 0
+	for {
+		start := coord{500, 0}
+		for {
+			if start.y == 1+yMax {
+				cave[start] = struct{}{}
+				break
+			}
+			if _, ok := cave[coord{start.x, start.y + 1}]; !ok {
+				start = coord{start.x, start.y + 1}
+				continue
+			}
+			if _, ok := cave[coord{start.x - 1, start.y + 1}]; !ok {
+				start = coord{start.x - 1, start.y + 1}
+				continue
+			}
+			if _, ok := cave[coord{start.x + 1, start.y + 1}]; !ok {
+				start = coord{start.x + 1, start.y + 1}
+				continue
+			}
+			cave[start] = struct{}{}
+			break
+		}
+		sand++
+		if start.x == 500 && start.y == 0 {
+			break
+		}
+	}
+	return sand
 }
