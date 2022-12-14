@@ -82,10 +82,10 @@ func Test_part2(t *testing.T) {
 		packets = append(packets, first)
 	}
 
-	divider, _ := createElement("[[2]]")
-	packets = append(packets, divider)
-	divider, _ = createElement("[[6]]")
-	packets = append(packets, divider)
+	divFirst, _ := createElement("[[2]]")
+	divSecond, _ := createElement("[[6]]")
+	packets = append(packets, divFirst)
+	packets = append(packets, divSecond)
 
 	sort.Slice(packets, func(i, j int) bool {
 		return packets[i].compare(packets[j]) == -1
@@ -93,10 +93,7 @@ func Test_part2(t *testing.T) {
 
 	dividerSum := 1
 	for i, packet := range packets {
-		if packet.isList && len(packet.children) == 1 &&
-			packet.children[0].isList && len(packet.children[0].children) == 1 &&
-			packet.children[0].children[0].isValue &&
-			(packet.children[0].children[0].value == 2 || packet.children[0].children[0].value == 6) {
+		if packet.equals(divFirst) || packet.equals(divSecond) {
 			dividerSum *= (1 + i)
 		}
 	}
