@@ -3,6 +3,7 @@ package main
 import (
 	"advent2022/pkg/io"
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -10,18 +11,43 @@ func main() {
 	input := io.ReadData("13")
 	groups := strings.Split(input, "\r\n\r\n")
 
+	packets := make([]element, 0)
 	sum := 0
 	for i, group := range groups {
 		parts := strings.Split(group, "\r\n")
 		first, _ := createElement(parts[0])
 		second, _ := createElement(parts[1])
+
+		packets = append(packets, second)
+		packets = append(packets, first)
+
 		compare := first.compare(second)
-		if compare == 1 {
-			fmt.Printf("Index: %d\n", i+1)
+		if compare == -1 {
 			sum += i + 1
 		}
 	}
 	fmt.Printf("Part 1: %d\n", sum)
+
+	divider, _ := createElement("[[2]]")
+	packets = append(packets, divider)
+	divider, _ = createElement("[[6]]")
+	packets = append(packets, divider)
+
+	sort.Slice(packets, func(i, j int) bool {
+		return packets[i].compare(packets[j]) == -1
+	})
+
+	dividerSum := 1
+	for i, packet := range packets {
+		if packet.isList && len(packet.children) == 1 &&
+			packet.children[0].isList && len(packet.children[0].children) == 1 &&
+			packet.children[0].children[0].isValue &&
+			(packet.children[0].children[0].value == 2 || packet.children[0].children[0].value == 6) {
+			dividerSum *= (1 + i)
+		}
+	}
+
+	fmt.Printf("Part 2: %d\n", dividerSum)
 }
 
 type element struct {
@@ -51,11 +77,13 @@ func createElement(line string) (element, int) {
 			break
 		}
 		c.isValue = true
-		c.value = int(elm - '0')
-		if line[i] == '0' {
-			c.value = 10
+		value := int(elm - '0')
+		for line[i] != ',' && line[i] != ']' {
+			value *= 10
+			value += int(line[i] - '0')
 			i++
 		}
+		c.value = value
 		break
 	}
 	return c, i
@@ -64,11 +92,11 @@ func createElement(line string) (element, int) {
 func (e element) compare(other element) int {
 	if e.isValue && other.isValue {
 		if e.value < other.value {
-			return 1
+			return -1
 		} else if e.value == other.value {
 			return 0
 		} else {
-			return -1
+			return 1
 		}
 	}
 	if !e.isValue && !other.isValue {
@@ -84,10 +112,10 @@ func (e element) compare(other element) int {
 			idx++
 		}
 		if len(e.children) < len(other.children) {
-			return 1
+			return -1
 		}
 		if len(e.children) > len(other.children) {
-			return -1
+			return 1
 		}
 		return 0
 	}

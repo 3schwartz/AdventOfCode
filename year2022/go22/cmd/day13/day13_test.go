@@ -2,6 +2,7 @@ package main
 
 import (
 	"advent2022/pkg/io"
+	"sort"
 	"strings"
 	"testing"
 
@@ -65,6 +66,47 @@ func Test_whenCreateWithEmpty_ThenCorrect(t *testing.T) {
 	}
 }
 
+func Test_part2(t *testing.T) {
+	// Arrange
+	input := io.ReadData("13_test")
+	groups := strings.Split(input, "\r\n\r\n")
+
+	// Act
+	packets := make([]element, 0)
+	for _, group := range groups {
+		parts := strings.Split(group, "\r\n")
+		first, _ := createElement(parts[0])
+		second, _ := createElement(parts[1])
+
+		packets = append(packets, second)
+		packets = append(packets, first)
+	}
+
+	divider, _ := createElement("[[2]]")
+	packets = append(packets, divider)
+	divider, _ = createElement("[[6]]")
+	packets = append(packets, divider)
+
+	sort.Slice(packets, func(i, j int) bool {
+		return packets[i].compare(packets[j]) == -1
+	})
+
+	dividerSum := 1
+	for i, packet := range packets {
+		if packet.isList && len(packet.children) == 1 &&
+			packet.children[0].isList && len(packet.children[0].children) == 1 &&
+			packet.children[0].children[0].isValue &&
+			(packet.children[0].children[0].value == 2 || packet.children[0].children[0].value == 6) {
+			dividerSum *= (1 + i)
+		}
+	}
+
+	// Assert
+	if diff := cmp.Diff(dividerSum, 140); diff != "" {
+		t.Error(diff)
+	}
+}
+
 func Test_part1(t *testing.T) {
 	// Arrange
 	input := io.ReadData("13_test")
@@ -77,7 +119,7 @@ func Test_part1(t *testing.T) {
 		first, _ := createElement(parts[0])
 		second, _ := createElement(parts[1])
 		compare := first.compare(second)
-		if compare == 1 {
+		if compare == -1 {
 			sum += i + 1
 		}
 	}
