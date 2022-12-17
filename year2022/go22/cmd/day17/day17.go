@@ -2,27 +2,32 @@ package main
 
 import (
 	"advent2022/pkg/io"
+	"crypto/md5"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 )
 
 var figures [5][]coord
 
 func init() {
-	figures[0] = []coord{{2, 3}, {3, 3}, {4, 3}, {5, 3}}
-	figures[1] = []coord{{2, 4}, {3, 4}, {4, 4}, {3, 3}, {3, 5}}
-	figures[2] = []coord{{2, 3}, {3, 3}, {4, 3}, {4, 4}, {4, 5}}
-	figures[3] = []coord{{2, 3}, {2, 4}, {2, 5}, {2, 6}}
-	figures[4] = []coord{{2, 3}, {2, 4}, {3, 3}, {3, 4}}
+	figures[0] = []coord{{2, 4}, {3, 4}, {4, 4}, {5, 4}}
+	figures[1] = []coord{{2, 5}, {3, 5}, {4, 5}, {3, 4}, {3, 6}}
+	figures[2] = []coord{{2, 4}, {3, 4}, {4, 4}, {4, 5}, {4, 6}}
+	figures[3] = []coord{{2, 4}, {2, 5}, {2, 6}, {2, 7}}
+	figures[4] = []coord{{2, 4}, {2, 5}, {3, 4}, {3, 5}}
 }
 
 func main() {
 	jetPattern := io.ReadData("17")
-
 	maxY := findRockHeight(2022, jetPattern, false)
-
 	fmt.Printf("Part 1: %d\n", maxY)
+
+	maxY = findRockHeight(1_000_000_000_000, jetPattern, false)
+	fmt.Printf("Part 2: %d\n", maxY)
 }
 
 type coord struct {
@@ -74,7 +79,7 @@ func (f figure) fallDown() figure {
 func (f figure) canMove(figures map[coord]struct{}) bool {
 	canMove := true
 	for _, shifted := range f {
-		if shifted.x < 0 || shifted.x > 6 || shifted.y < 0 {
+		if shifted.x < 0 || shifted.x > 6 || shifted.y == 0 {
 			canMove = false
 			break
 		}
@@ -86,11 +91,45 @@ func (f figure) canMove(figures map[coord]struct{}) bool {
 	return canMove
 }
 
+type state struct {
+	shape  int
+	jet    int
+	latest string
+}
+
+func createState(figures map[coord]struct{}, i, jet, maxY int) state {
+	latest := make([]coord, 0)
+	for c := range figures {
+		t := maxY - c.y
+		if t < 250 {
+			latest = append(latest, coord{c.x, t})
+		}
+	}
+	sort.SliceStable(latest, func(s1, s2 int) bool {
+		if latest[s1].x == latest[s2].x {
+			return latest[s1].y < latest[s2].y
+		}
+		return latest[s1].x < latest[s2].x
+	})
+	f, _ := json.Marshal(latest)
+	hash := md5.Sum(f)
+	encoded := base64.StdEncoding.EncodeToString(hash[:])
+	return state{i, jet, encoded}
+}
+
+type stateResult struct {
+	position int
+	yMax     int
+}
+
 func findRockHeight(loop int, jetPattern string, printFigures bool) int {
 	jetPattern = strings.TrimSpace(jetPattern)
 	maxY := 0
 	gasIdx := -1
 	figures := map[coord]struct{}{}
+	states := map[state]stateResult{}
+	doneShift := false
+	extra := 0
 	for i := 0; i < loop; i++ {
 		figure := getFigure(i, maxY)
 		for {
@@ -106,19 +145,34 @@ func findRockHeight(loop int, jetPattern string, printFigures bool) int {
 			if !canFallDown {
 				for _, c := range figure {
 					figures[c] = struct{}{}
-					if c.y+1 > maxY {
-						maxY = c.y + 1
+					if c.y > maxY {
+						maxY = c.y
 					}
 				}
+				if doneShift {
+					break
+				}
+				newState := createState(figures, i%5, gasIdx%len(jetPattern), maxY)
+				oldState, ok := states[newState]
+
+				if !ok {
+					states[newState] = stateResult{i, maxY}
+					break
+				}
+				cycle := i - oldState.position
+				yIncrease := (maxY - oldState.yMax) * ((loop - i) / cycle)
+				loop = i + (loop-i)%cycle
+				extra += yIncrease
+				doneShift = true
 				break
 			}
 			figure = down
-			if printFigures {
-				print(figures)
-			}
+		}
+		if printFigures {
+			print(figures)
 		}
 	}
-	return maxY
+	return maxY + extra
 }
 
 func print(figures map[coord]struct{}) {
