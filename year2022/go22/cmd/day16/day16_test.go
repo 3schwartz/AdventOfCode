@@ -1,7 +1,6 @@
 package main
 
 import (
-	"advent2022/pkg/collections"
 	"advent2022/pkg/io"
 	"strconv"
 	"strings"
@@ -82,19 +81,33 @@ func Test_part2_value(t *testing.T) {
 	}
 }
 
+func Test_part2_array(t *testing.T) {
+	// Arrange
+	input := io.ReadData("16_test")
+
+	// Act
+	maxPressure := usingArray(input, 26, true)
+
+	// Assert
+	if maxPressure != 1707 {
+		t.Error(maxPressure)
+	}
+}
+
 var blackhole int
 
 func Benchmark_part2(b *testing.B) {
+	data := "16"
 	b.Run("Value", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			input := io.ReadData("16_test")
+			input := io.ReadData(data)
 			rates, graph := createRatesAndGraph(input)
 			blackhole = dfsValue(0, "AA", 1, true, 26, createLoopUp(graph), rates, graph)
 		}
 	})
 	b.Run("Cache", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			input := io.ReadData("16_test")
+			input := io.ReadData(data)
 			rates, graph := createRatesAndGraph(input)
 			cache := make(map[visit]int)
 			blackhole = dfsCache(visit{
@@ -108,7 +121,7 @@ func Benchmark_part2(b *testing.B) {
 	})
 	b.Run("Default", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			input := io.ReadData("16_test")
+			input := io.ReadData(data)
 			rates, graph := createRatesAndGraph(input)
 			blackhole = dfs(visit{
 				state:         0,
@@ -117,6 +130,12 @@ func Benchmark_part2(b *testing.B) {
 				pressureCount: 0,
 				elephant:      true,
 			}, 26, createLoopUp(graph), rates, graph)
+		}
+	})
+	b.Run("Array", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			input := io.ReadData(data)
+			blackhole = usingArray(input, 26, true)
 		}
 	})
 }
@@ -199,9 +218,9 @@ func dfsCache(v visit, loopCount int, lu loopUp, rates map[string]int, graph map
 	return pressure
 }
 
-func createRatesAndGraph(input string) (map[string]int, map[string]map[string]int) {
+func usingArray(input string, loop int, elephant bool) int {
 	rates := make([]int, 0)
-	valves := make([]string, 0)
+	// valves := make([]string, 0)
 	valvesLookup := map[string]int{}
 	connections := make([][]string, 0)
 	for i, line := range strings.Split(input, "\r\n") {
@@ -216,16 +235,18 @@ func createRatesAndGraph(input string) (map[string]int, map[string]map[string]in
 		}
 		destinations := strings.Split(split[1], ", ")
 
-		valves = append(valves, valve)
+		// valves = append(valves, valve)
 		valvesLookup[valve] = i
 		connections = append(connections, destinations)
 		rates = append(rates, flow)
 	}
-	distances := make([][]int, 0)
-	for i := 0; i < len(valves); i++ {
-		for j := 0; j < len(valves); j++ {
-			distances[i][j] = 100
+	distances := make([][]int, len(rates))
+	for i := 0; i < len(rates); i++ {
+		jLine := make([]int, len(rates))
+		for j := 0; j < len(rates); j++ {
+			jLine[j] = 100
 		}
+		distances[i] = jLine
 	}
 	for i := 0; i < len(connections); i++ {
 		for _, connection := range connections[i] {
@@ -233,9 +254,9 @@ func createRatesAndGraph(input string) (map[string]int, map[string]map[string]in
 		}
 	}
 	// https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm
-	for k := 0; k < len(valves); k++ {
-		for i := 0; i < len(valves); i++ {
-			for j := 0; j < len(valves); j++ {
+	for k := 0; k < len(rates); k++ {
+		for i := 0; i < len(rates); i++ {
+			for j := 0; j < len(rates); j++ {
 				temp := distances[i][k] + distances[k][j]
 				if temp < distances[i][j] {
 					distances[i][j] = temp
@@ -249,36 +270,47 @@ func createRatesAndGraph(input string) (map[string]int, map[string]map[string]in
 			idxAboveZero = append(idxAboveZero, i)
 		}
 	}
+	start := valvesLookup["AA"]
+	final := dfsArray(start, loop, start, loop, idxAboveZero, distances, rates, elephant)
 
-	graph := map[string]map[string]int{}
-	for key, value := range rates {
-		if value == 0 && key != "AA" {
+	return final
+}
+
+func dfsArray(start, startTime, this, time int, missingVisit []int, distances [][]int,
+	rates []int, elephant bool) int {
+
+	var pressure int
+	for _, c := range missingVisit {
+		if distances[this][c] >= time {
 			continue
 		}
-		queue := collections.CreateQueue[queueElement]()
-		for _, elm := range connections[key] {
-			queue.Append(queueElement{valve: elm, steps: 1})
+		toVisit := missing(c, missingVisit)
+		newTime := (time - distances[this][c] - 1)
+		temp := rates[c]*newTime +
+			dfsArray(start, startTime, c, newTime, toVisit, distances, rates, elephant)
+		if temp > pressure {
+			pressure = temp
 		}
-		visited := map[string]struct{}{}
-		destinations := map[string]int{}
-		for queue.Len() > 0 {
-			elm, ok := queue.TryDequeue()
-			if !ok {
-				break
-			}
-			if _, ok := visited[elm.valve]; ok {
-				continue
-			}
-			visited[elm.valve] = struct{}{}
-			if rates[elm.valve] > 0 {
-				destinations[elm.valve] = elm.steps
-				// continue
-			}
-			for _, n := range connections[elm.valve] {
-				queue.Append(queueElement{n, elm.steps + 1})
-			}
-		}
-		graph[key] = destinations
 	}
-	return rates, graph
+	if elephant {
+		temp := dfsArray(start, startTime, start, startTime, missingVisit,
+			distances, rates, false)
+		if temp > pressure {
+			pressure = temp
+		}
+	}
+	return pressure
+}
+
+func missing(i int, old []int) []int {
+	new := make([]int, len(old)-1)
+	idx := 0
+	for _, c := range old {
+		if c == i {
+			continue
+		}
+		new[idx] = c
+		idx++
+	}
+	return new
 }
