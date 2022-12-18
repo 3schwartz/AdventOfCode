@@ -218,6 +218,32 @@ func dfsCache(v visit, loopCount int, lu loopUp, rates map[string]int, graph map
 	return pressure
 }
 
+func dfsArray(start, startTime, this, time int, missingVisit []int, distances [][]int,
+	rates []int, elephant bool) int {
+
+	var pressure int
+	for _, c := range missingVisit {
+		if distances[this][c] >= time {
+			continue
+		}
+		toVisit := missing(c, missingVisit)
+		newTime := (time - distances[this][c] - 1)
+		temp := rates[c]*newTime +
+			dfsArray(start, startTime, c, newTime, toVisit, distances, rates, elephant)
+		if temp > pressure {
+			pressure = temp
+		}
+	}
+	if elephant {
+		temp := dfsArray(start, startTime, start, startTime, missingVisit,
+			distances, rates, false)
+		if temp > pressure {
+			pressure = temp
+		}
+	}
+	return pressure
+}
+
 func usingArray(input string, loop int, elephant bool) int {
 	rates := make([]int, 0)
 	// valves := make([]string, 0)
@@ -274,32 +300,6 @@ func usingArray(input string, loop int, elephant bool) int {
 	final := dfsArray(start, loop, start, loop, idxAboveZero, distances, rates, elephant)
 
 	return final
-}
-
-func dfsArray(start, startTime, this, time int, missingVisit []int, distances [][]int,
-	rates []int, elephant bool) int {
-
-	var pressure int
-	for _, c := range missingVisit {
-		if distances[this][c] >= time {
-			continue
-		}
-		toVisit := missing(c, missingVisit)
-		newTime := (time - distances[this][c] - 1)
-		temp := rates[c]*newTime +
-			dfsArray(start, startTime, c, newTime, toVisit, distances, rates, elephant)
-		if temp > pressure {
-			pressure = temp
-		}
-	}
-	if elephant {
-		temp := dfsArray(start, startTime, start, startTime, missingVisit,
-			distances, rates, false)
-		if temp > pressure {
-			pressure = temp
-		}
-	}
-	return pressure
 }
 
 func missing(i int, old []int) []int {
