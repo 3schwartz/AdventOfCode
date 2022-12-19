@@ -11,8 +11,22 @@
             "cargo": {
                 "args": [
                     "build",
+                    "--manifest-path=${fileDirname}\\..\\Cargo.toml",
+                    // "--release"
+                ]
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug library",
+            "cargo": {
+                "args": [
+                    "build",
                     "--manifest-path=${fileDirname}\\..\\..\\Cargo.toml",
-                    "--release"
+                    // "--release"
                 ]
             },
             "args": [],
