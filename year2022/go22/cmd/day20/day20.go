@@ -18,7 +18,9 @@ func main() {
 
 	p, n = initPositions(input, 811589153)
 	c = mix(p, n, 10)
-	sum = findIdxAfterZero(c, 1_000) + findIdxAfterZero(c, 2_000) + findIdxAfterZero(c, 3_000)
+	sum = findIdxAfterZero(c, modulo(1_000, n)) +
+		findIdxAfterZero(c, modulo(2_000, n)) +
+		findIdxAfterZero(c, modulo(3_000, n))
 	fmt.Printf("Part 2: %d\n", sum)
 }
 
@@ -51,6 +53,10 @@ func initPositions(input string, decryptionKey int) (*position, int) {
 	return first, len(lines)
 }
 
+func modulo(a, mod int) int {
+	return (a%mod + mod) % mod
+}
+
 func mix(p *position, n, mixCount int) *position {
 	c := p
 	for mc := 0; mc < mixCount; mc++ {
@@ -67,18 +73,18 @@ func mix(p *position, n, mixCount int) *position {
 				right := c.right
 				left.right = right
 				right.left = left
-				count := c.move - 1
+				count := modulo(c.move, n-1) - 1
 				current := right
-				if c.move < 0 {
-					current = left.left
-					count = c.move + 1
-				}
+				// if c.move < 0 {
+				// 	current = left.left
+				// 	count = c.move + 1
+				// }
 				for count != 0 {
-					if c.move < 0 {
-						current = current.left
-						count++
-						continue
-					}
+					// if c.move < 0 {
+					// 	current = current.left
+					// 	count++
+					// 	continue
+					// }
 					current = current.right
 					count--
 					continue

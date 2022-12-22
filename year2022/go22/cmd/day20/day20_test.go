@@ -12,7 +12,9 @@ func Test_part2(t *testing.T) {
 
 	// Act
 	c := mix(p, n, 10)
-	sum := findIdxAfterZero(c, 1_000) + findIdxAfterZero(c, 2_000) + findIdxAfterZero(c, 3_000)
+	sum := findIdxAfterZero(c, modulo(1_000, n)) +
+		findIdxAfterZero(c, modulo(2_000, n)) +
+		findIdxAfterZero(c, modulo(3_000, n))
 
 	// Assert
 	if sum != 1623178306 {
