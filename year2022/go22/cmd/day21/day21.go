@@ -39,15 +39,21 @@ func createValueMonkey(valueString string) monkey {
 	return monkey{value: value}
 }
 
-func (m monkey) resolve(equals, side int) int {
+func (m monkey) resolve(equals, side int, right bool) int {
 	switch m.action {
 	case "+":
 		return equals - side
 	case "-":
+		if right {
+			return side - equals
+		}
 		return equals + side
 	case "*":
 		return equals / side
 	default: // /
+		if right {
+			return side / equals
+		}
 		return equals * side
 	}
 }
@@ -70,8 +76,7 @@ func (m monkeyTree) findCorrectInitialUsingBinary(root, end string) int {
 	ending := 1_000_000_000_000_000_000
 	var final int
 	for start != ending {
-		// middle := (start + ending) / 2
-		middle := start/2 + ending/2
+		middle := (start + ending) / 2
 		result := target - m.findSumFromBinary(side, end, middle)
 		if result == 0 {
 			fmt.Println(middle)
@@ -83,7 +88,7 @@ func (m monkeyTree) findCorrectInitialUsingBinary(root, end string) int {
 			break
 		}
 		// if result > 0 || start == middle { // Use this way to solve part 2
-		if result < 0 || start == middle {
+		if result > 0 || start == middle {
 			ending = middle
 			continue
 		}
@@ -131,20 +136,20 @@ func (m monkeyTree) findCorrect(root, end string, equals int) int {
 	monkey := m[root]
 	if monkey.right == end {
 		leftSum := m.findSumFrom(monkey.left)
-		return monkey.resolve(equals, leftSum)
+		return monkey.resolve(equals, leftSum, true)
 	}
 	if monkey.left == end {
 		rightSum := m.findSumFrom(monkey.right)
-		return monkey.resolve(equals, rightSum)
+		return monkey.resolve(equals, rightSum, false)
 	}
 	leftContains := m.contains(monkey.left, end)
 	if leftContains {
 		rightSum := m.findSumFrom(monkey.right)
-		toEqual := monkey.resolve(equals, rightSum)
+		toEqual := monkey.resolve(equals, rightSum, false)
 		return m.findCorrect(monkey.left, end, toEqual)
 	}
 	leftSum := m.findSumFrom(monkey.left)
-	toEqual := monkey.resolve(equals, leftSum)
+	toEqual := monkey.resolve(equals, leftSum, true)
 	return m.findCorrect(monkey.right, end, toEqual)
 }
 
