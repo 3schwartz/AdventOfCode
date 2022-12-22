@@ -17,6 +17,9 @@ func main() {
 
 	yell := monkeys.findCorrectInitial("root", "humn")
 	fmt.Printf("Part 2: %d\n", yell)
+
+	yell = monkeys.findCorrectInitialUsingBinary("root", "humn")
+	fmt.Printf("Part 2 using binary search: %d\n", yell)
 }
 
 type monkey struct {
@@ -50,6 +53,69 @@ func (m monkey) resolve(equals, side int) int {
 }
 
 type monkeyTree map[string]monkey
+
+func (m monkeyTree) findCorrectInitialUsingBinary(root, end string) int {
+	monkey := m[root]
+	var target int
+	var side string
+	leftContains := m.contains(monkey.left, end)
+	if leftContains {
+		target = m.findSumFrom(monkey.right)
+		side = monkey.left
+	} else {
+		target = m.findSumFrom(monkey.left)
+		side = monkey.right
+	}
+	start := 0
+	ending := 1_000_000_000_000_000_000
+	var final int
+	for start != ending {
+		// middle := (start + ending) / 2
+		middle := start/2 + ending/2
+		result := target - m.findSumFromBinary(side, end, middle)
+		if result == 0 {
+			fmt.Println(middle)
+			final = middle
+			ending = middle
+			continue
+		}
+		if start == ending {
+			break
+		}
+		// if result > 0 || start == middle { // Use this way to solve part 2
+		if result < 0 || start == middle {
+			ending = middle
+			continue
+		}
+		start = middle
+	}
+	return final
+}
+
+func (m monkeyTree) findSumFromBinary(from, end string, endValue int) int {
+	monkey, ok := m[from]
+	if !ok {
+		panic(from)
+	}
+	if from == end {
+		return endValue
+	}
+	if monkey.value != 0 {
+		return monkey.value
+	}
+	leftSum := m.findSumFromBinary(monkey.left, end, endValue)
+	rightSum := m.findSumFromBinary(monkey.right, end, endValue)
+	switch monkey.action {
+	case "+":
+		return leftSum + rightSum
+	case "-":
+		return leftSum - rightSum
+	case "*":
+		return leftSum * rightSum
+	default: // /
+		return leftSum / rightSum
+	}
+}
 
 func (m monkeyTree) findCorrectInitial(root, end string) int {
 	monkey := m[root]

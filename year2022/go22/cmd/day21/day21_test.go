@@ -19,6 +19,20 @@ func Test_part2(t *testing.T) {
 	}
 }
 
+func Test_part2Binary(t *testing.T) {
+	// Arrange
+	input := io.ReadData("21_test")
+	monkeys := createMonkeyTree(input)
+
+	// Act
+	sum := monkeys.findCorrectInitialUsingBinary("root", "humn")
+
+	// Assert
+	if sum != 301 {
+		t.Error(sum)
+	}
+}
+
 func Test_part1(t *testing.T) {
 	// Arrange
 	input := io.ReadData("21_test")
