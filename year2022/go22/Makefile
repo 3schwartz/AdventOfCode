@@ -44,7 +44,10 @@ test13:
 	go test ./cmd/day13 -v				
 
 test14:
-	go test ./cmd/day14 -v					
+	go test ./cmd/day14 -v	
+
+test24:
+	go test ./cmd/day24 -v
 
 # Benchmarks
 bench16:

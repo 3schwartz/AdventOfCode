@@ -31,12 +31,12 @@ func main() {
 }
 
 type coord struct {
-	x int
-	y int
+	X int
+	Y int
 }
 
 func (c coord) add(other coord) coord {
-	return coord{c.x + other.x, c.y + other.y}
+	return coord{c.X + other.X, c.Y + other.Y}
 }
 
 type figure []coord
@@ -54,11 +54,11 @@ func (f figure) gasShiftFigure(jet byte) figure {
 	move := coord{}
 	switch jet {
 	case '<':
-		move.x = -1
-		move.y = 0
+		move.X = -1
+		move.Y = 0
 	case '>':
-		move.x = 1
-		move.y = 0
+		move.X = 1
+		move.Y = 0
 	}
 	moved := make([]coord, len(f))
 	for i, c := range f {
@@ -79,7 +79,7 @@ func (f figure) fallDown() figure {
 func (f figure) canMove(figures map[coord]struct{}) bool {
 	canMove := true
 	for _, shifted := range f {
-		if shifted.x < 0 || shifted.x > 6 || shifted.y == 0 {
+		if shifted.X < 0 || shifted.X > 6 || shifted.Y == 0 {
 			canMove = false
 			break
 		}
@@ -100,18 +100,20 @@ type state struct {
 func createState(figures map[coord]struct{}, i, jet, maxY int) state {
 	latest := make([]coord, 0)
 	for c := range figures {
-		t := maxY - c.y
+		t := maxY - c.Y
 		if t < 250 {
-			latest = append(latest, coord{c.x, t})
+			latest = append(latest, coord{c.X, t})
 		}
 	}
 	sort.SliceStable(latest, func(s1, s2 int) bool {
-		if latest[s1].x == latest[s2].x {
-			return latest[s1].y < latest[s2].y
+		if latest[s1].X == latest[s2].X {
+			return latest[s1].Y < latest[s2].Y
 		}
-		return latest[s1].x < latest[s2].x
+		return latest[s1].X < latest[s2].X
 	})
 	f, _ := json.Marshal(latest)
+	// foo := string(f)
+	// fmt.Println(foo)
 	hash := md5.Sum(f)
 	encoded := base64.StdEncoding.EncodeToString(hash[:])
 	return state{i, jet, encoded}
@@ -145,8 +147,8 @@ func findRockHeight(loop int, jetPattern string, printFigures bool) int {
 			if !canFallDown {
 				for _, c := range figure {
 					figures[c] = struct{}{}
-					if c.y > maxY {
-						maxY = c.y
+					if c.Y > maxY {
+						maxY = c.Y
 					}
 				}
 				if doneShift {
@@ -179,11 +181,11 @@ func print(figures map[coord]struct{}) {
 	yMin := math.MaxInt
 	yMax := math.MinInt
 	for c := range figures {
-		if c.y < yMin {
-			yMin = c.y
+		if c.Y < yMin {
+			yMin = c.Y
 		}
-		if c.y > yMax {
-			yMax = c.y
+		if c.Y > yMax {
+			yMax = c.Y
 		}
 	}
 	for y := yMax; y >= yMin; y-- {
