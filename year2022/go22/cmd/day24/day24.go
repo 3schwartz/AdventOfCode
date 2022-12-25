@@ -16,7 +16,7 @@ func init() {
 }
 
 func main() {
-	input := io.ReadData("24_test")
+	input := io.ReadData("24")
 
 	steps := findShortestSteps(input, 1)
 
@@ -80,7 +80,7 @@ func initialize(input string) (blizzards, blizzardDefinition) {
 			case '<':
 				blizzard.X = -1
 				blizzard.Y = 0
-			case 'V':
+			case 'v':
 				blizzard.X = 0
 				blizzard.Y = 1
 			case '^':
@@ -136,9 +136,9 @@ func findShortestSteps(input string, times int) int {
 	blizzardCache := map[int]blizzards{}
 
 	for queue.Len() > 0 {
-		if queue.Len()%2_000 == 0 {
-			fmt.Println(queue.Len())
-		}
+		// if queue.Len()%2_000 == 0 {
+		// 	fmt.Println(queue.Len())
+		// }
 		elm, ok := queue.TryDequeue()
 		if !ok {
 			break

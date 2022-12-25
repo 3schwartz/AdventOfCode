@@ -112,8 +112,6 @@ func createState(figures map[coord]struct{}, i, jet, maxY int) state {
 		return latest[s1].X < latest[s2].X
 	})
 	f, _ := json.Marshal(latest)
-	// foo := string(f)
-	// fmt.Println(foo)
 	hash := md5.Sum(f)
 	encoded := base64.StdEncoding.EncodeToString(hash[:])
 	return state{i, jet, encoded}
