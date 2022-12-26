@@ -16,32 +16,21 @@ func main() {
 
 func snafuToInteger(input string) int {
 	number := 0
-	for i := 0; i < len(input); i++ {
-		p := power(5, len(input)-i-1)
+	base := 1
+	for i := len(input) - 1; i >= 0; i-- {
 		switch e := input[i]; {
 		case e == '=':
-			number += -2 * p
+			number += -2 * base
 		case e == '-':
-			number += -1 * p
+			number += -1 * base
 		case e == '1':
-			number += p
+			number += base
 		case e == '2':
-			number += 2 * p
-		case e == '0':
-			continue
-		default:
-			panic(e)
+			number += 2 * base
 		}
+		base *= 5
 	}
 	return number
-}
-
-func power(x, p int) int {
-	result := 1
-	for i := 0; i < p; i++ {
-		result *= x
-	}
-	return result
 }
 
 func findSnafuSum(input string) int {
