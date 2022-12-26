@@ -166,10 +166,6 @@ func (j jungle) followCubeInstructions(instructions []string, maxY, maxX int) in
 			if !ok {
 				panic(newPosition)
 			}
-			// for !ok || q == ' ' {
-			// 	newPosition = newPosition.add(direction, maxX, maxY)
-			// 	q, ok = j[newPosition]
-			// }
 			if q == '#' {
 				break
 			}
