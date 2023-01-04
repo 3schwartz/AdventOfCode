@@ -32,7 +32,7 @@ fn create_coors(lines: Split<&str>) -> (HashMap<(u32,u32), usize>, u32, u32, u32
     return (coords, x_min, x_max, y_min, y_max)
 }
 
-fn find_count(coords: HashMap<(u32,u32), usize>, x_min: u32, x_max:u32, y_min:u32, y_max : u32) ->
+fn find_count(coords: &HashMap<(u32,u32), usize>, x_min: u32, x_max:u32, y_min:u32, y_max : u32) ->
     (HashSet<usize>, HashMap<usize, u32>) {
     let mut borders = HashSet::new();
     let mut coord_count: HashMap<usize, u32> = HashMap::new();
@@ -42,7 +42,7 @@ fn find_count(coords: HashMap<(u32,u32), usize>, x_min: u32, x_max:u32, y_min:u3
             let mut optimal = i32::MAX;
             let mut has_multiple = false;
 
-            for (coord, d) in &coords {
+            for (coord, d) in coords {
                 let manhattan = (x as i32 - coord.0 as i32).abs() + (y as i32 - coord.1 as i32).abs();
                 if manhattan > optimal {
                     continue;
@@ -66,7 +66,25 @@ fn find_count(coords: HashMap<(u32,u32), usize>, x_min: u32, x_max:u32, y_min:u3
         }
     }
     return (borders, coord_count)
+}
 
+fn region_count(coords: &HashMap<(u32,u32),usize>, x_min: i32, x_max:i32, y_min:i32, y_max : i32, threshold: i32) -> u32 {
+    let mut count = 0;
+    let limit = threshold / coords.len() as i32;
+    for x in x_min-limit..=x_max+limit {
+        for y in y_min-limit..=y_max+limit {
+            let mut manhattan = 0;
+
+            for (coord, _) in coords {
+                manhattan += (x as i32 - coord.0 as i32).abs() + (y as i32 - coord.1 as i32).abs();
+            }
+
+            if manhattan < threshold {
+                count += 1;
+            }
+        }
+    }
+    return count
 }
 
 fn find_max_count_on_center(borders : HashSet<usize>, coord_count : HashMap<usize, u32>) -> u32 {
@@ -87,9 +105,15 @@ fn main() {
         .expect("couldn't open file");
     let lines = file.split("\r\n");
     let (coords, x_min, x_max, y_min, y_max) = create_coors(lines);
-    let (borders, coord_count) = find_count(coords, x_min, x_max, y_min, y_max);
+    
+    let (borders, coord_count) = find_count(&coords, x_min, x_max, y_min, y_max);
     let max_count = find_max_count_on_center(borders, coord_count);
-    println!("Part 1: {}", max_count)
+    
+    println!("Part 1: {}", max_count);
+
+    let region_count = region_count(&coords, x_min as i32, x_max as i32, y_min as i32, y_max as i32, 10_000);
+
+    println!("Part 2: {}", region_count);
 }
 
 #[cfg(test)]
@@ -98,13 +122,33 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_part1() {
+    fn test_part2() {
+        // Arrange
         let file: String = fs::read_to_string("../../data/day6_test_data.txt")
         .expect("couldn't open file");
         let lines = file.split("\r\n");
+
+        // Act
         let (coords, x_min, x_max, y_min, y_max) = create_coors(lines);
-        let (borders, coord_count) = find_count(coords, x_min, x_max, y_min, y_max);
+        let region_count = region_count(&coords, x_min as i32, x_max as i32, y_min as i32, y_max as i32, 32);
+
+        // Assert
+        assert_eq!(region_count, 16);
+    }
+
+    #[test]
+    fn test_part1() {
+        // Arrange
+        let file: String = fs::read_to_string("../../data/day6_test_data.txt")
+        .expect("couldn't open file");
+
+        // Act
+        let lines = file.split("\r\n");
+        let (coords, x_min, x_max, y_min, y_max) = create_coors(lines);
+        let (borders, coord_count) = find_count(&coords, x_min, x_max, y_min, y_max);
         let max_count = find_max_count_on_center(borders, coord_count);
+
+        // Assert
         assert_eq!(max_count, 17);
     }
 }
