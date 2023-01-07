@@ -116,7 +116,7 @@ impl Road {
                     Some(c) => c == e.0,
                     None => false,
                 }});
-                if let Some(t) = exist {
+                if let Some(_) = exist {
                     continue;
                 }
                 let zeros = workers_map.iter()
