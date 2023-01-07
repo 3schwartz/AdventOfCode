@@ -118,8 +118,8 @@ fn main() {
 
 #[cfg(test)]
 mod test {
-    use std::fs;
     use super::*;
+    use std::env;
 
     #[test]
     fn test_part2() {
@@ -139,6 +139,7 @@ mod test {
     #[test]
     fn test_part1() {
         // Arrange
+        println!("{}", env::current_dir().unwrap().display());
         let file: String = fs::read_to_string("../../data/day6_test_data.txt")
         .expect("couldn't open file");
 
