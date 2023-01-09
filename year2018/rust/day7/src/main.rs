@@ -22,22 +22,22 @@ struct Road {
 impl Road {
     fn new (file: String) -> Road {
         let mut nodes = HashSet::new();
-            let mut begins: HashMap<char, Vec<char>> = HashMap::new();
-            for s in file.split("\r\n") {
-                let split = s.split(" must be finished before step ")
-                        .collect::<Vec<&str>>();
-                    let step = split[0].chars().last()
-                        .unwrap();
-                    let to_begin = split[1].chars().nth(0)
-                        .unwrap();
-        
-                    nodes.insert(step);
-                    nodes.insert(to_begin);
-                    begins.entry(to_begin)
-                        .or_default()
-                        .push(step);
-            }
-            return Self{relations: begins, nodes: nodes};
+        let mut begins: HashMap<char, Vec<char>> = HashMap::new();
+        for s in file.lines() {
+            let split = s.split(" must be finished before step ")
+                    .collect::<Vec<&str>>();
+            let step = split[0].chars().next_back()
+                .unwrap();
+            let to_begin = split[1].chars().next()
+                .unwrap();
+    
+            nodes.insert(step);
+            nodes.insert(to_begin);
+            begins.entry(to_begin)
+                .or_default()
+                .push(step);
+        }
+        return Self{relations: begins, nodes: nodes};
     }
 
     fn char_seconds(c: char) -> u32 {

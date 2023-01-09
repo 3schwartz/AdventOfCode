@@ -43,31 +43,14 @@ func findSnafuSum(input string) int {
 
 func integerToSnafu(input int) string {
 	snafu := make([]byte, 0)
+	lookup := []byte{'=', '-', '0', '1', '2'}
 	for input != 0 {
 		remainder := input % 5
-		if remainder != 2 &&
-			remainder != 1 &&
-			remainder != 0 &&
-			remainder != -1 &&
-			remainder != -2 {
+		if remainder > 2 {
 			remainder -= 5
 			input += 5
 		}
-		switch remainder {
-		case 2:
-			snafu = append(snafu, '2')
-		case 1:
-			snafu = append(snafu, '1')
-		case 0:
-			snafu = append(snafu, '0')
-		case -1:
-			snafu = append(snafu, '-')
-		case -2:
-			snafu = append(snafu, '=')
-		default:
-			panic(remainder)
-		}
-
+		snafu = append(snafu, lookup[remainder+2])
 		input /= 5
 	}
 
