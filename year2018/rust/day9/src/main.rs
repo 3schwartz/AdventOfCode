@@ -9,7 +9,7 @@ fn main() {
 
             match score {
                 Ok(r) => println!("Part 1: {}", r),
-                Err(()) => print!("Part 1 error"),
+                Err(e) => print!("Part 1 error: {}", e),
             }            
 
             let game = Game::new(input.as_str(), 100);
@@ -17,9 +17,12 @@ fn main() {
 
             match score {
                 Ok(r) => println!("Part 2: {}", r),
-                Err(()) => print!("Part 2 error"),
+                Err(e) => print!("Part 2 error: {}", e),
             }            
 }
+
+type GenericError = Box<dyn std::error::Error + Send + Sync + 'static>;
+type GenericResult<T> = Result<T, GenericError>;
 
 struct Game {
     players: u32,
@@ -37,10 +40,10 @@ impl Game{
             .parse()
             .expect("not able to parse marbles");
         
-        return Self { players: players, marbles: marbles * multiple }
+        return Self { players, marbles: marbles * multiple }
     }
 
-    fn find_highest_score(&self) -> Result<u128, ()> {
+    fn find_highest_score(&self) -> GenericResult<u128> {
         let mut player = 0;
         let mut current_marble = 0;
         let mut marbles : HashMap<u32, Marble> = HashMap::from([
@@ -52,10 +55,12 @@ impl Game{
             if round % 23 == 0 {
                 for _ in 0..7 {
                     current_marble = marbles.get(&current_marble)
-                        .map(|m| m.left).ok_or(())?;
+                        .map(|m| m.left)
+                        .ok_or_else(|| GenericError::from("counter clockwise"))?;
                 }
                 let (left, right) = marbles.get(&current_marble)
-                    .map(|m| (m.left, m.right)).ok_or(())?;
+                    .map(|m| (m.left, m.right))
+                    .ok_or_else(|| GenericError::from("missing counter clockwise"))?;
                 marbles.get_mut(&left)
                     .map(|m| m.right = right);
                 marbles.get_mut(&right)
@@ -69,14 +74,16 @@ impl Game{
                 continue;
             }
             let left = marbles.get(&current_marble)
-                .map(|m| m.right).ok_or(())?;
+                .map(|m| m.right)
+                .ok_or_else(|| GenericError::from("Not able to find left"))?;
             let right= marbles
                 .get_mut(&left)
                 .map(|l| {
                     let right = l.right;
                     l.right = round;
                     right
-                }).ok_or_else(|| ())?;
+                })
+                .ok_or_else(|| GenericError::from("Not able to find right"))?;
 
             marbles.get_mut(&right)
                 .map(|r|{
@@ -93,7 +100,7 @@ impl Game{
         return players.iter()
             .max_by_key(|k| k.1)
             .map(|m| *m.1)
-            .ok_or(());
+            .ok_or_else(|| GenericError::from("Not able to find max"));
     }
 }
 
@@ -131,6 +138,9 @@ mod test {
             .expect("not able to get expected")
             .parse()
             .expect("not able to parse expected");
-        assert_eq!(score, Ok(expected))
+        match score {
+            Ok(r) => assert_eq!(r, expected),
+            Err(_) => assert!(false),
+        }
     }
 }
