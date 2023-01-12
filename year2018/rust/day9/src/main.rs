@@ -37,7 +37,7 @@ impl Marble {
 
 #[cfg(test)]
 mod test {
-    use std::collections::HashMap;
+    use std::{collections::HashMap, fmt::Error};
 
     use super::*;
 
@@ -46,7 +46,8 @@ mod test {
         // Arrange
         // let file = fs::read_to_string("../data/day8_test_data.txt")
         //     .expect("not able to open file");
-        let input = "10 players; last marble is worth 1618 points: high score is 8317";
+        // let input = "10 players; last marble is worth 1618 points: high score is 8317";
+        let input = "9 players; last marble is worth 25 points: high score is 32";
         
         // Act
         let score = findHighestScore(input);
@@ -58,40 +59,65 @@ mod test {
             .expect("not able to get expected")
             .parse()
             .expect("not able to parse expected");
-        assert_eq!(score, expected)
+        assert_eq!(score, Ok(expected))
     }
 
-    fn findHighestScore(input: &str) -> u32 {
+    fn findHighestScore(input: &str) -> Result<u32, ()> {
         let game = Game::new(input);
 
         let mut player = 0;
-        let mut next_marble = 0;
+        let mut current_marble = 0;
         let mut marbles : HashMap<u32, Marble> = HashMap::from([
             (0, Marble::new(0,0,0))
         ]);
-        for round in 0..game.marbles {
+        let mut players : HashMap<u32, u32> = HashMap::new();
+        for round in 1..=game.marbles {
 
-            let right = marbles.get_mut(&next_marble)
+            if round % 23 == 0 {
+                for _ in 0..7 {
+                    current_marble = marbles.get(&current_marble)
+                        .map(|m| m.left).ok_or(())?;
+                }
+                let (left, right) = marbles.get(&current_marble)
+                    .map(|m| (m.left, m.right)).ok_or(())?;
+                marbles.get_mut(&left)
+                    .map(|m| m.right = right);
+                marbles.get_mut(&right)
+                    .map(|m| m.left = left);
+                let score = round + current_marble;
+                players.entry(player)
+                    .and_modify(|s| *s += score)
+                    .or_insert(score);
+                marbles.remove(&current_marble);
+                current_marble = right;
+                continue;
+            }
+            let next = marbles.get(&current_marble)
+                .map(|m| m.left).ok_or(())?;
+            let (left, right) = marbles
+                .get_mut(&next)
                 .map(|l| {
-                    let temp = l.right;
+                    let right = l.right;
                     l.right = round;
-                    temp
-                })
-                .expect("left doesn't exist");
+                    (l.left, right)
+                }).ok_or_else(|| ())?;
+
             marbles.get_mut(&right)
                 .map(|r|{
                     r.left = round;
                 })
                 .expect("right doesn't exist");
             
-            let new_marble = Marble::new(round, next_marble, right);
+            let new_marble = Marble::new(round, left, right);
             marbles.insert(new_marble.idx, new_marble);
 
             player = (player + 1) % game.players;
-            next_marble = right;
+            current_marble = round;
         }
 
-
-        return 0;
+        return players.iter()
+            .max_by_key(|k| k.1)
+            .map(|m| *m.0)
+            .ok_or(());
     }
 }
