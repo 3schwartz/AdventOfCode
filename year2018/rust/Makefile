@@ -14,6 +14,10 @@ bench5:
 	cargo bench --bench benchmark --manifest-path=./day5/Cargo.toml -- --verbose
 .PHONY:bench5
 
+bench9:
+	cargo bench --bench benchmark --manifest-path=./day9/Cargo.toml -- --verbose
+.PHONY:bench9
+
 # Run
 
 run5:

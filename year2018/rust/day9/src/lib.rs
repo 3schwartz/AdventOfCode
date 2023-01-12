@@ -1,36 +1,16 @@
-use std::{fs, collections::HashMap};
-
-fn main() {
-        let input = fs::read_to_string("../data/day9_data.txt")
-            .expect("not able to open file");
-
-            let game = Game::new(input.as_str(), 1);
-            let score = game.find_highest_score();
-
-            match score {
-                Ok(r) => println!("Part 1: {}", r),
-                Err(e) => print!("Part 1 error: {}", e),
-            }            
-
-            let game = Game::new(input.as_str(), 100);
-            let score = game.find_highest_score();
-
-            match score {
-                Ok(r) => println!("Part 2: {}", r),
-                Err(e) => print!("Part 2 error: {}", e),
-            }            
-}
+use std::{collections::{HashMap, VecDeque}};
 
 type GenericError = Box<dyn std::error::Error + Send + Sync + 'static>;
 type GenericResult<T> = Result<T, GenericError>;
 
-struct Game {
+
+pub struct Game {
     players: u32,
     marbles: u32
 }
 
 impl Game{
-    fn new(input: &str, multiple: u32) -> Self {
+    pub fn new(input: &str, multiple: u32) -> Self {
         let split = input.split(" ")
             .collect::<Vec<&str>>();
         let players : u32 = split[0]
@@ -43,7 +23,57 @@ impl Game{
         return Self { players, marbles: marbles * multiple }
     }
 
-    fn find_highest_score(&self) -> GenericResult<u128> {
+    pub fn find_highest_score_vec(&self) -> GenericResult<u128> {
+        let mut player = 0;
+        let mut current_idx = 0;
+        let mut marbles = vec![0];
+        let mut players = vec![0; self.players as usize];
+
+        for round in 1..=self.marbles {
+            player = (player + 1) % self.players;
+            if round % 23 == 0 {
+                current_idx = (current_idx + marbles.len() - 7) % marbles.len();
+                let removed_marble = marbles.remove(current_idx);
+                players[player as usize] += round + removed_marble;
+                continue;
+            }
+            current_idx = (current_idx + 1) % marbles.len();
+            marbles.insert(current_idx + 1, round);
+            current_idx += 1;
+        }
+
+        return players
+            .iter()
+            .max()
+            .ok_or_else(|| GenericError::from("Not able to find max"))
+            .map(|&x| x as u128);
+    }
+
+    pub fn find_highest_score_deque(&self) -> GenericResult<u128> {
+        let mut player = 0;
+        let mut current_idx = 0;
+        let mut marbles = VecDeque::with_capacity((self.marbles + 1) as usize);
+        marbles.push_back(0);
+        let mut players = vec![0; self.players as usize];
+
+        for round in 1..=self.marbles {
+            player = (player + 1) % self.players;
+            if round % 23 == 0 {
+                current_idx = (current_idx + marbles.len() - 7) % marbles.len();
+
+                let removed_marble = marbles.remove(current_idx).unwrap();
+                players[player as usize] += round + removed_marble;
+                continue;
+            }
+            current_idx = (current_idx + 1) % marbles.len();
+            marbles.insert(current_idx + 1, round);
+            current_idx += 1;
+        }
+
+        return players.iter().max().map(|&x| x as u128).ok_or_else(|| GenericError::from("Not able to find max"));
+    }
+
+    pub fn find_highest_score(&self) -> GenericResult<u128> {
         let mut player = 0;
         let mut current_marble = 0;
         let mut marbles : HashMap<u32, Marble> = HashMap::from([
@@ -105,7 +135,6 @@ impl Game{
 }
 
 
-#[derive(Copy, Clone)]
 struct Marble {
     idx: u32,
     left : u32,
@@ -113,7 +142,7 @@ struct Marble {
 }
 
 impl Marble {
-    fn new(idx: u32, left: u32, right : u32) -> Self {
+    pub fn new(idx: u32, left: u32, right : u32) -> Self {
         return Self { idx, left, right }
     }
 }
@@ -121,6 +150,50 @@ impl Marble {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn test_part1_vec(){
+        // Arrange
+        let input = "10 players; last marble is worth 1618 points: high score is 8317";
+        let game = Game::new(input, 1);
+
+        // Act
+        let score = game.find_highest_score_vec();
+
+        // Assert
+        let expected: u128 = input.split(" ").collect::<Vec<&str>>()
+            .iter()
+            .nth(11)
+            .expect("not able to get expected")
+            .parse()
+            .expect("not able to parse expected");
+        match score {
+            Ok(r) => assert_eq!(r, expected),
+            Err(_) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn test_part1_deque(){
+        // Arrange
+        let input = "10 players; last marble is worth 1618 points: high score is 8317";
+        let game = Game::new(input, 1);
+
+        // Act
+        let score = game.find_highest_score_deque();
+
+        // Assert
+        let expected: u128 = input.split(" ").collect::<Vec<&str>>()
+            .iter()
+            .nth(11)
+            .expect("not able to get expected")
+            .parse()
+            .expect("not able to parse expected");
+        match score {
+            Ok(r) => assert_eq!(r, expected),
+            Err(_) => assert!(false),
+        }
+    }
 
     #[test]
     fn test_part1(){
