@@ -109,22 +109,22 @@ impl Sky {
             .iter()
             .map(|r| Coord::new(r))
             .collect();
-        let mut output = String::new();
+        let mut buffer = Vec::<u8>::new();
         for y in self.y_min..=self.y_max {
             for x in self.x_min..=self.x_max {
                 if sky.contains(&Coord::new_simple(x, y)) {
                     print!("#");
-                    output.push('#');
+                    buffer.push(b'#');
                     continue;
                 }
-                output.push('.');
+                buffer.push(b'.');
                 print!(".");
             }
-            output.push('\n');
+            buffer.push(b'\n');
             println!()
         }
         let mut file = File::create("result.txt")?;
-        file.write_all(output.as_bytes())?;
+        file.write_all(&buffer)?;
         println!();
         println!("---------------------------------");
         println!();
