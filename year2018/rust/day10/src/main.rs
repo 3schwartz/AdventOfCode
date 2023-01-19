@@ -90,39 +90,14 @@ impl Sky {
     }
 
     fn update(&mut self) {
-        let (x_min, x_max, y_min, y_max) = self.records.iter_mut()
+        (self.x_min, self.x_max, self.y_min, self.y_max) = self.records.iter_mut()
             .fold((i32::MAX, i32::MIN, i32::MAX, i32::MIN), |(x_min, x_max, y_min, y_max), record| {
                 record.move_velocity();
                 (cmp::min(x_min, record.cx), cmp::max(x_max, record.cx),
                 cmp::min(y_min, record.cy), cmp::max(y_max, record.cy))
             });
-            self.x_min = x_min;
-            self.x_max = x_max;
-            self.y_min = y_min;
-            self.y_max = y_max;
     }
 
-    // fn update(&mut self) {
-    //     self.x_max = i32::MIN;
-    //     self.x_min = i32::MAX;
-    //     self.y_max = i32::MIN;
-    //     self.y_min = i32::MAX;
-    //     for record in &mut self.records {
-    //         record.move_velocity();
-    //         if record.cx > self.x_max {
-    //             self.x_max = record.cx;
-    //         }
-    //         if record.cx < self.x_min {
-    //             self.x_min = record.cx;
-    //         }
-    //         if record.cy > self.y_max {
-    //             self.y_max = record.cy;
-    //         }
-    //         if record.cy < self.y_min {
-    //             self.y_min = record.cy;
-    //         }
-    //     }
-    // }
     fn rollback(&mut self) {
         for record in &mut self.records {
             record.rollback();
