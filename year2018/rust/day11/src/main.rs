@@ -1,13 +1,17 @@
-use std::{ops::RangeInclusive, collections::HashMap, iter::repeat};
+use std::{collections::HashMap, iter::repeat};
 
 fn main() {
     let size = 300;
     let serial = 9110;
 
     let powers = generate_powers(size, serial);
-    let max = find_max(size, powers);
+    let max = find_max(size, &powers, 1);
 
-    println!("Part 1: {:?} with power {}", max.top, max.max_power)
+    println!("Part 1: {:?} with power {}", max.top, max.max_power);
+
+    let max_square = find_max_square(size, &powers);
+
+    println!("Part 2: {:?} with power {}", max_square.top, max_square.max_power);
 }
 
 
@@ -32,14 +36,14 @@ fn get_coords(from: usize, to: usize) -> impl Iterator<Item=(usize,usize)> {
     return coords
 }
 
-fn get_neighbors(xc: usize, yc: usize) -> impl Iterator<Item=(usize,usize)> {
-    let n: RangeInclusive<i32> = -1..=1;
+fn get_neighbors(xc: usize, yc: usize, square_size: usize) -> impl Iterator<Item=(usize,usize)> {
+    let n = 0..square_size;
     let neighbors = n.clone()
         .cycle()
-        .take(9)
+        .take(square_size * square_size)
         .zip(n
-            .flat_map(|y:i32| repeat(y).take(3)))
-        .map(move |(x,y)| ((x + xc as i32) as usize, (y + yc as i32) as usize));
+            .flat_map(move |y| repeat(y).take(square_size)))
+        .map(move |(x,y)| (x + xc, y + yc));
     return neighbors;
 }
 
@@ -54,16 +58,16 @@ fn generate_powers(size: usize, serial: i32) -> HashMap<(usize, usize), i32> {
 }
 
 struct MaxPower {
-    top: (usize, usize),
+    top: (usize, usize, usize),
     max_power: i32
 }
 
-fn find_max(size: usize, powers: HashMap<(usize, usize), i32>) -> MaxPower {
-    let middle = get_coords(2, size-1);
+fn find_max(size: usize, powers: &HashMap<(usize, usize), i32>, square_size: usize) -> MaxPower {
+    let middle = get_coords(1, size-square_size);
     let mut max = i32::MIN;
     let (mut xm, mut ym) = (0,0);
     for (x, y) in middle {
-        let p: i32 = get_neighbors(x, y)
+        let p: i32 = get_neighbors(x, y, square_size)
             .flat_map(|n| powers.get(&n))
             .sum();
         if p > max {
@@ -71,7 +75,18 @@ fn find_max(size: usize, powers: HashMap<(usize, usize), i32>) -> MaxPower {
             (xm, ym) = (x,y);
         }
     }
-    return MaxPower { top: (xm-1, ym-1), max_power: max }
+    return MaxPower { top: (xm, ym, square_size), max_power: max }
+}
+
+fn find_max_square(size: usize, powers: &HashMap<(usize, usize), i32>) -> MaxPower {
+    let mut max_temp = MaxPower{max_power: i32::MIN, top: (0,0,0)};
+    for i in 1..=size {
+        let max = find_max(size, &powers, i);
+        if max.max_power > max_temp.max_power {
+            max_temp = max;
+        }
+    }
+    return max_temp;
 }
 
 #[cfg(test)]
@@ -100,10 +115,25 @@ mod test {
 
         // Act
         let powers = generate_powers(size, serial);
-        let max = find_max(size, powers);
+        let max = find_max(size, &powers, 3);
 
         // Assert
-        assert_eq!(max.top, (33,45));
+        assert_eq!(max.top, (33,45, 3));
         assert_eq!(max.max_power, 29);
+    }
+
+    #[test]
+    fn test_par2() {
+        // Arrange
+        let size = 300;
+        let serial = 18;
+
+        // Act
+        let powers = generate_powers(size, serial);
+        let max = find_max_square(size, &powers);
+
+        // Assert
+        assert_eq!(max.top, (90,269,16));
+        assert_eq!(max.max_power, 113);
     }
 }
