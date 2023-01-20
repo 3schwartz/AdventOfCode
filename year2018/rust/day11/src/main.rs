@@ -36,17 +36,6 @@ fn get_coords(from: usize, to: usize) -> impl Iterator<Item=(usize,usize)> {
     return coords
 }
 
-fn get_neighbors(xc: usize, yc: usize, square_size: usize) -> impl Iterator<Item=(usize,usize)> {
-    let n = 0..square_size;
-    let neighbors = n.clone()
-        .cycle()
-        .take(square_size * square_size)
-        .zip(n
-            .flat_map(move |y| repeat(y).take(square_size)))
-        .map(move |(x,y)| (x + xc, y + yc));
-    return neighbors;
-}
-
 fn generate_powers(size: usize, serial: i32) -> HashMap<(usize, usize), i32> {
     let coords = get_coords(1, size);
     let mut powers: HashMap<(usize, usize), i32> = HashMap::new();
@@ -62,8 +51,19 @@ struct MaxPower {
     max_power: i32
 }
 
+fn get_neighbors(xc: usize, yc: usize, square_size: usize) -> impl Iterator<Item=(usize,usize)> {
+    let n = 0..square_size;
+    let neighbors = n.clone()
+        .cycle()
+        .take(square_size * square_size)
+        .zip(n
+            .flat_map(move |y| repeat(y).take(square_size)))
+        .map(move |(x,y)| (x + xc, y + yc));
+    return neighbors;
+}
+
 fn find_max(size: usize, powers: &HashMap<(usize, usize), i32>, square_size: usize) -> MaxPower {
-    let middle = get_coords(1, size-square_size);
+    let middle = get_coords(1, size-square_size+1);
     let mut max = i32::MIN;
     let (mut xm, mut ym) = (0,0);
     for (x, y) in middle {
