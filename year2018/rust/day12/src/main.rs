@@ -1,4 +1,4 @@
-use std::{fs, collections::HashMap};
+use std::{fs, collections::HashSet};
 
 fn main() {
     let input = fs::read_to_string("../data/day12_data.txt")
@@ -26,8 +26,7 @@ impl Rule {
 }
 
 struct Generator {
-    plants: HashMap<i32,char>,
-    length: usize,
+    plants: HashSet<i32>,
     rules: Vec<Rule>
 }
 
@@ -38,44 +37,37 @@ impl Generator {
         let plants = lines[0][15..]
             .chars()
             .enumerate()
-            .map(|(i,c)| (i as i32, c))
-            .collect::<HashMap<i32, char>>();
+            .filter_map(|(i,c)| if c == '#' {Some(i as i32)} else {None})
+            .collect::<HashSet<i32>>();
         let rules = lines[2..]
             .iter()
             .map(|l| Rule{sequence: Rule::create_sequence(&l[..5]), to: l.chars().next_back().unwrap()})
             .collect::<Vec<Rule>>();
 
-        return Self { plants, rules, length: lines[0][15..].len()}
+        return Self { plants, rules}
     }
 
-    fn plants_sum(&self, state: &HashMap<i32, char>) -> i128 {
-        state.iter()
-            .map(|(i,c)| {
-                if c == &'#' {
-                    return *i as i128;
-                }
-                return 0 as i128;
-            }).sum()
+    fn plants_sum(&self, state: &HashSet<i32>) -> i128 {
+        state.iter().fold(0, |a,i| a + (*i as i128))
     }
 
-    fn get_plant(&self, state: &HashMap<i32, char>, idx: &i32) -> char {
-        state
-            .get(idx)
-            .unwrap_or(&'.').to_owned()
+    fn get_plant(&self, state: &HashSet<i32>, idx: &i32) -> char {
+        if state.contains(idx) {'#'} else {'.'}
     }
 
     fn run(&self, count: u128) -> i128{
         let mut state = self.plants.clone();
-        let mut from: i32 = 0;
-        let mut to: i32 = self.length as i32;
         let mut difference = Difference::default();
         for c in 0..count {
-            from -= 4;
-            to += 4;
-            let mut new_state: HashMap<i32, char> = HashMap::new();
+            let from = state.iter().min().expect("not able to find min") - 4;
+            let to = state.iter().max().expect("not able to find max") + 4;
+            let mut new_state: HashSet<i32> = HashSet::new();
             for idx in from..=to {
                 let mut replaced = false;
                 for r in &self.rules {
+                    if r.to == '.' {
+                        continue;
+                    }
                     let mut fits = true;
                     for (i, c) in &r.sequence {
                         let pot = self.get_plant(&state, &(idx + *i as i32 - 2));
@@ -88,19 +80,18 @@ impl Generator {
                     }
                     if fits {
                         replaced = true;
-                        new_state.insert(idx as i32, r.to);
+                        new_state.insert(idx as i32);
                         break;
                     }
                 }
                 if replaced {
                     continue;
                 }
-                new_state.insert(idx as i32, '.');
             }
             state = new_state;
             let sum = self.plants_sum(&state);
             if difference.is_stable(sum) {
-                return (count - c-1) as i128 * difference.diff + sum;
+                return difference.get_stable_sum(count, c, sum);
             }
             difference = difference.new(sum);
         };
@@ -117,6 +108,10 @@ struct Difference {
 }
 
 impl Difference {
+
+    fn get_stable_sum(&self, count: u128, c: u128, sum: i128) -> i128 {
+        (count - c-1) as i128 * self.diff + sum
+    }
     fn is_stable(&self, sum: i128) -> bool {
         if self.diff != sum - self.sum {
             return false;
@@ -156,7 +151,7 @@ mod test {
         let generator = Generator::new(input);
 
         // Assert
-        assert_eq!(generator.plants.get(&0), Some(&'#'));
+        assert_eq!(generator.plants.contains(&0), true);
         assert_eq!(generator.rules.first(), Some(&Rule{sequence: Rule::create_sequence("...##"), to: '#'}));
     }
 
