@@ -8,9 +8,9 @@ fn main() {
 
     println!("Part 1: {sum}");
 
-    // sum = generator.run(50_000_000_000);
+    sum = generator.run(50_000_000_000);
     
-    // println!("Part 2: {sum}");
+    println!("Part 2: {sum}");
 }
 
 #[derive(PartialEq, Debug)]
@@ -48,13 +48,13 @@ impl Generator {
         return Self { plants, rules, length: lines[0][15..].len()}
     }
 
-    fn plants_sum(&self, state: &HashMap<i32, char>) -> i32 {
+    fn plants_sum(&self, state: &HashMap<i32, char>) -> i128 {
         state.iter()
             .map(|(i,c)| {
                 if c == &'#' {
-                    return i;
+                    return *i as i128;
                 }
-                return &0;
+                return 0 as i128;
             }).sum()
     }
 
@@ -64,11 +64,12 @@ impl Generator {
             .unwrap_or(&'.').to_owned()
     }
 
-    fn run(&self, count: u128) -> i32{
+    fn run(&self, count: u128) -> i128{
         let mut state = self.plants.clone();
         let mut from: i32 = 0;
         let mut to: i32 = self.length as i32;
-        for _ in 0..count {
+        let mut difference = Difference::default();
+        for c in 0..count {
             from -= 4;
             to += 4;
             let mut new_state: HashMap<i32, char> = HashMap::new();
@@ -97,9 +98,47 @@ impl Generator {
                 new_state.insert(idx as i32, '.');
             }
             state = new_state;
+            let sum = self.plants_sum(&state);
+            if difference.is_stable(sum) {
+                return (count - c-1) as i128 * difference.diff + sum;
+            }
+            difference = difference.new(sum);
         };
 
         return self.plants_sum(&state);
+    }
+}
+
+#[derive(Debug)]
+struct Difference {
+    sum: i128,
+    diff: i128,
+    count: i32
+}
+
+impl Difference {
+    fn is_stable(&self, sum: i128) -> bool {
+        if self.diff != sum - self.sum {
+            return false;
+        }
+        if self.count < 10 {
+            return false;
+        }
+        return true;
+    }
+
+    fn new(&self, sum: i128) -> Difference {
+        let diff = sum - self.sum;
+        Difference{
+            sum, 
+            diff,
+            count: if self.diff == diff { self.count + 1 } else {0}}
+    }
+}
+
+impl Default for Difference {
+    fn default() -> Self {
+        Self { sum: 0, diff: 0, count: 0 }
     }
 }
 
