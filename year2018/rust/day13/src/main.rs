@@ -1,5 +1,5 @@
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::fs::File;
+use std::fs::{File};
 use std::io;
 use std::io::prelude::*;
 use std::path::Path;
@@ -53,58 +53,49 @@ fn initialize(
 
 fn find_last_location(
     track: &HashMap<(usize, usize), char>,
-    carts_locations: HashSet<(usize, usize)>,
-    carts: VecDeque<Cart>,
+    mut carts_locations: HashSet<(usize, usize)>,
+    carts_init: VecDeque<Cart>,
 ) -> Option<(usize, usize)> {
-
-    let mut locations = carts_locations
-        .into_iter()
-        .map(|c| (0, c))
-        .collect::<HashSet<(i32, (usize,usize))>>();
-    let mut carts_with_ticks = carts
-        .into_iter()
-        .map(|c| (0, c))
-        .collect::<VecDeque<(i32, Cart)>>();
-
-    let mut tick_count = 0;
-    let mut tick_length = carts_with_ticks.len();
-    let mut ticks = 0;
+    let mut next_carts: Vec<Cart> = Vec::new();
+    // let mut next_locations: HashSet<(usize, usize)> = HashSet::new();
+    let mut carts = Vec::from(carts_init);
+    carts.sort();
 
     let location: Option<(usize, usize)> = loop {
-        let popped = carts_with_ticks.pop_front();
+        let popped = carts.pop();
         if popped.is_none() {
-            break None;
+            next_carts.sort();
+            carts = next_carts;
+            // carts_locations = next_locations;
+            next_carts = Vec::new();
+            // next_locations = HashSet::new();
+            continue;
         }
-        let info = popped.unwrap();
-        let cart = info.1;
+        let cart = popped.unwrap();
 
-        if carts_with_ticks.len() == 0 && tick_count % tick_length == 0 {
+        if carts.len() == 0 && carts_locations.len() == 1 {
             break Some(cart.position);
         }
 
-        if tick_count % tick_length == 0 {
-            tick_count = 0;
-            tick_length = carts_with_ticks.len() + 1;
-            ticks += 1;
+        if !carts_locations.remove(&cart.position) {
+            continue;
         }
-        tick_count += 1;
 
         let movement = track
             .get(&cart.position)
             .map(|c| cart.sign_to_direction(c))
             .unwrap_or(Movement::new(cart.direction, cart.turns));
-        locations.remove(&(ticks, cart.position));
 
         let new_card = cart.new_from_movement(movement);
         
-        let unique = locations.insert((ticks+1, new_card.position));
+        let unique = carts_locations.insert(new_card.position);
 
         if unique {
-            carts_with_ticks.push_back((ticks+1,new_card));
+            next_carts.push(new_card);
             continue;
         }
-        locations.remove(&(ticks+1, new_card.position));
-        carts_with_ticks.retain(|(t, c)| !(c.position == new_card.position && *t == ticks +1));
+        carts_locations.remove(&new_card.position);
+        next_carts.retain(|c| c.position != new_card.position);
     };
 
     return location;
@@ -150,11 +141,27 @@ impl Movement {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct Cart {
     position: (usize, usize),
     direction: (i8, i8),
     turns: u32,
+}
+
+impl PartialOrd for Cart {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Cart {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        if self.position.1 == other.position.1 {
+            // return self.position.0.cmp(&other.position.0)
+            return other.position.0.cmp(&self.position.0)
+        }
+        return other.position.1.cmp(&self.position.1)
+    }
 }
 
 impl Cart {
@@ -216,6 +223,31 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn test_cart_order() {
+        // Arrange
+        let mut carts = vec![
+            Cart{position: (1,6), direction: (0,0), turns:0},
+            Cart{position: (7,2), direction: (0,0), turns:0},
+            Cart{position: (3,4), direction: (0,0), turns:0},
+            Cart{position: (7,4), direction: (0,0), turns:0}
+            ];
+        let expected = vec![
+            (1,6),
+            (7,4),
+            (3,4),
+            (7,2)
+            ];            
+        
+        // Act
+        carts.sort();
+
+        // Assert
+        assert_eq!(
+            carts.iter().map(|c| c.position).collect::<Vec<(usize,usize)>>(),
+            expected);
+    }
 
     #[test]
     fn test_part1() {
