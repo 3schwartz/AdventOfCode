@@ -57,25 +57,21 @@ fn find_last_location(
     carts_init: VecDeque<Cart>,
 ) -> Option<(usize, usize)> {
     let mut next_carts: Vec<Cart> = Vec::new();
-    // let mut next_locations: HashSet<(usize, usize)> = HashSet::new();
     let mut carts = Vec::from(carts_init);
     carts.sort();
 
     let location: Option<(usize, usize)> = loop {
         let popped = carts.pop();
         if popped.is_none() {
+            if next_carts.len() == 1 {
+                break next_carts.iter().map(|c| c.position).next();    
+            }
             next_carts.sort();
             carts = next_carts;
-            // carts_locations = next_locations;
             next_carts = Vec::new();
-            // next_locations = HashSet::new();
             continue;
         }
         let cart = popped.unwrap();
-
-        if carts.len() == 0 && carts_locations.len() == 1 {
-            break Some(cart.position);
-        }
 
         if !carts_locations.remove(&cart.position) {
             continue;
@@ -157,7 +153,6 @@ impl PartialOrd for Cart {
 impl Ord for Cart {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         if self.position.1 == other.position.1 {
-            // return self.position.0.cmp(&other.position.0)
             return other.position.0.cmp(&self.position.0)
         }
         return other.position.1.cmp(&self.position.1)
