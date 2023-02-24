@@ -16,16 +16,20 @@ fn main() {
         })
         .collect::<Vec<i32>>();
 
-    let floor = movements.clone().iter().sum::<i32>();
+    let floor = movements
+        .iter()
+        .sum::<i32>();
 
     println!("Part 1: {}", floor);
 
-    let mut base = 0;
-    for (position, movement) in movements.iter().enumerate() {
-        base += movement;
-        if base == -1 {
-            println!("Part 2: {}", position+1);
-            break;
-        }
-    }
+    let base = 0;
+    let position = movements
+        .iter()
+        .scan(base, |acc, x| {
+            *acc += x;
+            Some(*acc)
+        })
+        .position(|x| x == -1)
+        .unwrap() + 1;
+    println!("Part 2: {}", position);
 }
