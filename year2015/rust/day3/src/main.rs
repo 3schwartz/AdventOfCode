@@ -3,11 +3,11 @@ use std::{fs, collections::{HashSet, HashMap}};
 fn main() {
     let file = fs::read_to_string("../data/day3_data.txt").unwrap();
 
-    let santa_visited = part_1(&file);
+    let santa_visited = solution(&file, 1);
    
     println!("Part 1: {}", santa_visited);
 
-    let helpers_visited = part_2(&file, 2);
+    let helpers_visited = solution(&file, 2);
 
     println!("Part 2: {}", helpers_visited);
 }
@@ -17,7 +17,7 @@ struct Helper {
     visited: HashSet<(i32, i32)>
 }
 
-fn part_2(file: &str, helpers: usize) -> usize {
+fn solution(file: &str, helpers: usize) -> usize {
     let mut states = HashMap::new();
 
     for (i, c) in file.chars().enumerate() {
@@ -28,27 +28,13 @@ fn part_2(file: &str, helpers: usize) -> usize {
         helper.visited.insert(helper.state);
     }
 
-    let union = states.drain()
-        .fold(HashSet::new(), |acc, (_, helper)| {
-            acc.union(&helper.visited).cloned().collect()
-        });
-
-    return union.len();
-}
-
-fn part_1(file: &str) -> usize {
-    let mut visited = HashSet::new();
-    let mut state = (0,0);
-    visited.insert(state);
-
-    for c in file.chars() {
-        state = lookup(c, state);
-        visited.insert(state);
+    let mut union = HashSet::new();
+    for (_, helper) in states.drain() {
+        union.extend(helper.visited);
     }
     
-    visited.len()
+    return union.len();
 }
-
 
 fn lookup(c: char, state: (i32, i32)) -> (i32, i32) {
     match c {
