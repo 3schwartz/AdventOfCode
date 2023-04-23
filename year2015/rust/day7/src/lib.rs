@@ -1,5 +1,5 @@
 use core::fmt;
-use std::{error::Error, collections::HashMap, str::Lines};
+use std::{error::Error, collections::HashMap};
 
 pub type AoCResult<T> = Result<T, AoCError>;
 
@@ -24,7 +24,10 @@ impl fmt::Display for AoCError {
 
 impl Error for AoCError{}
 
-pub fn find_signal<'a>(signals: &mut HashMap<&'a str, u16>, lines: &'a Lines) -> AoCResult<()> {
+pub fn find_signal<'a, T>(signals: &mut HashMap<&'a str, u16>, lines: &T, debug: bool) -> AoCResult<()> 
+    where 
+        T: IntoIterator<Item = &'a str> + Clone
+{
     let mut count = 0;
 
     while !signals.contains_key("a") {
@@ -87,7 +90,10 @@ pub fn find_signal<'a>(signals: &mut HashMap<&'a str, u16>, lines: &'a Lines) ->
             signals.insert(options[4], new_signal);
         }
     }
-    println!("{count}");
+    if debug {
+        println!("{count}");
+    }
+    
 
     Ok(())
 }
