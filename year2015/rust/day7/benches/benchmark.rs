@@ -10,7 +10,7 @@ pub fn benchmark(c: &mut Criterion) {
 
     let mut group = c.benchmark_group("all");
     group.sample_size(10);
-    group.measurement_time(Duration::new(20,0));
+    group.measurement_time(Duration::new(30,0));
 
     group.bench_function("lines", |b| b.iter(|| {
         let lines = input.lines();
