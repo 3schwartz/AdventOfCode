@@ -72,7 +72,6 @@ func createRatesAndGraph(input string) (map[string]int, map[string]map[string]in
 			visited[elm.valve] = struct{}{}
 			if rates[elm.valve] > 0 {
 				destinations[elm.valve] = elm.steps
-				// continue
 			}
 			for _, n := range connections[elm.valve] {
 				queue.Append(queueElement{n, elm.steps + 1})

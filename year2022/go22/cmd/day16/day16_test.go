@@ -246,7 +246,6 @@ func dfsArray(start, startTime, this, time int, missingVisit []int, distances []
 
 func usingArray(input string, loop int, elephant bool) int {
 	rates := make([]int, 0)
-	// valves := make([]string, 0)
 	valvesLookup := map[string]int{}
 	connections := make([][]string, 0)
 	for i, line := range strings.Split(input, "\r\n") {
@@ -261,7 +260,6 @@ func usingArray(input string, loop int, elephant bool) int {
 		}
 		destinations := strings.Split(split[1], ", ")
 
-		// valves = append(valves, valve)
 		valvesLookup[valve] = i
 		connections = append(connections, destinations)
 		rates = append(rates, flow)
