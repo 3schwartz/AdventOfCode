@@ -16,7 +16,7 @@ fn play_game(sequence: i32, count: u8) -> usize {
 
     while input != 0 {
         let this = input % 10;
-        chars.push(char::from((this + 48) as u8));
+        chars.push(this as u8);
         input /= 10;
 
     }
@@ -29,9 +29,9 @@ fn play_game(sequence: i32, count: u8) -> usize {
     chars.len()
 }
 
-fn look_say(input: Vec<char>) -> Vec<char> {
+fn look_say(input: Vec<u8>) -> Vec<u8> {
     let mut count = 0;
-    let mut last = 'a';
+    let mut last = 0;
 
     let mut output = vec![];
 
@@ -45,12 +45,12 @@ fn look_say(input: Vec<char>) -> Vec<char> {
             last = c;
             continue;
         }
-        output.push(char::from((count + 48) as u8));
+        output.push(count);
         output.push(last);
         count = 1;
         last = c;
     };
-    output.push(char::from((count + 48) as u8));
+    output.push(count);
     output.push(last);
 
     output
