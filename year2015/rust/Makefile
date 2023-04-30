@@ -8,3 +8,8 @@ bench7:
 run11:
 	cargo run --manifest-path=./day11/Cargo.toml --release
 .PHONY:run11
+
+# Test
+test12:
+	cargo test --manifest-path=./day12/Cargo.toml --no-fail-fast --lib --bins --tests --release
+.PHONY:test12
