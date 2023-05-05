@@ -43,21 +43,26 @@ fn main() -> Result<()>
         gains.insert((name_idx, neighbor_idx), unit);
     }
 
-    let mut queue: Vec<State> = vec![];
-    for (_, idx) in &name_idx_lookup {
-        queue.push(State { start: *idx, next: *idx, visited: HashSet::from([*idx]), total: 0 });
-    }
+    // let mut queue: Vec<State> = vec![];
+    // for (_, idx) in &name_idx_lookup {
+    //     queue.push(State { start: *idx, next: *idx, visited: HashSet::from([*idx]), total: 0 });
+    // }
 
-    let final_person_count = &name_idx_lookup.len();
+    let mut queue: Vec<State> = vec![State { start: 0, next: 0, visited: HashSet::from([0]), total: 0 }];
+    neighbors.insert(0, neighbors.keys().cloned().collect::<Vec<i64>>());
+
+    // let final_person_count = &name_idx_lookup.len();
+    let final_person_count = &name_idx_lookup.len() + 1;
     let mut max_total = i64::MIN;
     println!("gains: {:?}", gains);
 
     while let Some(next) = queue.pop() {
 
-        if next.visited.len() == *final_person_count {
-            let first = *gains.get(&(next.next, next.start)).ok_or_else(|| anyhow!("error neighbors: {:?}", next))?;
-            let second = *gains.get(&(next.start, next.next)).ok_or_else(|| anyhow!("error neighbors: {:?}", next))?;
-            let total = next.total + first + second;
+        if next.visited.len() == final_person_count {
+            // let first = *gains.get(&(next.next, next.start)).ok_or_else(|| anyhow!("error neighbors: {:?}", next))?;
+            // let second = *gains.get(&(next.start, next.next)).ok_or_else(|| anyhow!("error neighbors: {:?}", next))?;
+            // let total = next.total + first + second;
+            let total = next.total;
 
             if total > max_total {
                 max_total = total;
@@ -69,9 +74,15 @@ fn main() -> Result<()>
             if next.visited.contains(&neighbor) {
                 continue;
             }
+            let (first, second) = if next.next != 0 {
+                (*gains.get(&(next.next, *neighbor)).ok_or_else(|| anyhow!("error neighbors: {:?}", next))?,
+                *gains.get(&(*neighbor, next.next)).ok_or_else(|| anyhow!("error neighbors: {:?}", next))?)
+            } else {
+                (0,0)
+            };
 
-            let first = *gains.get(&(next.next, *neighbor)).ok_or_else(|| anyhow!("error neighbors: {:?}", next))?;
-            let second = *gains.get(&(*neighbor, next.next)).ok_or_else(|| anyhow!("error neighbors: {:?}", next))?;
+            // let first = *gains.get(&(next.next, *neighbor)).ok_or_else(|| anyhow!("error neighbors: {:?}", next))?;
+            // let second = *gains.get(&(*neighbor, next.next)).ok_or_else(|| anyhow!("error neighbors: {:?}", next))?;
             let total = next.total + first + second;
 
             let mut cloned_visisted = next.visited.clone();
