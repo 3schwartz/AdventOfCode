@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 use anyhow::{anyhow, Result};
 
-fn generate_recipe(initial: &str) -> Result<Vec<u128>> {
-    let mut recipes = vec![];
-    for c in initial.chars() {
+fn generate_recipe(initial: &str) -> Result<HashMap<u128, u128>> {
+    let mut recipes = HashMap::new();
+    for (idx, c) in initial.chars().enumerate() {
         let recipe = c
             .to_digit(10)
             .ok_or_else(|| anyhow!("not able to parse: {}", c))? as u128;
-        recipes.push(recipe);
+        recipes.insert(idx as u128, recipe);
     }
     Ok(recipes)
 }
@@ -17,7 +17,8 @@ fn cook(
     second_elf: u128,
     recipes: &mut HashMap<u128, u128>,
     mut next_id: u128,
-) -> Result<(u128, u128, u128)> {
+    mut last: String
+) -> Result<(u128, u128, u128, String)> {
     let first = *recipes
         .get(&first_elf)
         .ok_or_else(|| anyhow!("issue get: {} on: {:?}", first_elf, recipes))?;
@@ -29,28 +30,28 @@ fn cook(
 
     if new_recipe > 9 {
         recipes.insert(next_id, 1);
+        last.push_str(&1.to_string());
         next_id += 1;
     }
     recipes.insert(next_id, new_recipe % 10);
+    last.push_str(&(new_recipe % 10).to_string());
     next_id += 1;
 
     let first_elf_new = (first_elf + first + 1) % recipes.len() as u128;
     let second_elf_new = (second_elf + second + 1) % recipes.len() as u128;
 
-    Ok((first_elf_new, second_elf_new, next_id))
+    Ok((first_elf_new, second_elf_new, next_id, last))
 }
 
 fn part_1(input_value: usize, initial: &str) -> Result<String> {
-    let mut recipes = HashMap::new();
-    for (idx, r) in generate_recipe(initial)?.iter().enumerate() {
-        recipes.insert(idx as u128, *r);
-    }
+    let mut recipes = generate_recipe(initial)?;
+
     let mut first_elf = 0;
     let mut second_elf = 1;
     let mut next_id = 2;
 
     while 10 + input_value >= recipes.len() {
-        (first_elf, second_elf, next_id) = cook(first_elf, second_elf, &mut recipes, next_id)?;
+        (first_elf, second_elf, next_id, _) = cook(first_elf, second_elf, &mut recipes, next_id, String::from(""))?;
     }
 
     let mut final_recipe = vec![];
@@ -68,40 +69,33 @@ fn part_1(input_value: usize, initial: &str) -> Result<String> {
 }
 
 fn part_2(final_r: &str, initial: &str) -> Result<usize> {
-    let mut recipes = HashMap::new();
-    for (idx, r) in generate_recipe(initial)?.iter().enumerate() {
-        recipes.insert(idx as u128, *r as u128);
-    }
-    let final_recipe = generate_recipe(final_r)?;
+    let mut recipes = generate_recipe(initial)?;
 
     let mut first_elf = 0;
     let mut second_elf = 1;
     let mut next_id = 2;
+    let mut last = initial.to_string();
 
     loop {
-        (first_elf, second_elf, next_id) =
-            cook(first_elf, second_elf, &mut recipes, next_id)?;
+        (first_elf, second_elf, next_id, last) =
+            cook(first_elf, second_elf, &mut recipes, next_id, last)?;
         
-        if recipes.len() < final_recipe.len() {
+        if last.contains(final_r) {
+            break;
+        }
+        
+        if recipes.len() < final_r.len() {
             continue;
         }
 
-        let offset = recipes.len()-final_recipe.len();
-        let mut done = true;
-        for i in 0..final_recipe.len() {
-            let x = recipes.get(&((i+offset) as u128)).ok_or_else(|| anyhow!("foo"))?;
-            let y = final_recipe.get(i).ok_or_else(|| anyhow!("should be within"))?;
-            if x != y {
-                done = false;
-            }
-        }
-
-        if done {
-            break;
-        }
+        let idx = last.len().saturating_sub(final_r.len());
+        last = last.split_off(idx);
     }
 
-    Ok(recipes.len() - final_recipe.len())
+    let last_idx = last.find(final_r)
+        .ok_or_else(|| anyhow!("this is strange: {} and {}", last, final_r))?;
+
+    Ok(recipes.len() - last.len() + last_idx)
 }
 
 fn main() -> Result<()> {
