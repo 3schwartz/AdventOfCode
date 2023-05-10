@@ -129,6 +129,8 @@ mod test {
          // Act
          for (x, y) in expected {
             let part_2 = part_2(x, initial)?;
+            
+            // Assert
             assert_eq!(part_2, y)
          };
 
