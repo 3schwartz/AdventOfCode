@@ -9,10 +9,13 @@ run11:
 	cargo run --manifest-path=./day11/Cargo.toml --release
 .PHONY:run11
 
-# Run
 run15:
 	cargo run --manifest-path=./day15/Cargo.toml --release
 .PHONY:run15
+
+run17:
+	cargo run --manifest-path=./day17/Cargo.toml --release
+.PHONY:run17
 
 # Test
 test12:
