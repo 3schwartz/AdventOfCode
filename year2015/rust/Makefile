@@ -17,6 +17,10 @@ run17:
 	cargo run --manifest-path=./day17/Cargo.toml --release
 .PHONY:run17
 
+run18:
+	cargo run --manifest-path=./day18/Cargo.toml --release
+.PHONY:run18
+
 # Test
 test12:
 	cargo test --manifest-path=./day12/Cargo.toml --no-fail-fast --lib --bins --tests --release

@@ -25,7 +25,7 @@ fn main() -> Result<()> {
 
 
 fn pack(input: &str, liter: u32) -> Result<BTreeSet<BTreeSet<usize>>>{
-    let mut queue = BTreeSet::new();
+    let mut queue: BTreeSet<(Vec<(usize, u32)>, BTreeSet<usize>, u32)> = BTreeSet::new();
     let mut containers = vec![];
 
     for (idx, line) in input.lines().enumerate() {
@@ -36,7 +36,6 @@ fn pack(input: &str, liter: u32) -> Result<BTreeSet<BTreeSet<usize>>>{
     queue.insert((containers, BTreeSet::new(), 0));
 
     let mut combinations = BTreeSet::new();
-    let mut visited: BTreeSet<BTreeSet<usize>> = BTreeSet::new();
 
     while let Some(comb) = queue.pop_first() {
         let cont = comb.0;
@@ -53,12 +52,11 @@ fn pack(input: &str, liter: u32) -> Result<BTreeSet<BTreeSet<usize>>>{
             let mut idxs_cloned = idxs.clone();
             idxs_cloned.insert(*idx);
 
-            if sum_updated < liter && !visited.contains(&idxs_cloned) {
+            if sum_updated < liter {
                 let mut cont_cloned = cont.clone();
                 cont_cloned.remove(i);
 
                 queue.insert((cont_cloned, idxs_cloned.clone(), sum_updated));
-                visited.insert(idxs_cloned);
                 continue;
             }
 
