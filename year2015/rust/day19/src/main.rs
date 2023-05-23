@@ -1,6 +1,6 @@
 use std::{fs, collections::HashSet};
-
 use anyhow::{Result, anyhow};
+use regex::Regex;
 
 fn split_by<'a, 'b>(input: &'a str, pattern: &'b str) -> Result<(&'a str, &'a str)> {
     let split: Vec<&str> = input.split(pattern).collect();
@@ -16,11 +16,27 @@ fn main() -> Result<()> {
     
     println!("Part 1: {}", distrinct_molecyles);
 
+    let part_2 = create_molecyle(&input)?;
+
+    println!("Part 2: {}", part_2);
+
     let steps = create_molecyle_in_steps(&input)?;
 
     println!("Part 2: {}", steps);
 
     Ok(())
+}
+
+fn create_molecyle(input: &str) -> Result<usize> {
+    let (_, molecule) = split_by(&input, "\n\n")?;
+    let re = Regex::new(r"[A-Z][a-z]{0,1}")?;
+    let regex_count = re.find_iter(molecule).count();
+
+    let rn = molecule.matches("Rn").count();
+    let ar = molecule.matches("Ar").count();
+    let y: usize = molecule.matches("Y").count();
+
+    Ok(regex_count - (rn+ar) - 2*y - 1)
 }
 
 fn distrinct_molecyles(input: &str, debug: bool) -> Result<usize> {

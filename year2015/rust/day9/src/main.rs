@@ -147,7 +147,6 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::collections::{HashSet, BTreeSet};
 
     #[test]
     fn test_part1() -> Result<()> {
