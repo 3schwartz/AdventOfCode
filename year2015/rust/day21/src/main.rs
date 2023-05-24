@@ -99,8 +99,6 @@ impl Player {
         return self.damage_init + 
                 self.weapon.as_ref()
                 .map_or(0, |i| i.damage) + 
-                self.armor.as_ref()
-                .map_or(0, |i| i.damage) + 
                 self.rings.0.as_ref()
                 .map_or(0, |i| i.damage) + 
                 self.rings.1.as_ref()
@@ -109,8 +107,6 @@ impl Player {
 
     fn get_armor(&self) -> u32 {
         return self.armor_init + 
-                self.weapon.as_ref()
-                .map_or(0, |i| i.armor) + 
                 self.armor.as_ref()
                 .map_or(0, |i| i.armor) + 
                 self.rings.0.as_ref()
@@ -132,21 +128,24 @@ impl Player {
     }
 }
 
-fn min_cost_to_win(start: Player, enemy: &Player, shop: &Shop) -> Result<u32> {
+fn specification_cost(start: Player, enemy: &Player, shop: &Shop, win: bool,
+    least_amount: bool) -> Result<u32> {
+    
     let mut visited: HashSet<Player> = HashSet::new();
     let mut queue: Vec<Player> = Vec::from([start]);
-    let mut min_cost = u32::MAX;
+    let mut boundary_cost = if least_amount { u32::MAX } else { u32::MIN};
     while let Some(player) = queue.pop() {
         if !visited.insert(player.clone()) {
             continue;
         }
         let cost =  player.get_cost();
-        if cost >= min_cost {
+        if least_amount && cost >= boundary_cost {
             continue;
         }
-        if player.beats(&enemy) {
-            min_cost = cost;
-            continue;
+        if player.beats(&enemy) == win && player.weapon.is_some() &&
+             (least_amount && cost < boundary_cost || !least_amount && cost > boundary_cost) {
+            let _foo = player.beats(&enemy);
+            boundary_cost = cost;
         }
         if player.weapon.is_none() {
             for weapon in &shop.weapons {
@@ -171,16 +170,16 @@ fn min_cost_to_win(start: Player, enemy: &Player, shop: &Shop) -> Result<u32> {
         }
         if player.rings.1.is_none() && player.rings.0.is_some() {
             for ring in &shop.rings {
-                if *ring == *player.rings.0.as_ref().ok_or_else(|| anyhow!("ring 1 should be there"))? {
+                if *ring == *player.rings.0.as_ref().ok_or_else(|| anyhow!("ring 0 should be there"))? {
                     continue;
                 }
                 let mut clone = player.clone();
-                clone.rings.0 = Some(ring.clone());
+                clone.rings.1 = Some(ring.clone());
                 queue.push(clone);
             }
         }
     }
-    Ok(min_cost)
+    Ok(boundary_cost)
 }
 
 fn main() -> Result<()> {
@@ -188,19 +187,17 @@ fn main() -> Result<()> {
     // let data = fs::read_to_string("../data/day21_data.txt")?;
 
     let shop = Shop::from(&info)?;
-    // println!("Weapons, {}", shop.weapons.len());
-    // println!("{:?}", shop.weapons);
-    // println!("Armor, {}", shop.armor.len());
-    // println!("{:?}", shop.armor);
-    // println!("Rings, {}", shop.rings.len());
-    // println!("{:?}", shop.rings);
 
     let enemy = Player::new(100, 8, 2);
     let start = Player::new(100, 0, 0);
 
-    let min_cost = min_cost_to_win(start.clone(), &enemy, &shop)?;
+    let min_cost = specification_cost(start.clone(), &enemy, &shop, true, true)?;
 
     println!("Part 1: {}", min_cost);
+
+    let max_cost_loose = specification_cost(start.clone(), &enemy, &shop, false, false)?;
+
+    println!("Part 2: {}", max_cost_loose);
 
     Ok(())
 }
