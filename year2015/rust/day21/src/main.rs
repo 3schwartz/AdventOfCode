@@ -132,22 +132,7 @@ impl Player {
     }
 }
 
-
-fn main() -> Result<()> {
-    let info = fs::read_to_string("../data/day21_info.txt")?;
-    // let data = fs::read_to_string("../data/day21_data.txt")?;
-
-    let shop = Shop::from(&info)?;
-    println!("Weapons, {}", shop.weapons.len());
-    println!("{:?}", shop.weapons);
-    println!("Armor, {}", shop.armor.len());
-    println!("{:?}", shop.armor);
-    println!("Rings, {}", shop.rings.len());
-    println!("{:?}", shop.rings);
-
-    let enemy = Player::new(100, 8, 2);
-    let start = Player::new(100, 0, 0);
-
+fn min_cost_to_win(start: Player, enemy: &Player, shop: &Shop) -> Result<u32> {
     let mut visited: HashSet<Player> = HashSet::new();
     let mut queue: Vec<Player> = Vec::from([start]);
     let mut min_cost = u32::MAX;
@@ -195,6 +180,25 @@ fn main() -> Result<()> {
             }
         }
     }
+    Ok(min_cost)
+}
+
+fn main() -> Result<()> {
+    let info = fs::read_to_string("../data/day21_info.txt")?;
+    // let data = fs::read_to_string("../data/day21_data.txt")?;
+
+    let shop = Shop::from(&info)?;
+    // println!("Weapons, {}", shop.weapons.len());
+    // println!("{:?}", shop.weapons);
+    // println!("Armor, {}", shop.armor.len());
+    // println!("{:?}", shop.armor);
+    // println!("Rings, {}", shop.rings.len());
+    // println!("{:?}", shop.rings);
+
+    let enemy = Player::new(100, 8, 2);
+    let start = Player::new(100, 0, 0);
+
+    let min_cost = min_cost_to_win(start.clone(), &enemy, &shop)?;
 
     println!("Part 1: {}", min_cost);
 
