@@ -1,6 +1,6 @@
 use std::{fs, collections::HashSet, cmp};
 
-use anyhow::{Result, anyhow};
+use anyhow::{Result, anyhow, Ok};
 
 #[derive(Debug, Eq, PartialEq, Hash, Clone)]
 struct Item {
@@ -83,6 +83,24 @@ impl Player {
              weapon: None, armor: None, rings: (None,None) }
     }
 
+    fn from(input: &str) -> Result<Player> {
+        let lines: Vec<&str> = input.lines().collect();
+        if lines.len() != 3 {
+            return Err(anyhow!("enemy input to able to be parsed to player: {:?}", input));
+        }
+        let hit_point: u32 = lines[0].split_whitespace().last()
+            .ok_or_else(|| anyhow!("not able to parse player: {:?}", lines))?
+            .parse()?;
+        let damage_init: u32 = lines[1].split_whitespace().last()
+            .ok_or_else(|| anyhow!("not able to parse player: {:?}", lines))?
+            .parse()?;
+        let armor_init: u32 = lines[2].split_whitespace().last()
+            .ok_or_else(|| anyhow!("not able to parse player: {:?}", lines))?
+            .parse()?;
+
+        Ok(Player::new(hit_point, damage_init, armor_init))
+    }
+
     fn beats(&self, enemy: &Player) -> bool {
         let own_damage = self.get_damage();
         let own_armor = self.get_armor();
@@ -126,76 +144,77 @@ impl Player {
                 self.rings.1.as_ref()
                 .map_or(0, |i| i.cost);
     }
+
+    fn specification_cost(&self, enemy: &Player, shop: &Shop, win: bool, least_amount: bool) -> Result<u32> {
+        let start = self.clone();
+        
+        let mut visited: HashSet<Player> = HashSet::new();
+        let mut queue: Vec<Player> = Vec::from([start]);
+        let mut boundary_cost = if least_amount { u32::MAX } else { u32::MIN};
+        while let Some(player) = queue.pop() {
+            if !visited.insert(player.clone()) {
+                continue;
+            }
+            let cost =  player.get_cost();
+            if least_amount && cost >= boundary_cost {
+                continue;
+            }
+            if player.beats(&enemy) == win && player.weapon.is_some() &&
+                 (least_amount && cost < boundary_cost || !least_amount && cost > boundary_cost) {
+                let _foo = player.beats(&enemy);
+                boundary_cost = cost;
+            }
+            if player.weapon.is_none() {
+                for weapon in &shop.weapons {
+                    let mut clone = player.clone();
+                    clone.weapon = Some(weapon.clone());
+                    queue.push(clone);
+                }
+            }
+            if player.armor.is_none() {
+                for armor in &shop.armor {
+                    let mut clone = player.clone();
+                    clone.armor = Some(armor.clone());
+                    queue.push(clone);
+                }
+            }
+            if player.rings.0.is_none() {
+                for ring in &shop.rings {
+                    let mut clone = player.clone();
+                    clone.rings.0 = Some(ring.clone());
+                    queue.push(clone);
+                }
+            }
+            if player.rings.1.is_none() && player.rings.0.is_some() {
+                for ring in &shop.rings {
+                    if *ring == *player.rings.0.as_ref().ok_or_else(|| anyhow!("ring 0 should be there"))? {
+                        continue;
+                    }
+                    let mut clone = player.clone();
+                    clone.rings.1 = Some(ring.clone());
+                    queue.push(clone);
+                }
+            }
+        }
+        Ok(boundary_cost)
+    }
 }
 
-fn specification_cost(start: Player, enemy: &Player, shop: &Shop, win: bool,
-    least_amount: bool) -> Result<u32> {
-    
-    let mut visited: HashSet<Player> = HashSet::new();
-    let mut queue: Vec<Player> = Vec::from([start]);
-    let mut boundary_cost = if least_amount { u32::MAX } else { u32::MIN};
-    while let Some(player) = queue.pop() {
-        if !visited.insert(player.clone()) {
-            continue;
-        }
-        let cost =  player.get_cost();
-        if least_amount && cost >= boundary_cost {
-            continue;
-        }
-        if player.beats(&enemy) == win && player.weapon.is_some() &&
-             (least_amount && cost < boundary_cost || !least_amount && cost > boundary_cost) {
-            let _foo = player.beats(&enemy);
-            boundary_cost = cost;
-        }
-        if player.weapon.is_none() {
-            for weapon in &shop.weapons {
-                let mut clone = player.clone();
-                clone.weapon = Some(weapon.clone());
-                queue.push(clone);
-            }
-        }
-        if player.armor.is_none() {
-            for armor in &shop.armor {
-                let mut clone = player.clone();
-                clone.armor = Some(armor.clone());
-                queue.push(clone);
-            }
-        }
-        if player.rings.0.is_none() {
-            for ring in &shop.rings {
-                let mut clone = player.clone();
-                clone.rings.0 = Some(ring.clone());
-                queue.push(clone);
-            }
-        }
-        if player.rings.1.is_none() && player.rings.0.is_some() {
-            for ring in &shop.rings {
-                if *ring == *player.rings.0.as_ref().ok_or_else(|| anyhow!("ring 0 should be there"))? {
-                    continue;
-                }
-                let mut clone = player.clone();
-                clone.rings.1 = Some(ring.clone());
-                queue.push(clone);
-            }
-        }
-    }
-    Ok(boundary_cost)
-}
 
 fn main() -> Result<()> {
     let info = fs::read_to_string("../data/day21_info.txt")?;
-    // let data = fs::read_to_string("../data/day21_data.txt")?;
+    let data = fs::read_to_string("../data/day21_data.txt")?;
 
     let shop = Shop::from(&info)?;
 
-    let enemy = Player::new(100, 8, 2);
+    let enemy = Player::from(&data)?;
     let start = Player::new(100, 0, 0);
 
-    let min_cost = specification_cost(start.clone(), &enemy, &shop, true, true)?;
+    let min_cost = start.specification_cost(&enemy, &shop, true, true)?;
 
     println!("Part 1: {}", min_cost);
 
-    let max_cost_loose = specification_cost(start.clone(), &enemy, &shop, false, false)?;
+    let max_cost_loose = start.specification_cost(&enemy, &shop, false, false)?;
 
     println!("Part 2: {}", max_cost_loose);
 
