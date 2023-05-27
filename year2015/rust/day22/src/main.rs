@@ -1,11 +1,15 @@
-use std::{fs, collections::{BTreeMap, BTreeSet}, cmp};
+use std::{
+    cmp,
+    collections::{BTreeMap, BTreeSet},
+    fs,
+};
 
-use anyhow::{Result,anyhow};
+use anyhow::{anyhow, Result};
 
 #[derive(Clone, Ord, PartialOrd, PartialEq, Eq)]
 enum Level {
     Standard,
-    Hard
+    Hard,
 }
 
 #[derive(Debug, Clone, Ord, PartialOrd, PartialEq, Eq)]
@@ -15,31 +19,44 @@ struct Player {
     armor_init: i32,
     mana: i32,
     damage: i32,
-    armor: i32
+    armor: i32,
 }
 
 impl Player {
-
     fn new(hit_point: i32, mana: i32) -> Self {
-        Self { hit_point, damage_init: 0, armor_init: 0, mana,
-             damage: 0, armor: 0
-            }
+        Self {
+            hit_point,
+            damage_init: 0,
+            armor_init: 0,
+            mana,
+            damage: 0,
+            armor: 0,
+        }
     }
 
     fn from(input: &str) -> Result<Player> {
-        let lines : Vec<&str> = input.lines().collect();
+        let lines: Vec<&str> = input.lines().collect();
         if lines.len() != 2 {
-            return Err(anyhow!("not able to create player: {:?}", input))
+            return Err(anyhow!("not able to create player: {:?}", input));
         }
-        let hit_point: i32 = lines[0].split_ascii_whitespace().last()
+        let hit_point: i32 = lines[0]
+            .split_ascii_whitespace()
+            .last()
             .ok_or_else(|| anyhow!("not able to parse player: {:?}", lines[0]))?
             .parse()?;
-        let damage_init: i32 = lines[1].split_ascii_whitespace().last()
+        let damage_init: i32 = lines[1]
+            .split_ascii_whitespace()
+            .last()
             .ok_or_else(|| anyhow!("not able to parse player: {:?}", lines[1]))?
             .parse()?;
 
-        Ok(Player{ hit_point, damage_init, armor_init: 0, mana: 0,
-            damage: 0, armor: 0
+        Ok(Player {
+            hit_point,
+            damage_init,
+            armor_init: 0,
+            mana: 0,
+            damage: 0,
+            armor: 0,
         })
     }
 
@@ -85,7 +102,7 @@ impl Player {
                 continue;
             }
             visisted.insert(state.clone());
-            
+
             // Boss turn ///
             state.apply_effects();
             if state.enemy.is_dead() {
@@ -111,13 +128,13 @@ impl Player {
             }
 
             for spell in Spell::iter() {
-                if state.spells.iter().any(|(k,v)| k == &spell && *v > 0) {
+                if state.spells.iter().any(|(k, v)| k == &spell && *v > 0) {
                     continue;
                 }
                 if !state.player.can_affort(&spell) {
                     continue;
                 }
-                
+
                 let mut state_cloned = state.clone();
                 state_cloned.apply_spell(spell);
 
@@ -149,7 +166,13 @@ struct State {
 
 impl State {
     fn new(player: Player, enemy: Player, level: Level, initial_spell: Spell) -> Self {
-        let mut state = Self { spells: BTreeMap::new(), player, enemy, total_mana: 0, level };
+        let mut state = Self {
+            spells: BTreeMap::new(),
+            player,
+            enemy,
+            total_mana: 0,
+            level,
+        };
         state.apply_level_returns_true_if_player_dead();
         state.apply_spell(initial_spell);
         state
@@ -158,7 +181,7 @@ impl State {
     fn reset_effect(&mut self) {
         self.player.reset();
         self.enemy.reset();
-        self.spells.retain(|_,v| *v > 0);
+        self.spells.retain(|_, v| *v > 0);
     }
 
     fn apply_effects(&mut self) {
@@ -191,11 +214,11 @@ enum Spell {
     Drain,
     Shield,
     Poison,
-    Recharge
+    Recharge,
 }
 
 struct SpellIterator {
-    next: u32
+    next: u32,
 }
 
 impl Iterator for SpellIterator {
@@ -208,13 +231,12 @@ impl Iterator for SpellIterator {
             2 => Some(Spell::Shield),
             3 => Some(Spell::Poison),
             4 => Some(Spell::Recharge),
-            _ => None
+            _ => None,
         };
         self.next += 1;
         result
     }
 }
-
 
 impl Spell {
     const MAGIC_MISSILE_COST: i32 = 53;
@@ -222,7 +244,7 @@ impl Spell {
     const SHIELD_COST: i32 = 113;
     const POISON_COST: i32 = 173;
     const RECHARGE_COST: i32 = 229;
-    
+
     fn iter() -> SpellIterator {
         SpellIterator { next: 0 }
     }
@@ -257,7 +279,7 @@ impl Spell {
             Spell::Drain => {
                 player.hit_point += 2;
                 enemy.hit_point -= 2;
-            },
+            }
             Spell::Shield | Spell::Poison | Spell::Recharge => (),
         }
     }
@@ -286,4 +308,31 @@ fn main() -> Result<()> {
     println!("Part 2: {}", part_2);
 
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    struct Foo<'a> {
+        bar: &'a mut i32,
+    }
+
+    impl<'a> Drop for Foo<'a> {
+        fn drop(&mut self) {
+            *self.bar -= 1;
+        }
+    }
+
+    #[test]
+    fn test() {
+        // Arrange
+        let mut value = 5;
+
+        // Act
+        {
+            let _ = Foo { bar: &mut value };
+        }
+
+        // Assert
+        assert_eq!(value, 4);
+    }
 }
