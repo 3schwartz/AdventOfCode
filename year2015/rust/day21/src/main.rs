@@ -161,7 +161,6 @@ impl Player {
             }
             if player.beats(&enemy) == win && player.weapon.is_some() &&
                  (least_amount && cost < boundary_cost || !least_amount && cost > boundary_cost) {
-                let _foo = player.beats(&enemy);
                 boundary_cost = cost;
             }
             if player.weapon.is_none() {
