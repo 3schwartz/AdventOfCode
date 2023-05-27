@@ -2,6 +2,12 @@ use std::{fs, collections::{BTreeMap, BTreeSet}, cmp};
 
 use anyhow::{Result,anyhow};
 
+#[derive(Clone, Ord, PartialOrd, PartialEq, Eq)]
+enum Level {
+    Standard,
+    Hard
+}
+
 #[derive(Debug, Clone, Ord, PartialOrd, PartialEq, Eq)]
 struct Player {
     hit_point: i32,
@@ -13,6 +19,7 @@ struct Player {
 }
 
 impl Player {
+
     fn new(hit_point: i32, mana: i32) -> Self {
         Self { hit_point, damage_init: 0, armor_init: 0, mana,
              damage: 0, armor: 0
@@ -62,15 +69,14 @@ impl Player {
         return spell.get_cost() <= self.mana;
     }
 
-    fn win_with_least_amount_of_mana(&self, enemy: &Player) -> i32 {
+    fn win_with_least_amount_of_mana(&self, enemy: &Player, level: Level) -> i32 {
         let mut visisted: BTreeSet<State> = BTreeSet::new();
 
         let mut queue: Vec<State> = Vec::new();
         let mut boundary = i32::MAX;
 
         for spell in Spell::iter() {
-            let mut state = State::new(self.clone(), enemy.clone());
-            state.apply_spell(spell);
+            let state = State::new(self.clone(), enemy.clone(), level.clone(), spell);
             queue.push(state);
         }
 
@@ -95,11 +101,15 @@ impl Player {
             state.reset();
 
             // Players turn ///
+            if state.apply_level_returns_true_if_player_dead() {
+                continue;
+            }
             state.apply_effects();
             if state.enemy.is_dead() {
                 boundary = state.total_mana;
                 continue;
             }
+            state.reset();
 
             for spell in Spell::iter() {
                 if state.spells.contains_key(&spell) {
@@ -119,8 +129,7 @@ impl Player {
                     boundary = state_cloned.total_mana;
                     continue;
                 }
-                
-                state_cloned.reset();
+
                 queue.push(state_cloned);
             }
         }
@@ -134,12 +143,16 @@ struct State {
     spells: BTreeMap<Spell, u32>,
     player: Player,
     enemy: Player,
-    total_mana: i32
+    total_mana: i32,
+    level: Level,
 }
 
 impl State {
-    fn new(player: Player, enemy: Player) -> Self {
-        Self { spells: BTreeMap::new(), player, enemy, total_mana: 0 }
+    fn new(player: Player, enemy: Player, level: Level, initial_spell: Spell) -> Self {
+        let mut state = Self { spells: BTreeMap::new(), player, enemy, total_mana: 0, level };
+        state.apply_level_returns_true_if_player_dead();
+        state.apply_spell(initial_spell);
+        state
     }
 
     fn reset(&mut self) {
@@ -161,6 +174,14 @@ impl State {
         spell.apply_damage(&mut self.player, &mut self.enemy);
         self.spells.insert(spell, turns);
         self.total_mana += cost;
+    }
+
+    fn apply_level_returns_true_if_player_dead(&mut self) -> bool {
+        match self.level {
+            Level::Standard => (),
+            Level::Hard => self.player.hit_point -= 1,
+        }
+        self.player.is_dead()
     }
 }
 
@@ -256,8 +277,13 @@ fn main() -> Result<()> {
     let player = Player::new(50, 500);
     let enemy = Player::from(&input)?;
 
-    let part_1 = player.win_with_least_amount_of_mana(&enemy);
+    let part_1 = player.win_with_least_amount_of_mana(&enemy, Level::Standard);
 
     println!("Part 1: {}", part_1);
+
+    let part_2 = player.win_with_least_amount_of_mana(&enemy, Level::Hard);
+
+    println!("Part 2: {}", part_2);
+
     Ok(())
 }
