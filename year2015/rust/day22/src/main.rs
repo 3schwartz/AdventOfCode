@@ -98,7 +98,7 @@ impl Player {
                 continue;
             }
 
-            state.reset();
+            state.reset_effect();
 
             // Players turn ///
             if state.apply_level_returns_true_if_player_dead() {
@@ -109,10 +109,9 @@ impl Player {
                 boundary = state.total_mana;
                 continue;
             }
-            state.reset();
 
             for spell in Spell::iter() {
-                if state.spells.contains_key(&spell) {
+                if state.spells.iter().any(|(k,v)| k == &spell && *v > 0) {
                     continue;
                 }
                 if !state.player.can_affort(&spell) {
@@ -130,6 +129,7 @@ impl Player {
                     continue;
                 }
 
+                state_cloned.reset_effect();
                 queue.push(state_cloned);
             }
         }
@@ -155,7 +155,7 @@ impl State {
         state
     }
 
-    fn reset(&mut self) {
+    fn reset_effect(&mut self) {
         self.player.reset();
         self.enemy.reset();
         self.spells.retain(|_,v| *v > 0);
