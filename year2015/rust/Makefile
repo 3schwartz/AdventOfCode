@@ -29,7 +29,16 @@ run20:
 	cargo run --manifest-path=./day20/Cargo.toml --release
 .PHONY:run20
 
+run24:
+	cargo run --manifest-path=./day24/Cargo.toml --release
+.PHONY:run24
+
 # Test
 test12:
 	cargo test --manifest-path=./day12/Cargo.toml --no-fail-fast --lib --bins --tests --release
 .PHONY:test12
+
+# Format
+format23:
+	cargo fmt --manifest-path=./day23/Cargo.toml
+.PHONY:format23
