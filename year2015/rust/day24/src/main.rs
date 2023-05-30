@@ -1,74 +1,94 @@
-use std::{fs, collections::BTreeSet};
+use std::{collections::BTreeSet, fs};
 
 use anyhow::Result;
 
-#[derive(Debug, Ord, PartialEq, PartialOrd, Eq, Clone)]
-struct State {
-    places: [BTreeSet<u32>; 3]
-}
-
-impl State {
-    fn get_overview(&self) -> BTreeSet<BTreeSet<u32>> {
-        return BTreeSet::from([self.places[0].clone(),self.places[1].clone(),self.places[2].clone()])
+fn dfs(
+    states: [BTreeSet<u32>; 3],
+    mut missing: BTreeSet<u32>,
+    split: u32,
+    smallest: u32,
+    visited: &mut BTreeSet<(BTreeSet<BTreeSet<u32>>, BTreeSet<u32>)>,
+) -> u32 {
+    let compare = BTreeSet::from(states.clone());
+    if !visited.insert((compare, missing.clone())) {
+        return u32::MAX;
     }
 
-    fn any_sum_above(&self, max: u32) -> bool {
-        return self.places.iter().any(|s| s.iter().sum::<u32>() > max)
-    }
+    let Some(next) = missing.pop_first() else { return u32::MAX; };
 
-    fn is_valid(&self) -> bool {
-        let first: u32 = self.places[0].iter().sum();
-        for set in &self.places {
-            let sum: u32 = set.iter().sum();
-            if first != sum {
-                return false;
+    let mut smallest_current = smallest;
+
+    let first_sum = states[0].iter().sum::<u32>();
+    let second_sum = states[1].iter().sum::<u32>();
+    let third_sum = states[2].iter().sum::<u32>();
+
+    if first_sum == split && first_sum == second_sum && second_sum == third_sum {
+        let mut min_len = states[0].len();
+        let mut min_idx = 0;
+        for i in 0..3 {
+            if states[i].len() < min_len {
+                min_idx = i;
+                min_len = states[i].len();
             }
         }
-        return true
+        return states[min_idx].iter().fold(1, |acc, &num| acc * num);
     }
+
+    if first_sum + next > split && first_sum != split
+        || second_sum + next > split && second_sum != split
+        || third_sum + next > split && third_sum != split
+    {
+        return smallest_current;
+    }
+
+    println!("{}, {}, {}, {}", first_sum, second_sum, third_sum, next);
+
+    if first_sum + next < split {
+        let mut cloned = states.clone();
+        cloned[0].insert(next);
+        let qe = dfs(cloned, missing.clone(), split, smallest_current, visited);
+        if qe < smallest_current {
+            smallest_current = qe;
+        }
+    }
+
+    if second_sum + next < split {
+        let mut cloned = states.clone();
+        cloned[1].insert(next);
+        let qe = dfs(cloned, missing.clone(), split, smallest_current, visited);
+        if qe < smallest_current {
+            smallest_current = qe;
+        }
+    }
+    if third_sum + next < split {
+        let mut cloned = states.clone();
+        cloned[2].insert(next);
+        let qe = dfs(cloned, missing.clone(), split, smallest_current, visited);
+        if qe < smallest_current {
+            smallest_current = qe;
+        }
+    }
+
+    return smallest_current;
 }
 
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day24_data.txt")?;
 
-    let presents: Vec<u32> = input.lines()
-        .flat_map(|l| l.parse())
-        .collect();
+    let presents: BTreeSet<u32> = input.lines().flat_map(|l| l.parse()).collect();
 
-    let max: u32 = presents.iter().sum::<u32>() / 3;
+    let sum = presents.iter().sum::<u32>();
+    let value: u32 = sum / 3;
 
-    let state = State{places: [BTreeSet::new(), BTreeSet::new(), BTreeSet::new()]};
-    let mut states = BTreeSet::from([state]);
-    let mut visited = BTreeSet::new();
+    let qe = dfs(
+        [BTreeSet::new(), BTreeSet::new(), BTreeSet::new()],
+        presents,
+        value,
+        u32::MAX,
+        &mut BTreeSet::new(),
+    );
 
-    for present in presents {
-        let mut new_state = BTreeSet::new();
-
-        for set in &states {
-            if !visited.insert(set.get_overview()) {
-                continue;
-            }
-            if set.any_sum_above(max) {
-                continue;
-            }
-            for i in 0..3 {
-                let mut cloned = set.clone();
-                let cloned_group = &mut cloned.places[i];
-                cloned_group.insert(present);
-                new_state.insert(cloned);
-            }
-        }
-        states = new_state;
-    }
-
-    let mut valids = BTreeSet::new();
-    for state in states {
-        if state.is_valid() {
-            valids.insert(state);
-        }
-    }
-
-    println!("{:?}", valids);
+    println!("Part 1: {}", qe);
 
     Ok(())
 }
