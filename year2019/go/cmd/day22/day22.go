@@ -36,9 +36,15 @@ func parseData(fileName string) []string {
 		panic(err)
 	}
 
-	lines := strings.Split(string(f), "\r\n")
+	lines := splitLines(string(f))
 
 	return lines
+}
+
+func splitLines(s string) []string {
+	return strings.FieldsFunc(s, func(r rune) bool {
+		return r == '\r' || r == '\n'
+	})
 }
 
 type deckModuloShuffler struct {

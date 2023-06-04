@@ -416,7 +416,7 @@ FodyWeavers.xsd
 *.dll
 
 # Fortran module files
-*.mod
+#*.mod this does go.mod file isn't committed.
 *.smod
 
 # Compiled Static libraries
