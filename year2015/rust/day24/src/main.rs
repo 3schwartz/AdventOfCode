@@ -1,3 +1,4 @@
+use core::iter::Iterator;
 use std::fs;
 
 use anyhow::Result;
@@ -98,17 +99,65 @@ impl Groups {
     }
 }
 
-impl Iterator for &Groups {
+impl<'a> IntoIterator for &'a Groups {
+    type Item = Vec<u64>;
+    type IntoIter = GroupIterator<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        GroupIterator::new(self)
+    }
+}
+
+struct GroupIterator<'a> {
+    idx: usize,
+    groups: &'a Groups,
+    combinations: Option<Box<dyn Iterator<Item = Vec<u64>> + 'a>>,
+}
+
+impl<'a> GroupIterator<'a> {
+    fn new(groups: &'a Groups) -> Self {
+        Self {
+            idx: 0,
+            groups,
+            combinations: None,
+        }
+    }
+}
+
+impl<'a> Iterator for GroupIterator<'a> {
     type Item = Vec<u64>;
 
-    fn next(&mut self) -> Option<Vec<u64>> {
-        for l in 0..self.packages.len() {
-            for group in self.packages.iter().map(|v| *v).combinations(l) {
-                if group.iter().sum::<u64>() == self.split {
-                    return Some(group);
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            if self.idx == self.groups.packages.len() {
+                return None;
+            }
+
+            let group_option = match &mut self.combinations {
+                Some(g) => g.next(),
+                None => {
+                    let mut g = Box::new(
+                        self.groups
+                            .packages
+                            .iter()
+                            .map(|v| *v)
+                            .combinations(self.idx),
+                    );
+                    let next = g.next();
+                    self.combinations = Some(g);
+                    self.idx += 1;
+                    next
                 }
+            };
+
+            match group_option {
+                Some(group) => {
+                    if group.iter().sum::<u64>() == self.groups.split {
+                        return Some(group);
+                    }
+                }
+                None => self.combinations = None,
             }
         }
-        return None;
     }
 }
