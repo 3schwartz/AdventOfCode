@@ -17,7 +17,6 @@ fn main() -> Result<()> {
 struct Visits {
     first_move: (usize, usize),
     location: (usize, usize),
-    // elem: Elem,
     steps: u32,
 }
 
@@ -35,7 +34,6 @@ impl Visits {
         Visits {
             first_move: self.first_move,
             location: new_location,
-            // elem: self.elem.clone(),
             steps: self.steps + 1,
         }
     }
@@ -65,6 +63,9 @@ impl Elem {
         match cloned {
             Elem::Elf(ref mut life) | Elem::Goblin(ref mut life) => {
                 *life = life.saturating_sub(damage);
+                if *life == 0 {
+                    cloned = Elem::Empty;
+                }
             }
             Elem::Empty => (),
         };
@@ -250,18 +251,35 @@ impl Game {
     fn move_elemements(&mut self) -> Result<()> {
         let mut moved_map: HashMap<(usize, usize), Elem> = HashMap::new();
 
-        for (location, elem) in &self.map {
-            match elem {
-                Elem::Elf(_) | Elem::Goblin(_) => {
-                    let next_location = elem.find_next_location(location, &self.map)?;
-                    moved_map.insert(next_location, elem.clone());
-                }
-                Elem::Empty => (),
-            };
-            if !moved_map.contains_key(location) {
-                moved_map.insert(*location, Elem::Empty);
-            };
+        for x in 0..=self.x_max {
+            for y in 0..=self.y_max {
+                let location = (x, y);
+                let Some(elem) = self.map.get(&location) else {continue;};
+                match elem {
+                    Elem::Elf(_) | Elem::Goblin(_) => {
+                        let next_location = elem.find_next_location(&location, &self.map)?;
+                        moved_map.insert(next_location, elem.clone());
+                    }
+                    Elem::Empty => (),
+                };
+                if !moved_map.contains_key(&location) {
+                    moved_map.insert(location, Elem::Empty);
+                };
+            }
         }
+
+        // for (location, elem) in &self.map {
+        //     match elem {
+        //         Elem::Elf(_) | Elem::Goblin(_) => {
+        //             let next_location = elem.find_next_location(location, &self.map)?;
+        //             moved_map.insert(next_location, elem.clone());
+        //         }
+        //         Elem::Empty => (),
+        //     };
+        //     if !moved_map.contains_key(location) {
+        //         moved_map.insert(*location, Elem::Empty);
+        //     };
+        // }
 
         self.map = moved_map;
         Ok(())
@@ -303,6 +321,16 @@ impl Game {
         return true;
     }
 
+    fn all_goblins_dead(&self) -> bool {
+        for (_, v) in &self.map {
+            match v {
+                Elem::Goblin(_) => return false,
+                _ => (),
+            }
+        }
+        return true;
+    }
+
     /// Round
     /// For each
     ///     if none in range then move
@@ -322,10 +350,16 @@ impl Game {
             self.move_elemements()?;
             self.attack_with_elements()?;
 
-            if self.all_elves_dead() {
+            if self.all_elves_dead() || self.all_goblins_dead() {
                 break;
             }
             round += 1;
+        }
+        for (_, v) in &self.map {
+            match v {
+                Elem::Elf(life) | Elem::Goblin(life) => println!("{}", life),
+                _ => ()
+            }
         }
         let hit_point_sum: u32 = self
             .map
@@ -348,13 +382,24 @@ mod test {
 
     #[test]
     fn test_part_1() -> Result<()> {
-        let expected = 27730;
-        let input = fs::read_to_string("../../data/day15_test_data.txt")?;
-        let mut game = Game::from(input)?;
+        // Arrange
+        let data = vec![
+            // (27730, "1"),
+            (36334, "2"),
+        ];
 
-        let part_1 = game.play()?;
+        for (expected, file) in data {
+            let input = fs::read_to_string(format!("../data/day15_test{}_data.txt", file))?;
 
-        assert_eq!(expected, part_1);
+            // Act
+            let mut game = Game::from(input)?;
+
+            let part_1 = game.play()?;
+
+            // Assert
+            assert_eq!(expected, part_1);
+        }
+
         Ok(())
     }
 }
