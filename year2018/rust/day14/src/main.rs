@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use anyhow::{anyhow, Result};
+use std::collections::HashMap;
 
 fn generate_recipe(initial: &str) -> Result<HashMap<u128, u128>> {
     let mut recipes = HashMap::new();
@@ -17,7 +17,7 @@ fn cook(
     second_elf: u128,
     recipes: &mut HashMap<u128, u128>,
     mut next_id: u128,
-    mut last: String
+    mut last: String,
 ) -> Result<(u128, u128, u128, String)> {
     let first = *recipes
         .get(&first_elf)
@@ -51,7 +51,13 @@ fn part_1(input_value: usize, initial: &str) -> Result<String> {
     let mut next_id = 2;
 
     while 10 + input_value >= recipes.len() {
-        (first_elf, second_elf, next_id, _) = cook(first_elf, second_elf, &mut recipes, next_id, String::from(""))?;
+        (first_elf, second_elf, next_id, _) = cook(
+            first_elf,
+            second_elf,
+            &mut recipes,
+            next_id,
+            String::from(""),
+        )?;
     }
 
     let mut final_recipe = vec![];
@@ -79,11 +85,11 @@ fn part_2(final_r: &str, initial: &str) -> Result<usize> {
     loop {
         (first_elf, second_elf, next_id, last) =
             cook(first_elf, second_elf, &mut recipes, next_id, last)?;
-        
+
         if last.contains(final_r) {
             break;
         }
-        
+
         if recipes.len() < final_r.len() {
             continue;
         }
@@ -92,7 +98,8 @@ fn part_2(final_r: &str, initial: &str) -> Result<usize> {
         last = last.split_off(idx);
     }
 
-    let last_idx = last.find(final_r)
+    let last_idx = last
+        .find(final_r)
         .ok_or_else(|| anyhow!("this is strange: {} and {}", last, final_r))?;
 
     Ok(recipes.len() - last.len() + last_idx)
@@ -121,19 +128,16 @@ mod test {
         // Arrange
         let initial = "37";
 
-        let expected = vec![("51589", 9),
-         ("01245", 5),
-         ("92510", 18),
-         ("59414", 2018)];
+        let expected = vec![("51589", 9), ("01245", 5), ("92510", 18), ("59414", 2018)];
 
-         // Act
-         for (x, y) in expected {
+        // Act
+        for (x, y) in expected {
             let part_2 = part_2(x, initial)?;
-            
+
             // Assert
             assert_eq!(part_2, y)
-         };
+        }
 
-         Ok(())
+        Ok(())
     }
 }

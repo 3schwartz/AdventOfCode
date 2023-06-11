@@ -1,8 +1,7 @@
 use std::fs;
 
 fn main() {
-    let file = fs::read_to_string("../data/day8_data.txt")
-        .expect("couldn't open file");
+    let file = fs::read_to_string("../data/day8_data.txt").expect("couldn't open file");
     let tree = Tree::new(file);
 
     let meta_sum = tree.get_meta_sum();
@@ -16,26 +15,27 @@ fn main() {
 
 struct Tree {
     children: Vec<Tree>,
-    meta: Vec<u32>
+    meta: Vec<u32>,
 }
 
 impl Tree {
     fn new(file: String) -> Self {
-        let numbers = file.split(" ")
+        let numbers = file
+            .split(" ")
             .filter_map(|n| n.parse::<u32>().ok())
             .collect::<Vec<u32>>();
         let idx = 0;
         let (tree, _) = Tree::create_tree(idx, &numbers);
 
-        return tree
+        return tree;
     }
 
     fn create_tree(mut idx: usize, numbers: &Vec<u32>) -> (Tree, usize) {
         let mut children = Vec::<Tree>::new();
         let number_of_children: u32 = numbers[idx];
-        let number_of_meta = numbers[idx+1];
+        let number_of_meta = numbers[idx + 1];
         idx += 2;
-        for _ in 0..number_of_children{
+        for _ in 0..number_of_children {
             let (tree, id) = Tree::create_tree(idx, numbers);
             children.push(tree);
             idx = id
@@ -46,7 +46,7 @@ impl Tree {
             idx += 1;
         }
 
-        return (Tree{children, meta}, idx)
+        return (Tree { children, meta }, idx);
     }
 
     fn get_meta_sum(&self) -> u32 {
@@ -87,8 +87,7 @@ mod test {
     #[test]
     fn test_part2() {
         // Arrange
-        let file = fs::read_to_string("../data/day8_test_data.txt")
-            .expect("couldn't open file");
+        let file = fs::read_to_string("../data/day8_test_data.txt").expect("couldn't open file");
         let tree = Tree::new(file);
 
         // Act
@@ -97,12 +96,11 @@ mod test {
         // Assert
         assert_eq!(66, root_value);
     }
-    
+
     #[test]
     fn test_part1() {
         // Arrange
-        let file = fs::read_to_string("../data/day8_test_data.txt")
-            .expect("couldn't open file");
+        let file = fs::read_to_string("../data/day8_test_data.txt").expect("couldn't open file");
         let tree = Tree::new(file);
 
         // Act

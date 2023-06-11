@@ -17,23 +17,20 @@ struct Unit {
     id: u32,
     next: u32,
 }
-struct Polymer{
-    polymer: HashMap<u32,Unit>,
-    start: u32
+struct Polymer {
+    polymer: HashMap<u32, Unit>,
+    start: u32,
 }
 
-impl Polymer{
-    fn new (chars : Chars) -> Polymer {
+impl Polymer {
+    fn new(chars: Chars) -> Polymer {
         let mut polymer: HashMap<u32, Unit> = HashMap::new();
         let mut idx: u32 = 0;
         for c in chars {
             polymer.insert(idx, Unit::new(c, idx, idx + 1));
-            idx+=1;
+            idx += 1;
         }
-        Self {
-            polymer,
-            start: 0
-        }
+        Self { polymer, start: 0 }
     }
 
     fn react(&mut self) {
@@ -62,25 +59,28 @@ impl Polymer{
 
     fn react_loop(&mut self) {
         let mut current: Option<Unit> = self.get(&self.start);
-        let mut last : Option<Unit> = None;
+        let mut last: Option<Unit> = None;
 
         loop {
             match current {
                 Some(this) => {
-                    let match_next = self.get(&this.next)
+                    let match_next = self
+                        .get(&this.next)
                         .map_or(false, |f| this.characters_match(&f));
-                    
+
                     if match_next {
                         match last {
                             Some(last_unit) => {
-                                let next = self.get(&this.next)
-                                    .map_or(last_unit.next + 1, |f| f.next);
+                                let next =
+                                    self.get(&this.next).map_or(last_unit.next + 1, |f| f.next);
                                 self.polymer.insert(last_unit.id, last_unit.new_next(next));
-                            },
+                            }
                             None => {
-                                self.start = self.polymer.get(&this.next)
+                                self.start = self
+                                    .polymer
+                                    .get(&this.next)
                                     .map_or(self.start + 1, |f| f.next)
-                            },
+                            }
                         }
                         self.remove(&this.id);
                         self.remove(&this.next);
@@ -89,12 +89,10 @@ impl Polymer{
 
                     last = current;
                     current = self.get(&this.next)
-                },
-                None =>  {
-                    break
-                },
+                }
+                None => break,
             };
-        };
+        }
     }
 
     fn length(&self) -> usize {
@@ -103,21 +101,21 @@ impl Polymer{
 }
 
 impl Unit {
-    fn new (character: char, id: u32, next: u32) -> Self {
+    fn new(character: char, id: u32, next: u32) -> Self {
         Self {
-            character, id, next
+            character,
+            id,
+            next,
         }
     }
 
     fn new_next(&self, next: u32) -> Unit {
-        Unit::new(
-            self.character, self.id, next
-        )
+        Unit::new(self.character, self.id, next)
     }
 
     fn characters_match(&self, next: &Unit) -> bool {
-        (self.character.is_ascii_lowercase() && next.character.is_ascii_uppercase() ||
-         self.character.is_ascii_uppercase() && next.character.is_ascii_lowercase()) &&
-         self.character.to_ascii_lowercase() == next.character.to_ascii_lowercase()
+        (self.character.is_ascii_lowercase() && next.character.is_ascii_uppercase()
+            || self.character.is_ascii_uppercase() && next.character.is_ascii_lowercase())
+            && self.character.to_ascii_lowercase() == next.character.to_ascii_lowercase()
     }
 }
