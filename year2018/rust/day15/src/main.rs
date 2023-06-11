@@ -25,7 +25,6 @@ impl Visits {
         Self {
             first_move,
             location: first_move.clone(),
-            // elem,
             steps: 1,
         }
     }
@@ -39,7 +38,7 @@ impl Visits {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 enum Elem {
     Elf(u8),
     Goblin(u8),
@@ -70,6 +69,18 @@ impl Elem {
             Elem::Empty => (),
         };
         cloned
+    }
+
+    fn opponent_exist(&self, map: &HashMap<(usize, usize), Elem>) -> bool {
+        if self == &Elem::Empty {
+            return true;
+        }
+        for (_, elem) in map {
+            if self.is_opposite(elem) {
+                return true;
+            }
+        }
+        return false;
     }
 
     fn find_opponent<'a>(
@@ -130,6 +141,8 @@ impl Elem {
         location: &(usize, usize),
         map: &HashMap<(usize, usize), Elem>,
     ) -> Result<(usize, usize)> {
+        if self == &Elem::Empty {return Ok(*location)}
+
         let neighbors = Elem::get_neigbors(location);
 
         for neighbor in &neighbors {
@@ -152,7 +165,7 @@ impl Elem {
                 continue;
             }
 
-            if !visited.insert(next_visit.location) {
+            if !visited.insert((next_visit.first_move, next_visit.location)) {
                 continue;
             }
 
@@ -268,19 +281,6 @@ impl Game {
             }
         }
 
-        // for (location, elem) in &self.map {
-        //     match elem {
-        //         Elem::Elf(_) | Elem::Goblin(_) => {
-        //             let next_location = elem.find_next_location(location, &self.map)?;
-        //             moved_map.insert(next_location, elem.clone());
-        //         }
-        //         Elem::Empty => (),
-        //     };
-        //     if !moved_map.contains_key(location) {
-        //         moved_map.insert(*location, Elem::Empty);
-        //     };
-        // }
-
         self.map = moved_map;
         Ok(())
     }
@@ -347,14 +347,99 @@ impl Game {
     fn play(&mut self) -> Result<u32> {
         let mut round = 1;
         loop {
-            self.move_elemements()?;
-            self.attack_with_elements()?;
+            let mut visited = HashSet::new();
+            let mut early_done = false; 
+            for y in 0..=self.y_max {
+                if early_done {
+                    break;
+                }
+                for x in 0..=self.x_max {
+                    let location = (x, y);
+                    if visited.contains(&location) {continue;}
+
+                    let Some(elem) = self.map.remove(&location) else {continue;};
+
+                    if !elem.opponent_exist(&self.map) {
+                        round -=1;
+                        self.map.insert(location, elem);
+                        early_done = true;
+                        break;    
+                    }
+
+                    let next_location = elem.find_next_location(&location, &self.map)?;
+
+                    self.map.insert(next_location, elem.clone());
+                    if !self.map.contains_key(&location) {
+                        self.map.insert(location, Elem::Empty);
+                    };
+
+                    match elem {
+                        Elem::Elf(_) | Elem::Goblin(_) => {
+                            visited.insert(next_location);
+                        },
+                        Elem::Empty => (),
+                    };
+
+                    let Some((opponent, opponent_location)) = elem.find_opponent(&next_location, &self.map) else {continue;};
+                    let opppnent_damaged = opponent.damage(3);
+                    self.map.insert(opponent_location, opppnent_damaged);
+                }
+            }
+
+            println!("---------------------");
+            println!("Rounds: {}", round);
+            println!("---------------------");
+            for y in 0..=self.y_max {
+                for x in 0..=self.x_max {
+                    let location = (x, y);
+                    match self.map.get(&location) {
+                        None => print!("#"),
+                        Some(el) => match el {
+                            Elem::Elf(_) => print!("E"),
+                            Elem::Goblin(_) => print!("G"),
+                            Elem::Empty => print!("."),
+                        }
+                    }
+                }
+                println!("")
+            }
+            // match self.map.get(&(2,1)) {
+            //     Some(v) => println!("Round: {}, life: {:?}", round, v),
+            //     _ => ()
+            // }
+            // match self.map.get(&(5,5)) {
+            //     Some(v) => println!("Round: {}, life: {:?}", round, v),
+            //     _ => ()
+            // }
+            // 34 * 3 = 102
+            // 32 * 3 = 96
+            // 198
+            // 31 + 3 = 34 -> (*3) -> 102 
+            // 31 + 1 = 32 -> (*3) -> 96
+            // (3 + 1) * 3 = 12 -> 188
+            // (31 * 6) = 186
+            // 
+
+            // for (_, v) in &mut self.map {
+            //     match *v {
+            //         Elem::Elf(life) | Elem::Goblin(life) => {
+            //             if life > 0 {
+            //                 continue;
+            //             };
+            //             *v = Elem::Empty;
+            //         }
+            //         Elem::Empty => (),
+            //     };
+            // }
+            // self.move_elemements()?;
+            // self.attack_with_elements()?;
 
             if self.all_elves_dead() || self.all_goblins_dead() {
                 break;
             }
             round += 1;
         }
+        println!("Rounds: {}", round);
         for (_, v) in &self.map {
             match v {
                 Elem::Elf(life) | Elem::Goblin(life) => println!("{}", life),
@@ -365,7 +450,7 @@ impl Game {
             .map
             .values()
             .map(|v| match v {
-                Elem::Goblin(life) => *life as u32,
+                Elem::Goblin(life) | Elem::Elf(life) => *life as u32,
                 _ => 0,
             })
             .sum::<u32>();
@@ -384,12 +469,15 @@ mod test {
     fn test_part_1() -> Result<()> {
         // Arrange
         let data = vec![
-            // (27730, "1"),
+            (27730, "1"),
             (36334, "2"),
+            (39514, "3"),
+            (27755, "4"),
         ];
 
         for (expected, file) in data {
-            let input = fs::read_to_string(format!("../data/day15_test{}_data.txt", file))?;
+            let input = fs::read_to_string(format!("../../data/day15_test{}_data.txt", file))?;
+            // let input = fs::read_to_string(format!("../data/day15_test{}_data.txt", file))?;
 
             // Act
             let mut game = Game::from(input)?;
