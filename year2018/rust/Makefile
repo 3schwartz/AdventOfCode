@@ -26,8 +26,12 @@ bench9:
 
 run5:
 	cargo run --manifest-path=./day5/Cargo.toml --release
-.PHONY:run5
 
 run14:
 	cargo run --manifest-path=./day14/Cargo.toml --release
-.PHONY:run14
+
+run15:
+	cargo run --manifest-path=./day15/Cargo.toml --release
+
+
+.PHONY:run5 run14 run15
