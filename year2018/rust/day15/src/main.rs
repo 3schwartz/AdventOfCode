@@ -6,11 +6,16 @@ use std::{
 
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day15_data.txt")?;
-    let mut game = Game::from(input)?;
+    let mut game = Game::from(input.clone(), 3)?;
 
     let part_1 = game.play(false)?;
 
     println!("Part 1: {}", part_1);
+
+    let part_2 = Game::find_outcome_when_all_elves_survive(input)?;
+
+    println!("Part 2: {}", part_2);
+
     Ok(())
 }
 
@@ -40,16 +45,18 @@ impl Visits {
 
 #[derive(Clone, Debug)]
 enum Elem {
-    Elf(u8),
-    Goblin(u8),
+    /// Life, Damage
+    Elf(u8, u8),
+    /// Life, Damage
+    Goblin(u8, u8),
     Empty,
 }
 
 impl PartialEq for Elem {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Self::Elf(_), Self::Elf(_)) => true,
-            (Self::Goblin(_), Self::Goblin(_)) => true,
+            (Self::Elf(_, _), Self::Elf(_, _)) => true,
+            (Self::Goblin(_, _), Self::Goblin(_, _)) => true,
             (Self::Empty, Self::Empty) => true,
             _ => false,
         }
@@ -57,11 +64,13 @@ impl PartialEq for Elem {
 }
 
 impl Elem {
-    fn damage(&self, damage: u8) -> Elem {
+    fn damage(&self, other: &Elem) -> Elem {
         let mut cloned = self.clone();
+        let attack = other.get_damage();
+
         match cloned {
-            Elem::Elf(ref mut life) | Elem::Goblin(ref mut life) => {
-                *life = life.saturating_sub(damage);
+            Elem::Elf(ref mut life, _) | Elem::Goblin(ref mut life, _) => {
+                *life = life.saturating_sub(attack);
                 if *life == 0 {
                     cloned = Elem::Empty;
                 }
@@ -129,9 +138,17 @@ impl Elem {
         possible
     }
 
+    fn get_damage(&self) -> u8 {
+        let attack = match self {
+            Elem::Goblin(_, power) | Elem::Elf(_, power) => *power,
+            Elem::Empty => 0,
+        };
+        attack
+    }
+
     fn get_life(&self) -> Option<&u8> {
         match self {
-            Elem::Elf(life) | Elem::Goblin(life) => Some(life),
+            Elem::Elf(life, _) | Elem::Goblin(life, _) => Some(life),
             Elem::Empty => None,
         }
     }
@@ -179,7 +196,7 @@ impl Elem {
             let Some(next) = map.get(&next_visit.location) else {continue;};
 
             match next {
-                Elem::Elf(_) | Elem::Goblin(_) => {
+                Elem::Elf(_, _) | Elem::Goblin(_, _) => {
                     if next == self {
                         continue;
                     }
@@ -215,8 +232,8 @@ impl Elem {
 
     fn is_opposite(&self, other: &Elem) -> bool {
         match (self, other) {
-            (Elem::Elf(_), Elem::Goblin(_)) => true,
-            (Elem::Goblin(_), Elem::Elf(_)) => true,
+            (Elem::Elf(_, _), Elem::Goblin(_, _)) => true,
+            (Elem::Goblin(_, _), Elem::Elf(_, _)) => true,
             _ => false,
         }
     }
@@ -240,7 +257,33 @@ struct Game {
 }
 
 impl Game {
-    fn from(input: String) -> Result<Game> {
+    fn find_outcome_when_all_elves_survive(input: String) -> Result<u32> {
+        let mut attack_power = 4;
+        loop {
+            let mut game = Game::from(input.clone(), attack_power)?;
+            let before_count = game.get_elve_count();
+            let outcome = game.play(false)?;
+            let after_count = game.get_elve_count();
+
+            if before_count == after_count {
+                return Ok(outcome);
+            }
+            attack_power += 1;
+        }
+    }
+
+    fn get_elve_count(&self) -> u32 {
+        let mut count = 0;
+        for (_, e) in &self.map {
+            match e {
+                Elem::Elf(_, _) => count += 1,
+                _ => (),
+            }
+        }
+        count
+    }
+
+    fn from(input: String, elf_attack_power: u8) -> Result<Game> {
         let mut map: HashMap<(usize, usize), Elem> = HashMap::new();
 
         let mut y_max = 0;
@@ -251,11 +294,11 @@ impl Game {
                 x_max = x;
                 match char {
                     'E' => {
-                        map.insert((x, y), Elem::Elf(200));
+                        map.insert((x, y), Elem::Elf(200, elf_attack_power));
                     }
                     '#' => (),
                     'G' => {
-                        map.insert((x, y), Elem::Goblin(200));
+                        map.insert((x, y), Elem::Goblin(200, 3));
                     }
                     '.' => {
                         map.insert((x, y), Elem::Empty);
@@ -268,21 +311,18 @@ impl Game {
         Ok(Game { x_max, y_max, map })
     }
 
-    fn all_elves_dead(&self) -> bool {
+    fn all_one_type_dead(&self) -> bool {
+        let mut last: Option<&Elem> = None;
         for (_, v) in &self.map {
-            match v {
-                Elem::Elf(_) => return false,
-                _ => (),
+            if v == &Elem::Empty {
+                continue;
             }
-        }
-        return true;
-    }
-
-    fn all_goblins_dead(&self) -> bool {
-        for (_, v) in &self.map {
-            match v {
-                Elem::Goblin(_) => return false,
-                _ => (),
+            let Some(l) = last else {
+                last = Some(v);
+                continue;
+            };
+            if v != l {
+                return false;
             }
         }
         return true;
@@ -318,14 +358,14 @@ impl Game {
                     };
 
                     match elem {
-                        Elem::Elf(_) | Elem::Goblin(_) => {
+                        Elem::Elf(_, _) | Elem::Goblin(_, _) => {
                             visited.insert(next_location);
                         }
                         Elem::Empty => (),
                     };
 
                     let Some((opponent, opponent_location)) = elem.find_opponent(&next_location, &self.map) else {continue;};
-                    let opppnent_damaged = opponent.damage(3);
+                    let opppnent_damaged = opponent.damage(&elem);
                     self.map.insert(opponent_location, opppnent_damaged);
                 }
             }
@@ -334,9 +374,10 @@ impl Game {
                 self.print_map(round);
             }
 
-            if self.all_elves_dead() || self.all_goblins_dead() {
+            if self.all_one_type_dead() {
                 break;
             }
+
             round += 1;
         }
         let hit_point_sum = self.get_hit_point_sum();
@@ -349,7 +390,7 @@ impl Game {
             .map
             .values()
             .map(|v| match v {
-                Elem::Goblin(life) | Elem::Elf(life) => *life as u32,
+                Elem::Goblin(life, _) | Elem::Elf(life, _) => *life as u32,
                 _ => 0,
             })
             .sum::<u32>();
@@ -366,8 +407,8 @@ impl Game {
                 match self.map.get(&location) {
                     None => print!("#"),
                     Some(el) => match el {
-                        Elem::Elf(_) => print!("E"),
-                        Elem::Goblin(_) => print!("G"),
+                        Elem::Elf(_, _) => print!("E"),
+                        Elem::Goblin(_, _) => print!("G"),
                         Elem::Empty => print!("."),
                     },
                 }
@@ -390,15 +431,32 @@ mod test {
 
         for (expected, file) in data {
             let input = fs::read_to_string(format!("../../data/day15_test{}_data.txt", file))?;
-            // let input = fs::read_to_string(format!("../data/day15_test{}_data.txt", file))?;
 
             // Act
-            let mut game = Game::from(input)?;
+            let mut game = Game::from(input, 3)?;
 
             let part_1 = game.play(false)?;
 
             // Assert
             assert_eq!(expected, part_1);
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_part_2() -> Result<()> {
+        // Arrange
+        let data = vec![(4988, "1"), (31284, "3"), (3478, "4")];
+
+        for (expected, file) in data {
+            let input = fs::read_to_string(format!("../../data/day15_test{}_data.txt", file))?;
+
+            // Act
+            let part_2 = Game::find_outcome_when_all_elves_survive(input)?;
+
+            // Assert
+            assert_eq!(expected, part_2);
         }
 
         Ok(())
