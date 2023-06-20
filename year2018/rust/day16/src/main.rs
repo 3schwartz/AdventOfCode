@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet, BTreeSet},
+    collections::{BTreeSet, HashMap, HashSet},
     fs,
 };
 
@@ -29,36 +29,43 @@ struct OpcodeRunner {
 
 struct PossibilitySets {
     possible: BTreeSet<u32>,
-    not_possible: HashSet<u32>
+    not_possible: HashSet<u32>,
 }
 
 impl PossibilitySets {
     fn new() -> Self {
-        Self { possible: BTreeSet::new(), not_possible: HashSet::new() }
+        Self {
+            possible: BTreeSet::new(),
+            not_possible: HashSet::new(),
+        }
     }
 }
 
 struct Possibilities {
-    possibile: HashMap<Opcodes, PossibilitySets>
+    possibile: HashMap<Opcodes, PossibilitySets>,
 }
 
 impl Possibilities {
     fn new() -> Self {
-        Self { possibile: HashMap::new() }
+        Self {
+            possibile: HashMap::new(),
+        }
     }
 
     fn remove(&mut self, opcode: Opcodes, value: u32) -> () {
-        let possible = self.possibile
-                            .entry(opcode)
-                            .or_insert_with(|| PossibilitySets::new());
+        let possible = self
+            .possibile
+            .entry(opcode)
+            .or_insert_with(|| PossibilitySets::new());
         possible.not_possible.insert(value);
         possible.possible.remove(&value);
     }
 
     fn insert(&mut self, opcode: Opcodes, value: u32) -> () {
-        let possible = self.possibile
-                            .entry(opcode)
-                            .or_insert_with(|| PossibilitySets::new());
+        let possible = self
+            .possibile
+            .entry(opcode)
+            .or_insert_with(|| PossibilitySets::new());
         if possible.not_possible.contains(&value) {
             return;
         }
@@ -74,26 +81,33 @@ impl OpcodeRunner {
     }
 
     fn run_program(program: &str, opcode_lookup: HashMap<u32, Opcodes>) -> Result<u32> {
-        let mut register = HashMap::from([(0,0), (1,0), (2,0), (3,0)]);
+        let mut register = HashMap::from([(0, 0), (1, 0), (2, 0), (3, 0)]);
         for line in program.lines() {
             let order = Instruction::map_order(line)?;
-            let opcode = opcode_lookup.get(&order[0]).ok_or_else(|| anyhow!("order: {:?} has key not in map: {:?} not present", order, opcode_lookup))?;
+            let opcode = opcode_lookup.get(&order[0]).ok_or_else(|| {
+                anyhow!(
+                    "order: {:?} has key not in map: {:?} not present",
+                    order,
+                    opcode_lookup
+                )
+            })?;
             opcode.invoke(order[1], order[2], order[3], &mut register)?;
         }
-    
-        let result = register.get(&0).ok_or_else(|| anyhow!("key 0 not present in map: {:?}", register))?;
+
+        let result = register
+            .get(&0)
+            .ok_or_else(|| anyhow!("key 0 not present in map: {:?}", register))?;
 
         Ok(*result)
     }
 
     fn find_opcode_possibilities(
         &self,
-        instructions: &Vec<Instruction>
+        instructions: &Vec<Instruction>,
     ) -> Result<HashMap<u32, Opcodes>> {
         let mut opcode_possibilities = Possibilities::new();
-        
-        for instruction in instructions {
 
+        for instruction in instructions {
             for opcode in &self.opcodes {
                 let mut before = instruction.create_register(instruction.before);
 
@@ -121,12 +135,16 @@ impl OpcodeRunner {
                     continue;
                 }
 
-                possibilities.possible.retain(|&v| !opcode_lookup.contains_key(&v));
+                possibilities
+                    .possible
+                    .retain(|&v| !opcode_lookup.contains_key(&v));
 
                 if possibilities.possible.len() > 1 {
                     continue;
                 }
-                let next = possibilities.possible.pop_first().ok_or_else(|| anyhow!("there should be one in set: {:?}", possibilities.possible))?;
+                let next = possibilities.possible.pop_first().ok_or_else(|| {
+                    anyhow!("there should be one in set: {:?}", possibilities.possible)
+                })?;
                 opcode_lookup.insert(next, *opcode);
             }
         }
