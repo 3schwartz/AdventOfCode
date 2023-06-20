@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{HashMap, HashSet, BTreeSet},
     fs,
 };
 
@@ -7,13 +7,19 @@ use anyhow::{anyhow, Result};
 
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day16_data.txt")?;
-    let parts: Vec<&str> = input.split("\n\n\n").collect();
+    let parts: Vec<&str> = input.split("\n\n\n\n").collect();
     let instructions = Instruction::from_several(parts[0])?;
     let runner = OpcodeRunner::new();
 
     let part_1 = runner.find_behave_above_threshold(&instructions, 2)?;
 
     println!("Part 1: {}", part_1);
+
+    let lookup = runner.find_opcode_possibilities(&instructions)?;
+    let part_2 = OpcodeRunner::run_program(parts[1], lookup)?;
+
+    println!("Part 2: {}", part_2);
+
     Ok(())
 }
 
@@ -21,11 +27,111 @@ struct OpcodeRunner {
     opcodes: HashSet<Opcodes>,
 }
 
+struct PossibilitySets {
+    possible: BTreeSet<u32>,
+    not_possible: HashSet<u32>
+}
+
+impl PossibilitySets {
+    fn new() -> Self {
+        Self { possible: BTreeSet::new(), not_possible: HashSet::new() }
+    }
+}
+
+struct Possibilities {
+    possibile: HashMap<Opcodes, PossibilitySets>
+}
+
+impl Possibilities {
+    fn new() -> Self {
+        Self { possibile: HashMap::new() }
+    }
+
+    fn remove(&mut self, opcode: Opcodes, value: u32) -> () {
+        let possible = self.possibile
+                            .entry(opcode)
+                            .or_insert_with(|| PossibilitySets::new());
+        possible.not_possible.insert(value);
+        possible.possible.remove(&value);
+    }
+
+    fn insert(&mut self, opcode: Opcodes, value: u32) -> () {
+        let possible = self.possibile
+                            .entry(opcode)
+                            .or_insert_with(|| PossibilitySets::new());
+        if possible.not_possible.contains(&value) {
+            return;
+        }
+        possible.possible.insert(value);
+    }
+}
+
 impl OpcodeRunner {
     fn new() -> Self {
         Self {
             opcodes: Opcodes::new_set(),
         }
+    }
+
+    fn run_program(program: &str, opcode_lookup: HashMap<u32, Opcodes>) -> Result<u32> {
+        let mut register = HashMap::from([(0,0), (1,0), (2,0), (3,0)]);
+        for line in program.lines() {
+            let order = Instruction::map_order(line)?;
+            let opcode = opcode_lookup.get(&order[0]).ok_or_else(|| anyhow!("order: {:?} has key not in map: {:?} not present", order, opcode_lookup))?;
+            opcode.invoke(order[1], order[2], order[3], &mut register)?;
+        }
+    
+        let result = register.get(&0).ok_or_else(|| anyhow!("key 0 not present in map: {:?}", register))?;
+
+        Ok(*result)
+    }
+
+    fn find_opcode_possibilities(
+        &self,
+        instructions: &Vec<Instruction>
+    ) -> Result<HashMap<u32, Opcodes>> {
+        let mut opcode_possibilities = Possibilities::new();
+        
+        for instruction in instructions {
+
+            for opcode in &self.opcodes {
+                let mut before = instruction.create_register(instruction.before);
+
+                match opcode.invoke(
+                    instruction.order[1],
+                    instruction.order[2],
+                    instruction.order[3],
+                    &mut before,
+                ) {
+                    Ok(_) => (),
+                    Err(_) => opcode_possibilities.remove(*opcode, instruction.order[0]),
+                }
+
+                let after = instruction.create_register(instruction.after);
+                if before == after {
+                    opcode_possibilities.insert(*opcode, instruction.order[0]);
+                }
+            }
+        }
+
+        let mut opcode_lookup: HashMap<u32, Opcodes> = HashMap::new();
+        while &opcode_lookup.len() != &opcode_possibilities.possibile.len() {
+            for (opcode, possibilities) in &mut opcode_possibilities.possibile {
+                if possibilities.possible.len() == 0 {
+                    continue;
+                }
+
+                possibilities.possible.retain(|&v| !opcode_lookup.contains_key(&v));
+
+                if possibilities.possible.len() > 1 {
+                    continue;
+                }
+                let next = possibilities.possible.pop_first().ok_or_else(|| anyhow!("there should be one in set: {:?}", possibilities.possible))?;
+                opcode_lookup.insert(next, *opcode);
+            }
+        }
+
+        Ok(opcode_lookup)
     }
 
     fn find_behave_above_threshold(
@@ -94,18 +200,23 @@ impl Instruction {
         }
         let before = Instruction::map_register(lines[0])?;
         let after = Instruction::map_register(lines[2])?;
-
-        let order: Vec<u32> = lines[1].split(" ").flat_map(|c| c.parse()).collect();
-
-        if order.len() != 4 {
-            return Err(anyhow!("not able to map order: {}", lines[1]));
-        }
+        let order = Instruction::map_order(lines[1])?;
 
         Ok(Self {
             before,
-            order: [order[0], order[1], order[2], order[3]],
+            order,
             after,
         })
+    }
+
+    fn map_order(line: &str) -> Result<[u32; 4]> {
+        let order: Vec<u32> = line.split(" ").flat_map(|c| c.parse()).collect();
+
+        if order.len() != 4 {
+            return Err(anyhow!("not able to map order: {}", line));
+        }
+
+        Ok([order[0], order[1], order[2], order[3]])
     }
 
     fn map_register(line: &str) -> Result<[u32; 4]> {
@@ -121,7 +232,7 @@ impl Instruction {
     }
 }
 
-#[derive(Eq, PartialEq, Hash)]
+#[derive(Eq, PartialEq, Hash, Copy, Clone, Debug)]
 enum Opcodes {
     Addr,
     Addi,
