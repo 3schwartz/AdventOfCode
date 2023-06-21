@@ -5,7 +5,7 @@ use std::{
 };
 
 fn main() -> Result<()> {
-    let input = fs::read_to_string("../data/day17_test_data.txt")?;
+    let input = fs::read_to_string("../data/day17_data.txt")?;
 
     let mut x_max = u32::MIN;
     let mut y_max = u32::MIN;
@@ -27,42 +27,41 @@ fn main() -> Result<()> {
         }
     }
     let initial = map.clone();
-
     let clay_size = map.len();
 
     // Flow
     loop {
-        println!("-------------------");
-        println!("-------------------");
-        println!("-------------------");
-        for y in 0..=y_max {
-            for x in 494..=507 {
-                match map.get(&Coordinate { x, y }) {
-                    Some(_) => print!("#"),
-                    None => print!("."),
-                }
-            }
-            println!()
-        }
-        let mut queue = VecDeque::from([spring.clone()]);
+        // println!("-------------------");
+        // println!("-------------------");
+        // println!("-------------------");
+        // for y in 0..=y_max {
+        //     for x in 494..=507 {
+        //         match map.get(&Coordinate { x, y }) {
+        //             Some(_) => print!("#"),
+        //             None => print!("."),
+        //         }
+        //     }
+        //     println!()
+        // }
+        let mut queue = VecDeque::from([(None, spring.clone(), spring.clone())]);
         let mut possibles = vec![];
-        let mut visited = HashSet::new();
-        let mut biggest_y = 0;
-        while let Some(current) = queue.pop_front() {
-            if !visited.insert(current.clone()) {
+        while let Some((previous, current)) = queue.pop_front() {
+            if current.is_possible_location(&previous, &map) {
+                possibles.push(current.clone());
                 continue;
             }
-            if current.y > biggest_y {
-                biggest_y = current.y;
+            let down = current.get_down();
+            if !map.contains(&down) && down.y <= y_max {
+                queue.push_back((current, down));
+                continue;
             }
-            if current.is_possible_location(&map) {
-                possibles.push(current.clone());
+            if !map.contains(&down) && current.y == y_max {
+                continue;
             }
 
-            for coord in current.get_surrounding() {
-                if !map.contains(&coord) && coord.y < y_max && current.x < x_max + 2 {
-                    queue.push_back(coord);
-                    continue;
+            for coord in current.get_sides() {
+                if !map.contains(&coord) && coord.x < x_max + 2 && coord != previous {
+                    queue.push_back((current.clone(), coord));
                 }
             }
         }
@@ -77,7 +76,7 @@ fn main() -> Result<()> {
             .ok_or_else(|| anyhow!("should not be empty"))?;
         for possible in possibles {
             if possible.y > best.y
-                || possible.y == best.y && (possible.x).abs_diff(500) > best.x.abs_diff(500)
+            // || possible.y == best.y && (possible.x).abs_diff(500) > best.x.abs_diff(500)
             {
                 best = possible
             }
@@ -85,10 +84,46 @@ fn main() -> Result<()> {
         map.insert(best);
     }
 
+    let mut queue = VecDeque::from([spring.clone()]);
+    let mut visited = HashSet::new();
+    while let Some(current) = queue.pop_front() {
+        if !visited.insert(current.clone()) {
+            continue;
+        }
+        let down = current.get_down();
+        if !map.contains(&down) && down.y <= y_max {
+            map.insert(down.clone());
+            queue.push_back(down);
+            continue;
+        }
+        if !map.contains(&down) && current.y == y_max {
+            continue;
+        }
+
+        for coord in current.get_sides() {
+            if !map.contains(&coord) && coord.x < x_max + 2 && !visited.contains(&coord) {
+                queue.push_back(coord.clone());
+                map.insert(coord);
+            }
+        }
+    }
+
+    println!();
+    println!("{}", visited.len());
     println!("{}", map.len() - clay_size);
     // map.retain(|c| !initial.contains(c));
-
-
+    // println!("-------------------");
+    //     println!("-------------------");
+    //     println!("-------------------");
+    //     for y in 0..=y_max {
+    //         for x in 494..=507 {
+    //             match map.get(&Coordinate { x, y }) {
+    //                 Some(_) => print!("#"),
+    //                 None => print!("."),
+    //             }
+    //         }
+    //         println!()
+    //     }
 
     Ok(())
 }
@@ -111,24 +146,34 @@ impl Coordinate {
                 return true;
             }
             for coord in current.get_surrounding() {
-                if !map.contains(&coord) && coord.y < y_max && current.x < x_max + 2 {
+                if !map.contains(&coord) && coord.y < y_max && coord.x < x_max + 2 {
                     queue.push(coord);
-                    continue;
                 }
             }
         }
         false
     }
 
-    fn is_possible_location(&self, map: &HashSet<Coordinate>) -> bool {
+    fn is_possible_location(&self, previous: &Coordinate, map: &HashSet<Coordinate>) -> bool {
         let mut possible = 0;
-        for coord in self.get_surrounding() {
+        let surrounding = self.get_surrounding();
+        for coord in &surrounding {
             possible += map.contains(&coord) as u8;
         }
-        if possible > 1 {
+        if possible == 3 {
             return true;
         }
-        false
+        if possible == 2 && surrounding.iter().any(|s| s == previous) {
+            return true;
+        }
+        return false;
+    }
+
+    fn get_sides(&self) -> [Coordinate; 2] {
+        [
+            Coordinate::new(self.x.saturating_sub(1), self.y),
+            Coordinate::new(self.x + 1, self.y),
+        ]
     }
 
     fn get_surrounding(&self) -> [Coordinate; 3] {
