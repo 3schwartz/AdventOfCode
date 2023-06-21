@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 use std::{
-    collections::{BTreeSet, HashSet, VecDeque},
+    collections::{BTreeSet, HashMap, HashSet, VecDeque},
     fs,
 };
 
@@ -12,7 +12,7 @@ fn main() -> Result<()> {
 
     let spring = Coordinate::new(500, 0);
 
-    let mut map = HashSet::new();
+    let mut map = HashMap::new();
     for line in input.lines() {
         let coords = Coordinate::from(line)?;
         println!("{}", line);
@@ -23,109 +23,132 @@ fn main() -> Result<()> {
             if coord.y > y_max {
                 y_max = coord.y;
             }
-            map.insert(coord);
-        }
-    }
-    let initial = map.clone();
-    let clay_size = map.len();
-
-    // Flow
-    loop {
-        // println!("-------------------");
-        // println!("-------------------");
-        // println!("-------------------");
-        // for y in 0..=y_max {
-        //     for x in 494..=507 {
-        //         match map.get(&Coordinate { x, y }) {
-        //             Some(_) => print!("#"),
-        //             None => print!("."),
-        //         }
-        //     }
-        //     println!()
-        // }
-        let mut queue = VecDeque::from([(None, spring.clone(), spring.clone())]);
-        let mut possibles = vec![];
-        while let Some((previous, current)) = queue.pop_front() {
-            if current.is_possible_location(&previous, &map) {
-                possibles.push(current.clone());
-                continue;
-            }
-            let down = current.get_down();
-            if !map.contains(&down) && down.y <= y_max {
-                queue.push_back((current, down));
-                continue;
-            }
-            if !map.contains(&down) && current.y == y_max {
-                continue;
-            }
-
-            for coord in current.get_sides() {
-                if !map.contains(&coord) && coord.x < x_max + 2 && coord != previous {
-                    queue.push_back((current.clone(), coord));
-                }
-            }
-        }
-
-        possibles.retain(|p| !p.can_go_lower(x_max, y_max, &map));
-        if possibles.is_empty() {
-            break;
-        }
-
-        let mut best = possibles
-            .pop()
-            .ok_or_else(|| anyhow!("should not be empty"))?;
-        for possible in possibles {
-            if possible.y > best.y
-            // || possible.y == best.y && (possible.x).abs_diff(500) > best.x.abs_diff(500)
-            {
-                best = possible
-            }
-        }
-        map.insert(best);
-    }
-
-    let mut queue = VecDeque::from([spring.clone()]);
-    let mut visited = HashSet::new();
-    while let Some(current) = queue.pop_front() {
-        if !visited.insert(current.clone()) {
-            continue;
-        }
-        let down = current.get_down();
-        if !map.contains(&down) && down.y <= y_max {
-            map.insert(down.clone());
-            queue.push_back(down);
-            continue;
-        }
-        if !map.contains(&down) && current.y == y_max {
-            continue;
-        }
-
-        for coord in current.get_sides() {
-            if !map.contains(&coord) && coord.x < x_max + 2 && !visited.contains(&coord) {
-                queue.push_back(coord.clone());
-                map.insert(coord);
-            }
+            map.insert(coord, Ground::Clay);
         }
     }
 
-    println!();
-    println!("{}", visited.len());
-    println!("{}", map.len() - clay_size);
-    // map.retain(|c| !initial.contains(c));
-    // println!("-------------------");
-    //     println!("-------------------");
-    //     println!("-------------------");
-    //     for y in 0..=y_max {
-    //         for x in 494..=507 {
-    //             match map.get(&Coordinate { x, y }) {
-    //                 Some(_) => print!("#"),
-    //                 None => print!("."),
-    //             }
-    //         }
-    //         println!()
-    //     }
+    fill(spring, y_max, &mut map);
+
+    let part_1 = map
+        .iter()
+        .filter(|(_, g)| match g {
+            Ground::Clay => false,
+            _ => true,
+        })
+        .count();
+
+    println!("Part 1: {}", part_1);
 
     Ok(())
+}
+
+#[derive(PartialEq)]
+enum Ground {
+    Clay,
+    Still,
+    Flow,
+}
+
+fn fill(current: Coordinate, y_max: u32, map: &mut HashMap<Coordinate, Ground>) {
+    if current.y >= y_max {
+        return;
+    }
+    let down = current.get_down();
+
+    if !map.contains_key(&down) {
+        map.insert(down.clone(), Ground::Flow);
+        fill(down.clone(), y_max, map);
+    }
+
+    match map.get(&down) {
+        Some(ground) => match ground {
+            Ground::Clay | Ground::Still => {
+                let right = Coordinate::new(current.x + 1, current.y);
+                if !map.contains_key(&right) {
+                    map.insert(right.clone(), Ground::Flow);
+                    fill(right, y_max, map);
+                }
+                let left = Coordinate::new(current.x.saturating_sub(1), current.y);
+                if !map.contains_key(&left) {
+                    map.insert(left.clone(), Ground::Flow);
+                    fill(left, y_max, map);
+                }
+            }
+            Ground::Flow => (),
+        },
+        None => (),
+    }
+    match map.get(&down) {
+        Some(ground) => match ground {
+            Ground::Clay | Ground::Still => {
+                let right = Coordinate::new(current.x + 1, current.y);
+                if !map.contains_key(&right) {
+                    map.insert(right.clone(), Ground::Flow);
+                    fill(right, y_max, map);
+                }
+                let left = Coordinate::new(current.x.saturating_sub(1), current.y);
+                if !map.contains_key(&left) {
+                    map.insert(left.clone(), Ground::Flow);
+                    fill(left, y_max, map);
+                }
+            }
+            Ground::Flow => (),
+        },
+        None => (),
+    }
+
+    if within_boundaries(&current, map) {
+        fill_height(&current, map);
+    }
+}
+
+fn fill_height(coord: &Coordinate, map: &mut HashMap<Coordinate, Ground>) {
+    fill_side(coord, Action::Add, map);
+    fill_side(coord, Action::Subtract, map);
+}
+
+fn fill_side(coord: &Coordinate, shift: Action, map: &mut HashMap<Coordinate, Ground>) {
+    let mut current = coord.x;
+    loop {
+        let c = Coordinate::new(current, coord.y);
+        if let Some(ground) = map.get(&c) {
+            if ground == &Ground::Clay {
+                return;
+            }
+        }
+        map.insert(c, Ground::Still);
+        match shift {
+            Action::Add => current += 1,
+            Action::Subtract => current = current.saturating_sub(1),
+        }
+    }
+}
+
+fn within_boundaries(coord: &Coordinate, map: &HashMap<Coordinate, Ground>) -> bool {
+    has_walls(coord, Action::Add, map) && has_walls(coord, Action::Subtract, map)
+}
+
+enum Action {
+    Add,
+    Subtract,
+}
+
+fn has_walls(coord: &Coordinate, shift: Action, map: &HashMap<Coordinate, Ground>) -> bool {
+    let mut current = coord.x;
+    loop {
+        let c = Coordinate::new(current, coord.y);
+        match map.get(&c) {
+            Some(ground) => match ground {
+                Ground::Clay => return true,
+                _ => (),
+            },
+            None => return false,
+        }
+        match shift {
+            Action::Add => current += 1,
+            Action::Subtract => current = current.saturating_sub(1),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
