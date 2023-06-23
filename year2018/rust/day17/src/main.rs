@@ -1,76 +1,58 @@
 use anyhow::{anyhow, Result};
-use std::{
-    collections::{BTreeSet, HashMap, HashSet, VecDeque},
-    fs,
-};
+use std::{collections::HashMap, fs};
 
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day17_data.txt")?;
 
-    let mut x_min = u32::MAX;
-    let mut x_max = u32::MIN;
-
-    let mut y_min = u32::MAX;
-    let mut y_max = u32::MIN;
+    let (y_min, y_max, mut map) = generate_map(input)?;
 
     let spring = Coordinate::new(500, 0);
+    spring.fill(y_max, &mut map);
 
-    let mut map = HashMap::new();
-    for line in input.lines() {
-        let coords = Coordinate::from(line)?;
-        // println!("{}", line);
-        for coord in coords {
-            x_max = std::cmp::max(x_max, coord.x);
-            y_max = std::cmp::max(y_max, coord.y);
-            x_min = std::cmp::min(x_min, coord.x);
-            y_min = std::cmp::min(y_min, coord.y);
+    let part_1 = get_water_count(y_min, y_max, &map);
+    let part_2 = get_still_waiter_count(y_min, y_max, &map);
 
-            map.insert(coord, Ground::Clay);
-        }
-    }
+    println!("Part 1: {}", part_1);
+    println!("Part 2: {}", part_2);
 
-    fill(spring, y_max, &mut map);
+    Ok(())
+}
 
-    let part_1 = map
-        .iter()
+fn get_still_waiter_count(y_min: u32, y_max: u32, map: &HashMap<Coordinate, Ground>) -> usize {
+    map.iter()
+        .filter(|(c, _)| c.y >= y_min && c.y <= y_max)
+        .filter(|(_, g)| match g {
+            Ground::Still => true,
+            _ => false,
+        })
+        .count()
+}
+
+fn get_water_count(y_min: u32, y_max: u32, map: &HashMap<Coordinate, Ground>) -> usize {
+    map.iter()
         .filter(|(c, _)| c.y >= y_min && c.y <= y_max)
         .filter(|(_, g)| match g {
             Ground::Clay => false,
             _ => true,
         })
-        .count();
+        .count()
+}
 
-    let flow = map
-        .iter()
-        .filter(|(c, _)| c.y >= y_min && c.y <= y_max)
-        .filter(|(_, g)| match g {
-            Ground::Flow => true,
-            _ => false,
-        })
-        .count();
+fn generate_map(input: String) -> Result<(u32, u32, HashMap<Coordinate, Ground>)> {
+    let mut y_min = u32::MAX;
+    let mut y_max = u32::MIN;
 
-    let still = map
-        .iter()
-        .filter(|(_, g)| match g {
-            Ground::Still => true,
-            _ => false,
-        })
-        .count();
+    let mut map = HashMap::new();
+    for line in input.lines() {
+        let coords = Coordinate::from(line)?;
+        for coord in coords {
+            y_max = std::cmp::max(y_max, coord.y);
+            y_min = std::cmp::min(y_min, coord.y);
 
-    let clay = map
-        .iter()
-        .filter(|(_, g)| match g {
-            Ground::Clay => true,
-            _ => false,
-        })
-        .count();
-
-    println!("Part 1: {}", part_1);
-    println!("Flow: {}", flow);
-    println!("Still: {}", still);
-    println!("clay: {}", clay);
-
-    Ok(())
+            map.insert(coord, Ground::Clay);
+        }
+    }
+    Ok((y_min, y_max, map))
 }
 
 #[derive(PartialEq)]
@@ -80,106 +62,9 @@ enum Ground {
     Flow,
 }
 
-fn fill(current: Coordinate, y_max: u32, map: &mut HashMap<Coordinate, Ground>) {
-    if current.y >= y_max {
-        return;
-    }
-    let down = current.get_down();
-
-    if !map.contains_key(&down) {
-        map.insert(down.clone(), Ground::Flow);
-        fill(down.clone(), y_max, map);
-    }
-
-    match map.get(&down) {
-        Some(ground) => match ground {
-            Ground::Clay | Ground::Still => {
-                let right = Coordinate::new(current.x + 1, current.y);
-                if !map.contains_key(&right) {
-                    map.insert(right.clone(), Ground::Flow);
-                    fill(right, y_max, map);
-                }
-                // let left = Coordinate::new(current.x.saturating_sub(1), current.y);
-                // if !map.contains_key(&left) {
-                //     map.insert(left.clone(), Ground::Flow);
-                //     fill(left, y_max, map);
-                // }
-            }
-            Ground::Flow => (),
-        },
-        None => (),
-    }
-    match map.get(&down) {
-        Some(ground) => match ground {
-            Ground::Clay | Ground::Still => {
-                // let right = Coordinate::new(current.x + 1, current.y);
-                // if !map.contains_key(&right) {
-                //     map.insert(right.clone(), Ground::Flow);
-                //     fill(right, y_max, map);
-                // }
-                let left = Coordinate::new(current.x.saturating_sub(1), current.y);
-                if !map.contains_key(&left) {
-                    map.insert(left.clone(), Ground::Flow);
-                    fill(left, y_max, map);
-                }
-            }
-            Ground::Flow => (),
-        },
-        None => (),
-    }
-
-    if within_boundaries(&current, map) {
-        fill_height(&current, map);
-    }
-}
-
-fn fill_height(coord: &Coordinate, map: &mut HashMap<Coordinate, Ground>) {
-    fill_side(coord, Action::Add, map);
-    fill_side(coord, Action::Subtract, map);
-}
-
-fn fill_side(coord: &Coordinate, shift: Action, map: &mut HashMap<Coordinate, Ground>) {
-    let mut current = coord.x;
-    loop {
-        let c = Coordinate::new(current, coord.y);
-        if let Some(ground) = map.get(&c) {
-            if ground == &Ground::Clay {
-                return;
-            }
-        }
-        map.insert(c, Ground::Still);
-        match shift {
-            Action::Add => current += 1,
-            Action::Subtract => current = current.saturating_sub(1),
-        }
-    }
-}
-
-fn within_boundaries(coord: &Coordinate, map: &HashMap<Coordinate, Ground>) -> bool {
-    has_walls(coord, Action::Add, map) && has_walls(coord, Action::Subtract, map)
-}
-
 enum Action {
     Add,
     Subtract,
-}
-
-fn has_walls(coord: &Coordinate, shift: Action, map: &HashMap<Coordinate, Ground>) -> bool {
-    let mut current = coord.x;
-    loop {
-        let c = Coordinate::new(current, coord.y);
-        match map.get(&c) {
-            Some(ground) => match ground {
-                Ground::Clay => return true,
-                _ => (),
-            },
-            None => return false,
-        }
-        match shift {
-            Action::Add => current += 1,
-            Action::Subtract => current = current.saturating_sub(1),
-        }
-    }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
@@ -189,53 +74,102 @@ struct Coordinate {
 }
 
 impl Coordinate {
-    fn can_go_lower(&self, x_max: u32, y_max: u32, map: &HashSet<Coordinate>) -> bool {
-        let mut visited = HashSet::new();
-        let mut queue = Vec::from([self.clone()]);
-        while let Some(current) = queue.pop() {
-            if !visited.insert(current.clone()) {
-                continue;
-            }
-            if current.y > self.y {
-                return true;
-            }
-            for coord in current.get_surrounding() {
-                if !map.contains(&coord) && coord.y < y_max && coord.x < x_max + 2 {
-                    queue.push(coord);
+    fn fill_height(&self, map: &mut HashMap<Coordinate, Ground>) {
+        self.fill_side(Action::Add, map);
+        self.fill_side(Action::Subtract, map);
+    }
+
+    fn fill_side(&self, shift: Action, map: &mut HashMap<Coordinate, Ground>) {
+        let mut current = self.x;
+        loop {
+            let c = Coordinate::new(current, self.y);
+            if let Some(ground) = map.get(&c) {
+                if ground == &Ground::Clay {
+                    return;
                 }
             }
+            map.insert(c, Ground::Still);
+            match shift {
+                Action::Add => current += 1,
+                Action::Subtract => current = current.saturating_sub(1),
+            }
         }
-        false
     }
 
-    fn is_possible_location(&self, previous: &Coordinate, map: &HashSet<Coordinate>) -> bool {
-        let mut possible = 0;
-        let surrounding = self.get_surrounding();
-        for coord in &surrounding {
-            possible += map.contains(&coord) as u8;
-        }
-        if possible == 3 {
-            return true;
-        }
-        if possible == 2 && surrounding.iter().any(|s| s == previous) {
-            return true;
-        }
-        return false;
+    fn within_boundaries(&self, map: &HashMap<Coordinate, Ground>) -> bool {
+        self.has_walls(Action::Add, map) && self.has_walls(Action::Subtract, map)
     }
 
-    fn get_sides(&self) -> [Coordinate; 2] {
-        [
-            Coordinate::new(self.x.saturating_sub(1), self.y),
-            Coordinate::new(self.x + 1, self.y),
-        ]
+    fn has_walls(&self, shift: Action, map: &HashMap<Coordinate, Ground>) -> bool {
+        let mut current = self.x;
+        loop {
+            let c = Coordinate::new(current, self.y);
+
+            let Some(ground) = map.get(&c) else { return false; };
+
+            match ground {
+                Ground::Clay => return true,
+                _ => (),
+            };
+
+            match shift {
+                Action::Add => current += 1,
+                Action::Subtract => current = current.saturating_sub(1),
+            }
+        }
     }
 
-    fn get_surrounding(&self) -> [Coordinate; 3] {
-        [
-            Coordinate::new(self.x.saturating_sub(1), self.y),
-            Coordinate::new(self.x + 1, self.y),
-            Coordinate::new(self.x, self.y + 1),
-        ]
+    fn fill(&self, y_max: u32, map: &mut HashMap<Coordinate, Ground>) {
+        if self.y >= y_max {
+            return;
+        }
+
+        let down = self.get_down();
+
+        // Go down if nothing
+        if !map.contains_key(&down) {
+            map.insert(down.clone(), Ground::Flow);
+            // Will end in clay or still if in boundary
+            down.fill(y_max, map);
+        }
+
+        // There was something, go to sides.
+        let Some(ground) = map.get(&down) else { return; };
+        match ground {
+            // If going down ended in clay or still then go to sides
+            Ground::Clay | Ground::Still => {
+                let right = self.get_right();
+                if !map.contains_key(&right) {
+                    map.insert(right.clone(), Ground::Flow);
+                    right.fill(y_max, map);
+                }
+                let left = self.get_left();
+                if !map.contains_key(&left) {
+                    map.insert(left.clone(), Ground::Flow);
+                    left.fill(y_max, map);
+                }
+            }
+            // Didn't end in boundary
+            Ground::Flow => (),
+        }
+
+        if self.within_boundaries(map) {
+            self.fill_height(map);
+        }
+    }
+
+    fn get_left(&self) -> Coordinate {
+        Self {
+            x: self.x + 1,
+            y: self.y,
+        }
+    }
+
+    fn get_right(&self) -> Coordinate {
+        Self {
+            x: self.x.saturating_sub(1),
+            y: self.y,
+        }
     }
 
     fn get_down(&self) -> Coordinate {
@@ -294,5 +228,48 @@ impl Coordinate {
         }
 
         Ok(from_to)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_part_1() -> Result<()> {
+        // Arrange
+        let input = fs::read_to_string("../../data/day17_test_data.txt")?;
+        let expected = 57;
+
+        let (y_min, y_max, mut map) = generate_map(input)?;
+
+        // Act
+        let spring = Coordinate::new(500, 0);
+        spring.fill(y_max, &mut map);
+
+        let water = get_water_count(y_min, y_max, &map);
+
+        // Assert
+        assert_eq!(water, expected);
+        Ok(())
+    }
+
+    #[test]
+    fn test_part_2() -> Result<()> {
+        // Arrange
+        let input = fs::read_to_string("../../data/day17_test_data.txt")?;
+        let expected = 29;
+
+        let (y_min, y_max, mut map) = generate_map(input)?;
+
+        // Act
+        let spring = Coordinate::new(500, 0);
+        spring.fill(y_max, &mut map);
+
+        let still = get_still_waiter_count(y_min, y_max, &map);
+
+        // Assert
+        assert_eq!(still, expected);
+        Ok(())
     }
 }
