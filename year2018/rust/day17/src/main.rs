@@ -7,7 +7,10 @@ use std::{
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day17_data.txt")?;
 
+    let mut x_min = u32::MAX;
     let mut x_max = u32::MIN;
+
+    let mut y_min = u32::MAX;
     let mut y_max = u32::MIN;
 
     let spring = Coordinate::new(500, 0);
@@ -15,14 +18,13 @@ fn main() -> Result<()> {
     let mut map = HashMap::new();
     for line in input.lines() {
         let coords = Coordinate::from(line)?;
-        println!("{}", line);
+        // println!("{}", line);
         for coord in coords {
-            if coord.x > x_max {
-                x_max = coord.x;
-            }
-            if coord.y > y_max {
-                y_max = coord.y;
-            }
+            x_max = std::cmp::max(x_max, coord.x);
+            y_max = std::cmp::max(y_max, coord.y);
+            x_min = std::cmp::min(x_min, coord.x);
+            y_min = std::cmp::min(y_min, coord.y);
+
             map.insert(coord, Ground::Clay);
         }
     }
@@ -31,13 +33,42 @@ fn main() -> Result<()> {
 
     let part_1 = map
         .iter()
+        .filter(|(c, _)| c.y >= y_min && c.y <= y_max)
         .filter(|(_, g)| match g {
             Ground::Clay => false,
             _ => true,
         })
         .count();
 
+    let flow = map
+        .iter()
+        .filter(|(c, _)| c.y >= y_min && c.y <= y_max)
+        .filter(|(_, g)| match g {
+            Ground::Flow => true,
+            _ => false,
+        })
+        .count();
+
+    let still = map
+        .iter()
+        .filter(|(_, g)| match g {
+            Ground::Still => true,
+            _ => false,
+        })
+        .count();
+
+    let clay = map
+        .iter()
+        .filter(|(_, g)| match g {
+            Ground::Clay => true,
+            _ => false,
+        })
+        .count();
+
     println!("Part 1: {}", part_1);
+    println!("Flow: {}", flow);
+    println!("Still: {}", still);
+    println!("clay: {}", clay);
 
     Ok(())
 }
@@ -68,11 +99,11 @@ fn fill(current: Coordinate, y_max: u32, map: &mut HashMap<Coordinate, Ground>) 
                     map.insert(right.clone(), Ground::Flow);
                     fill(right, y_max, map);
                 }
-                let left = Coordinate::new(current.x.saturating_sub(1), current.y);
-                if !map.contains_key(&left) {
-                    map.insert(left.clone(), Ground::Flow);
-                    fill(left, y_max, map);
-                }
+                // let left = Coordinate::new(current.x.saturating_sub(1), current.y);
+                // if !map.contains_key(&left) {
+                //     map.insert(left.clone(), Ground::Flow);
+                //     fill(left, y_max, map);
+                // }
             }
             Ground::Flow => (),
         },
@@ -81,11 +112,11 @@ fn fill(current: Coordinate, y_max: u32, map: &mut HashMap<Coordinate, Ground>) 
     match map.get(&down) {
         Some(ground) => match ground {
             Ground::Clay | Ground::Still => {
-                let right = Coordinate::new(current.x + 1, current.y);
-                if !map.contains_key(&right) {
-                    map.insert(right.clone(), Ground::Flow);
-                    fill(right, y_max, map);
-                }
+                // let right = Coordinate::new(current.x + 1, current.y);
+                // if !map.contains_key(&right) {
+                //     map.insert(right.clone(), Ground::Flow);
+                //     fill(right, y_max, map);
+                // }
                 let left = Coordinate::new(current.x.saturating_sub(1), current.y);
                 if !map.contains_key(&left) {
                     map.insert(left.clone(), Ground::Flow);
