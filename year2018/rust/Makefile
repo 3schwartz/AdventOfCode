@@ -22,6 +22,9 @@ bench9:
 	cargo bench --bench benchmark --manifest-path=./day9/Cargo.toml -- --verbose
 .PHONY:bench9
 
+bench18:
+	cargo bench --bench benchmark --manifest-path=./day18/Cargo.toml -- --verbose
+
 # Run
 
 run5:
@@ -40,4 +43,4 @@ run18:
 	cargo run --manifest-path=./day18/Cargo.toml --release			
 
 
-.PHONY:run5 run14 run15
+.PHONY:run5 run14 run15 bench18

@@ -12,7 +12,7 @@
 
 ## Day5
 
-#### Rust
+### Rust
 
 ```
 All/Simple - All        time:   [3.7360 s 4.0107 s 4.3430 s]
@@ -30,6 +30,7 @@ median [3.9195 s 4.8863 s] med. abs. dev. [88.877 ms 745.28 ms]
 
 ## Day9
 
+### Rust
 ```
 All/Hashmap - 1         time:   [8.2452 ms 8.7236 ms 9.6160 ms]
                         change: [-11.213% -4.0011% +5.5184%] (p = 0.39 > 0.05)
@@ -90,4 +91,24 @@ Found 1 outliers among 10 measurements (10.00%)
   1 (10.00%) high severe
 mean   [8.0320 s 8.5808 s] std. dev.      [173.38 ms 667.97 ms]
 median [7.9243 s 8.4355 s] med. abs. dev. [68.145 ms 621.05 ms]
+```
+
+## Day18
+
+### Rust
+
+```
+All/Many collections    time:   [351.58 ms 355.45 ms 358.87 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+slope  [351.58 ms 358.87 ms] R^2            [0.9929957 0.9934875]
+mean   [348.21 ms 366.17 ms] std. dev.      [4.7900 ms 22.249 ms]
+median [346.55 ms 360.98 ms] med. abs. dev. [1.5632 ms 18.027 ms]
+
+All/Simple              time:   [337.86 ms 350.23 ms 368.09 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+slope  [337.86 ms 368.09 ms] R^2            [0.9459186 0.9307743]
+mean   [338.51 ms 356.67 ms] std. dev.      [929.71 µs 21.850 ms]
+median [338.18 ms 353.62 ms] med. abs. dev. [204.84 µs 21.566 ms]
 ```
