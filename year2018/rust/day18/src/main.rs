@@ -1,4 +1,4 @@
-use std::{fs, collections::{HashMap, HashSet}};
+use std::{fs, collections::{BTreeMap, BTreeSet}};
 use anyhow::{Result, anyhow};
 
 fn main() -> Result<()> {
@@ -6,22 +6,21 @@ fn main() -> Result<()> {
 
     let map = create_map(&input)?;
 
-    let part_1 = part_1(map, 50);
+    let part_1 = part_1(map, 0); // 50 to debug
 
     println!("Part 1: {}", part_1);
 
     Ok(())
 }
 
-fn part_1(mut map: HashMap<Coord, Acre>, debug: usize) -> usize {
-    let mut new_map = HashMap::new();
+fn part_1(mut map: BTreeMap<Coord, Acre>, debug: usize) -> usize {
     for _ in 0..10 {
+        let mut new_map = BTreeMap::new();
         for (c, a) in &map {
             let next = a.next(c, &map);
             new_map.insert(c.clone(), next);
         }
         map = new_map;
-        new_map = HashMap::new();
     }
 
     let trees = map.iter().filter(|(_, a)| *a == &Acre::Trees).count();
@@ -46,8 +45,8 @@ fn part_1(mut map: HashMap<Coord, Acre>, debug: usize) -> usize {
     trees * lumberyards
 }
 
-fn create_map(input: &str) -> Result<HashMap<Coord, Acre>> {
-    let mut map = HashMap::new();
+fn create_map(input: &str) -> Result<BTreeMap<Coord, Acre>> {
+    let mut map = BTreeMap::new();
     for (y, line) in input.lines().enumerate() {
         for (x, c) in line.chars().enumerate() {
             let acre = match c {
@@ -70,7 +69,7 @@ enum Acre {
 }
 
 impl Acre {
-    fn next(&self, coord: &Coord, map: &HashMap<Coord, Acre>) -> Acre {
+    fn next(&self, coord: &Coord, map: &BTreeMap<Coord, Acre>) -> Acre {
         let neighbors = coord.neighbors();
         let neighbor_types = self.neighbors(neighbors, map);
         match self {
@@ -91,10 +90,6 @@ impl Acre {
             Acre::Lumberyard => {
                 let lumberyard = neighbor_types.iter().filter(|&s| s == &Acre::Lumberyard).count();
                 let trees = neighbor_types.iter().filter(|&s| s == &Acre::Trees).count();
-                // if coord.x == 0 && coord.y == 15 {
-                //     println!("{:?}", neighbor_types);
-                //     println!("{:?}", neighbors);
-                // }
                 if lumberyard > 0 && trees > 0 {
                     return Acre::Lumberyard;
                 }
@@ -105,7 +100,7 @@ impl Acre {
 
     }
 
-    fn neighbors(&self, neighbors: Vec<Coord>, map: &HashMap<Coord, Acre>) -> Vec<Acre> {
+    fn neighbors(&self, neighbors: Vec<Coord>, map: &BTreeMap<Coord, Acre>) -> Vec<Acre> {
         let mut types = vec![];
         for n in neighbors {
             match map.get(&n) {
@@ -119,7 +114,7 @@ impl Acre {
     
 }
 
-#[derive(Hash, PartialEq, Eq, Clone, Debug)]
+#[derive(Eq, Ord,PartialEq, PartialOrd, Clone, Debug)]
 struct Coord {
     x: usize,
     y: usize
@@ -131,7 +126,7 @@ impl Coord {
     }
 
     fn neighbors(&self) -> Vec<Coord> {
-        let mut neighbors = HashSet::new();
+        let mut neighbors = BTreeSet::new();
         for x in -1..=1 {
             for y in -1..=1 {
                 let x_n = if x < 0 { self.x.saturating_sub(1) } else { self.x.saturating_add(x as usize)};
@@ -143,9 +138,6 @@ impl Coord {
                 neighbors.insert(n);
             }
         };
-        // if self.x == 0 && self.y == 15 {
-        //     println!("{:?}", neighbors)
-        // }
 
         neighbors.into_iter().collect()
     }
