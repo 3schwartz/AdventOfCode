@@ -1,8 +1,32 @@
-use std::{collections::HashMap, fs};
+use std::{collections::{HashMap, BTreeMap}, fs};
 
 use anyhow::{anyhow, Result};
 
+fn sum_of_divisors(n: u32) -> u32 {
+    let mut sum = 0;
+    let mut j = 1;
+    loop {
+        if j * j > n {
+            break;
+        }
+        if (n % j) == 0 {
+            if n / j == j {
+                sum += j;
+            }
+            else {
+                sum += j + n / j;
+            }
+        }
+        j+=1;
+    }
+    
+    return sum;
+}
+
 fn main() -> Result<()> {
+    let div = sum_of_divisors(10551326);
+
+    println!("{}", div);
     let input = fs::read_to_string("../data/day19_data.txt")?;
 
     let possible_bound = input.lines().next();
@@ -13,13 +37,34 @@ fn main() -> Result<()> {
         instructions.insert(idx as u32, instruction);
     }
 
+
     // let mut register = HashMap::new();
-    let mut register = HashMap::from([(0, 1)]);
+    let debug = true;
+    let mut register = BTreeMap::from([(0, 1)]);
     let mut pointer = 0;
     loop {
         let Some(instruction) = instructions.get(&pointer) else {
             break;
         };
+        if debug {
+            
+            println!("{}", pointer);
+            println!("{:?}", instruction);
+            println!("{:?}", register);   
+        }
+        if pointer == 3 {
+            let reg_2 = *register.get(&2).ok_or_else(|| anyhow!("should have 2"))?;
+            let reg_4 = *register.get(&4).ok_or_else(|| anyhow!("should have 4"))?;
+            if reg_4 % reg_2 == 0 {
+                let reg_0 = register.get(&0).ok_or_else(|| anyhow!("should have 0"))?;
+                register.insert(0, reg_0 + reg_2);
+            };
+            register.insert(1, 1);
+            register.insert(5, reg_4);
+            pointer = 12;
+            continue;
+        }
+
         register.insert(bound, pointer);
 
         instruction.opcode.invoke(
@@ -44,6 +89,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+#[derive(Debug)]
 struct Instruction {
     opcode: Opcodes,
     input_a: u32,
@@ -128,7 +174,7 @@ impl Opcodes {
         input_a: u32,
         input_b: u32,
         output: u32,
-        register: &mut HashMap<u32, u32>,
+        register: &mut BTreeMap<u32, u32>,
     ) -> Result<()> {
         let value = match self {
             Opcodes::Addr => {
@@ -227,7 +273,7 @@ impl Opcodes {
         Ok(())
     }
 
-    fn get_or_insert(&self, input: u32, register: &HashMap<u32, u32>) -> u32 {
+    fn get_or_insert(&self, input: u32, register: &BTreeMap<u32, u32>) -> u32 {
         let value = *register.get(&input).unwrap_or(&0);
         value
     }
