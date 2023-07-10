@@ -34,45 +34,47 @@ fn main() -> Result<()> {
     let max_simple = *simple_paths.values().max().unwrap_or(&0);
     println!("Part 1 simple: {}", max_simple);
 
-    let above_simple = simple_paths
-        .values()
-        .filter(|&v| *v >= 1_000)
-        .count();
+    let above_simple = simple_paths.values().filter(|&v| *v >= 1_000).count();
     println!("Part 2 simple: {}", above_simple);
 
     Ok(())
 }
 
 fn simple(input: String) -> Result<HashMap<(i32, i32), u32>> {
-
-    let mut position = (0,0);
+    let mut position = (0, 0);
     let mut previous = position;
     let mut debt = Vec::new();
-    let mut steps: HashMap<(i32, i32), u32> = HashMap::from([((0,0), 0)]);
+    let mut steps: HashMap<(i32, i32), u32> = HashMap::from([((0, 0), 0)]);
     for c in input.chars() {
         match c {
             '^' | '$' => continue,
             '(' => debt.push(position),
             '|' => {
-                position = *debt.last().ok_or_else(|| anyhow!("should not be empty when getting last"))?;
-            },
-            ')' => {
-                position = debt.pop().ok_or_else(|| anyhow!("should not be empty when going up"))?;
+                position = *debt
+                    .last()
+                    .ok_or_else(|| anyhow!("should not be empty when getting last"))?;
             }
-            'W' | 'N' | 'E'| 'S' => {
+            ')' => {
+                position = debt
+                    .pop()
+                    .ok_or_else(|| anyhow!("should not be empty when going up"))?;
+            }
+            'W' | 'N' | 'E' | 'S' => {
                 position = shift(c, position)?;
-                let previos_step = *steps
-                    .get(&previous)
-                    .ok_or_else(|| anyhow!("previous: {:?}, should be in map: {:?}", previous, steps))?;
-                if let Some(earlier) = steps.get(&position) {
-                    let min = std::cmp::min(*earlier, previos_step + 1);
-                    steps.insert(position, min);
+                let previos_step = *steps.get(&previous).ok_or_else(|| {
+                    anyhow!("previous: {:?}, should be in map: {:?}", previous, steps)
+                })?;
+                let steps_from_previous = previos_step + 1;
+
+                let next = if let Some(earlier) = steps.get(&position) {
+                    std::cmp::min(*earlier, steps_from_previous)
                 } else {
-                    steps.insert(position, previos_step + 1);
-                }
+                    steps_from_previous
+                };
+                steps.insert(position, next);
             }
 
-            _ => return Err(anyhow!("unknown: {c}"))
+            _ => return Err(anyhow!("unknown: {c}")),
         }
         previous = position;
     }
@@ -86,7 +88,7 @@ fn shift(c: char, position: (i32, i32)) -> Result<(i32, i32)> {
         'N' => (position.0, position.1 + 1),
         'E' => (position.0 + 1, position.1),
         'S' => (position.0, position.1 - 1),
-        _ => return Err(anyhow!("unknown: {c} for position: {:?}", position))
+        _ => return Err(anyhow!("unknown: {c} for position: {:?}", position)),
     };
     Ok(shift)
 }
