@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs::{self, File}, cmp, io::{Write}};
+use std::{collections::{HashMap, HashSet, VecDeque}, fs::{self, File}, cmp, io::{Write}};
 
 use anyhow::{anyhow, Result};
 
@@ -12,6 +12,11 @@ fn main() -> Result<()> {
         (0,0), &mut map)?;
 
     print_map(&map)?;
+
+    let paths = find_shortest_paths(&map);
+    let max = find_max(&paths);
+
+    println!("Part 1: {}", max);
 
     Ok(())
 }
@@ -82,6 +87,24 @@ impl Direction {
         };
         Ok(direction)
     }
+
+    fn move_direction(&self, coord: (i32, i32)) -> (i32, i32) {
+        match self {
+            Direction::W => (coord.0 - 1, coord.1),
+            Direction::N => (coord.0, coord.1 - 1),
+            Direction::E => (coord.0 + 1, coord.1),
+            Direction::S => (coord.0, coord.1 + 1),
+        }
+    }
+
+    fn get_directions() -> [Direction; 4] {
+        [
+            Direction::W,
+            Direction::N,
+            Direction::E,
+            Direction::S,
+        ]
+    }
 }
 
 enum Continuation {
@@ -103,8 +126,8 @@ fn create_map(
             '^' | '$' => continue,
             'W' | 'N' | 'E' | 'S' => {
                 let direction = Direction::from(next.1)?;
-                let door = move_direction(position, direction.clone());
-                let room = move_direction(door, direction);
+                let door = direction.move_direction(position);
+                let room = direction.move_direction(door);
                 map.insert(door, Elem::Door);
                 map.insert(room, Elem::Room);
                 position = room;
@@ -115,13 +138,13 @@ fn create_map(
                 let mut clone = iter.clone();
                 let mut previous: Option<char> = None;
                 let mut previous_debt = debt;
-                // let mut idx = next.0;
+                let mut idx = next.0;
                 while let Some(n) = clone.next() {
                     if previous_debt < debt {
                         return Err(anyhow!("debt should not be lower"));
                     }
                     if n.1 == ')' && debt == previous_debt {
-                        // idx = n.0;
+                        idx = n.0;
                         break;
                     }
                     if n.1 == '(' {
@@ -132,8 +155,13 @@ fn create_map(
                     }
                     previous = Some(n.1);
                 }
-                // Validate if it is optional
+                // Validate if it is optional and move iterator if
                 if previous.is_some() && previous.unwrap() == '|' {
+                    while let Some(continuing) = iter.next() {
+                        if continuing.0 == idx {
+                            break;
+                        }
+                    }
                     continue;
                 }
 
@@ -152,13 +180,38 @@ fn create_map(
     Ok(Continuation::Stop)
 }
 
-fn move_direction(coord: (i32, i32), direction: Direction) -> (i32, i32) {
-    match direction {
-        Direction::W => (coord.0 - 1, coord.1),
-        Direction::N => (coord.0, coord.1 - 1),
-        Direction::E => (coord.0 + 1, coord.1),
-        Direction::S => (coord.0, coord.1 + 1),
+fn find_shortest_paths(map: &HashMap<(i32, i32), Elem>) -> HashMap<(i32, i32), u32> {
+    let mut visited = HashSet::new();
+    let mut queue = VecDeque::from([(0,(0,0))]);
+    let mut paths = HashMap::new();
+
+    while let Some(next) = queue.pop_front() {
+        let steps = next.0;
+        let position = next.1;
+        if !visited.insert(position) {
+            continue;
+        }
+        paths.insert(position, steps);
+
+        for direction in Direction::get_directions() {
+            let neighbor = direction.move_direction(position);
+            match map.get(&neighbor) {
+                Some(elem) => match elem {
+                    Elem::Room | Elem::You => (),
+                    Elem::Door => {
+                        let room = direction.move_direction(neighbor);
+                        queue.push_back((steps + 1, room));
+                    },
+                },
+                None => (),
+            }
+        }
     }
+    paths
+}
+
+fn find_max(paths: &HashMap<(i32, i32), u32> ) -> u32 {
+    *paths.values().max().unwrap_or(&0)
 }
 
 
@@ -167,9 +220,50 @@ mod test {
     use super::*;
 
     #[test]
+    fn test_part_1_with_empty() -> Result<()> {
+        // Arrange
+        let input = fs::read_to_string("../data/day20_test_data2.txt")?;
+
+        // Act
+        let mut map = HashMap::from([((0,0), Elem::You)]);
+        create_map(
+            &mut input.chars().enumerate().skip(1),
+            0,
+            (0,0), &mut map)?;
+
+        let paths = find_shortest_paths(&map);
+        let max = find_max(&paths);
+    
+        // Assert
+        assert_eq!(max, 18);
+        Ok(())
+    }
+
+    #[test]
     fn test_part_1() -> Result<()> {
         // Arrange
-        let input = fs::read_to_string("../../data/day20_test_data.txt")?;
+        let input = fs::read_to_string("../data/day20_test_data.txt")?;
+
+        // Act
+        let mut map = HashMap::from([((0,0), Elem::You)]);
+        create_map(
+            &mut input.chars().enumerate().skip(1),
+            0,
+            (0,0), &mut map)?;
+
+        let paths = find_shortest_paths(&map);
+        let max = find_max(&paths);
+    
+        // Assert
+        assert_eq!(max, 31);
+        Ok(())
+    }
+
+    #[test]
+    #[ignore = "Printing map"]
+    fn test_part_1_map() -> Result<()> {
+        // Arrange
+        let input = fs::read_to_string("../data/day20_test_data2.txt")?;
 
         // Act
         let mut map = HashMap::from([((0,0), Elem::You)]);
