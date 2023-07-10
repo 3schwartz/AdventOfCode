@@ -12,6 +12,10 @@ test14:
 	cargo test --manifest-path=./day14/Cargo.toml --no-fail-fast --release
 .PHONY:test14
 
+test20:
+	cargo test --manifest-path=./day20/Cargo.toml --no-fail-fast --release
+.PHONY:test20
+
 # BENCH
 
 bench5:
