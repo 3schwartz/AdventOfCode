@@ -564,48 +564,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-
-Skip to content
-Pulls
-Issues
-Marketplace
-Explore
-@3schwartz
-github /
-gitignore
-Public
-
-3.2k
-124k
-
-    69.7k
-
-Code
-Pull requests 335
-Actions
-Security
-
-    Insights
-
-gitignore/VisualStudio.gitignore
-@parsalotfy
-parsalotfy Revert #3706
-Latest commit 1503b47 on Jun 12
-History
-157 contributors
-@shiftkey
-@arcresu
-@aroben
-@bbodenmiller
-@HassanHashemi
-@haacked
-@niik
-@AArnott
-@Zenuka
-@sayedihashimi
-@saschanaz
-@LunicLynx
-388 lines (312 sloc) 6.46 KB
-
 # Own
 *.vcxproj*
