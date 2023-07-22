@@ -53,4 +53,8 @@ run21:
 	cargo run --manifest-path=./day21/Cargo.toml --release
 .PHONY:run21
 
+run22:
+	cargo run --manifest-path=./day22/Cargo.toml --release
+.PHONY:run22
+
 .PHONY:run5 run14 run15 bench18 run19
