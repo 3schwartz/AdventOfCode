@@ -1,15 +1,15 @@
 cabal-version:      2.4
 name:               day1
 version:            0.1.0.0
-author:             3schwartz
 maintainer:         40674593+3schwartz@users.noreply.github.com
-
+author:             3schwartz
 extra-source-files: CHANGELOG.md
 
 executable day1
     main-is:          Main.hs
-    build-depends:    
-        base ^>=4.16.4.0,
-        split ^>=0.2
     hs-source-dirs:   app
     default-language: Haskell2010
+    build-depends:
+        base ^>=4.16.4.0,
+        split ^>=0.2,
+        containers >=0.6 && <0.7
