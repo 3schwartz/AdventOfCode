@@ -566,3 +566,6 @@ dmypy.json
 
 # Own
 *.vcxproj*
+
+# Haskell
+dist-newstyle
