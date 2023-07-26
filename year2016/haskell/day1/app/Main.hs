@@ -3,7 +3,6 @@ module Main where
 import Data.List (foldl')
 import Data.List.Split (splitOn)
 import qualified Data.Set as S
-import Debug.Trace (trace)
 
 main :: IO ()
 main = do
@@ -49,10 +48,9 @@ returnIfMultipleVisits (StateWithSet state visited) (input : inputs)
                                 , y = y (position state) + y newDirection}
             (newState, found) = move (stateWithSetNew (stateNew newPosition newDirection) updated) (parsed - 1)
         in
-            if found
-                then newState
-                else trace ("newState: " ++ show (getState newState) ++ show input) $
-                    returnIfMultipleVisits newState inputs
+            case found of 
+                True -> newState
+                False -> returnIfMultipleVisits newState inputs
     | otherwise = stateWithSetNew state visited
 
 move :: StateWithSet -> Int -> (StateWithSet, Bool)
@@ -64,8 +62,7 @@ move (StateWithSet state visited) count
             newPosition = Coord { x = x (position state) + x (direction state)
                                 , y = y (position state) + y (direction state)}
             newState = stateWithSetNew (stateNew newPosition (direction state)) updated
-        in trace ("newState: " ++ show (getState newState)) $
-            move newState (count - 1)
+        in move newState (count - 1)
 
 
 parseDirection :: State -> String -> State
