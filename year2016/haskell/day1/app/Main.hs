@@ -6,14 +6,14 @@ import qualified Data.Set as S
 
 main :: IO ()
 main = do
-    contents <- readFile "../../data/day1_data.txt"
+    contents <- readFile "../data/day1_data.txt"
     let splitted = splitOn ", " contents
         initialState = stateNew (coordNew 0 0) (coordNew 0 1)
 
         part1 = foldl' parseDirection initialState splitted
         distance = manhattanDistance (position part1)
     putStrLn $ "Part 1: " ++ show distance
-    
+
     let stateWithSet = stateWithSetNew (stateNew (coordNew 0 0) (coordNew 0 1)) (S.empty)
         part2 = returnIfMultipleVisits stateWithSet splitted
         distancePart2 = manhattanDistance (position (state part2))
@@ -48,15 +48,13 @@ returnIfMultipleVisits (StateWithSet state visited) (input : inputs)
                                 , y = y (position state) + y newDirection}
             (newState, found) = move (stateWithSetNew (stateNew newPosition newDirection) updated) (parsed - 1)
         in
-            case found of 
-                True -> newState
-                False -> returnIfMultipleVisits newState inputs
+            (if found then newState else returnIfMultipleVisits newState inputs)
     | otherwise = stateWithSetNew state visited
 
 move :: StateWithSet -> Int -> (StateWithSet, Bool)
 move stateWithSet 0 = (stateWithSet, False)
 move (StateWithSet state visited) count
-    | S.member (position state) visited = ((stateWithSetNew state visited), True) 
+    | S.member (position state) visited = ((stateWithSetNew state visited), True)
     | otherwise =
         let updated = S.insert (position state) visited
             newPosition = Coord { x = x (position state) + x (direction state)
