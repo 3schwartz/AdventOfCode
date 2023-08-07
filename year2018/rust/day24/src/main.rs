@@ -1,5 +1,8 @@
-use std::{fs, collections::{HashSet, BTreeSet}};
-use anyhow::{Result, anyhow, Ok};
+use anyhow::{anyhow, Ok, Result};
+use std::{
+    collections::{BTreeSet, HashSet},
+    fs,
+};
 
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day24_data.txt")?;
@@ -14,7 +17,7 @@ fn main() -> Result<()> {
 
 struct Game {
     immunes: Group,
-    inflections: Group
+    inflections: Group,
 }
 
 impl Game {
@@ -23,32 +26,21 @@ impl Game {
         let immunes = Group::from(parts[0])?;
         let inflections = Group::from(parts[1])?;
 
-        Ok(Self{ immunes, inflections })
+        Ok(Self {
+            immunes,
+            inflections,
+        })
     }
 
-    fn play_game(&mut self) -> u32{
-        // let mut count = 0;
+    fn play_game(&mut self) -> u32 {
         loop {
-            // count += 1;
-            // println!("Rount: {}", count);
-            // println!("Immunes:");
-            // println!("{:?}", self.immunes);
-            // println!("Inflections:");
-            // println!("{:?}", self.inflections);
-
             self.play_round();
 
             if self.immunes.units.len() == 0 {
-                return self.inflections.units
-                    .iter()
-                    .map(|u| u.units)
-                    .sum::<u32>();
+                return self.inflections.units.iter().map(|u| u.units).sum::<u32>();
             }
             if self.inflections.units.len() == 0 {
-                return self.immunes.units
-                    .iter()
-                    .map(|u| u.units)
-                    .sum::<u32>();
+                return self.immunes.units.iter().map(|u| u.units).sum::<u32>();
             }
         }
     }
@@ -65,21 +57,19 @@ impl Game {
     }
 
     fn attack_selections(&mut self, target_selections: Vec<(usize, usize)>) {
-        let mut units= self.get_ordered_units();
+        let mut units = self.get_ordered_units();
 
         let mut attacking: Vec<(Unit, usize, usize)> = target_selections
             .iter()
-            .map(|(attacker_id, defender_id)| (units[*attacker_id].clone(), *attacker_id, *defender_id))
+            .map(|(attacker_id, defender_id)| {
+                (units[*attacker_id].clone(), *attacker_id, *defender_id)
+            })
             .collect();
         attacking.sort_by(|(a, _, _), (b, _, _)| b.initiative.cmp(&a.initiative));
-
 
         for (_, attacker_id, defender_id) in attacking {
             let attacker = units[attacker_id].clone();
             let defender = &mut units[defender_id];
-            // if attacker.units == 0 || defender.units == 0{
-            //     continue;
-            // }
             let damage = defender.calculate_damage_taken(&attacker);
             defender.apply_damage(damage);
         }
@@ -111,21 +101,29 @@ impl Game {
 
         let mut defends: HashSet<usize> = HashSet::new();
         let mut target_selections = vec![];
-        
+
         for (idx_target, select_target) in selections.iter().enumerate() {
             let mut targets = vec![];
             for (idx_defend, select_defend) in selections.iter().enumerate() {
-                if defends.contains(&idx_defend) || select_target.group_type == select_defend.group_type {
+                if defends.contains(&idx_defend)
+                    || select_target.group_type == select_defend.group_type
+                {
                     continue;
                 }
-                targets.push((idx_defend, select_defend.calculate_damage_taken(&select_target)));
+                let damage_to_defender = select_defend.calculate_damage_taken(&select_target);
+                if damage_to_defender == 0 {
+                    continue;
+                }
+                targets.push((idx_defend, damage_to_defender));
             }
             targets.sort_by(|(i_a, a), (i_b, b)| {
                 if b == a {
                     let b_effective = &selections[*i_b].get_effective_power();
                     let a_effective = &selections[*i_a].get_effective_power();
                     if b_effective == a_effective {
-                        *(&selections[*i_b].initiative.cmp(&selections[*i_a].initiative))
+                        *(&selections[*i_b]
+                            .initiative
+                            .cmp(&selections[*i_a].initiative))
                     } else {
                         b_effective.cmp(&a_effective)
                     }
@@ -172,7 +170,7 @@ impl Group {
         for line in lines {
             let unit = Unit::from(line, group_type.clone())?;
             units.push(unit);
-        };
+        }
         Ok(Self { units })
     }
 }
@@ -194,14 +192,14 @@ impl Special {
             "slashing" => Ok(Special::Slashing),
             "fire" => Ok(Special::Fire),
             "radiation" => Ok(Special::Radiation),
-            _ => Err(anyhow!("special error: {}", input))
+            _ => Err(anyhow!("special error: {}", input)),
         }
     }
 }
 
 enum SpecialType {
     Weak,
-    Immune
+    Immune,
 }
 
 impl SpecialType {
@@ -209,7 +207,7 @@ impl SpecialType {
         match input {
             "weak" => Ok(SpecialType::Weak),
             "immune" => Ok(SpecialType::Immune),
-            _ => Err(anyhow!("special type error: {}", input))
+            _ => Err(anyhow!("special type error: {}", input)),
         }
     }
 }
@@ -253,32 +251,22 @@ impl Unit {
     }
 
     fn from(input: &str, group_type: GroupType) -> Result<Self> {
-        let units_parts = input
-            .split(" units each with ")
-            .collect::<Vec<&str>>();
+        let units_parts = input.split(" units each with ").collect::<Vec<&str>>();
         let units: u32 = units_parts[0].parse()?;
-        let hits_points_parts = units_parts[1]
-            .split(" hit points ")
-            .collect::<Vec<&str>>();
+        let hits_points_parts = units_parts[1].split(" hit points ").collect::<Vec<&str>>();
         let hit_points: u32 = hits_points_parts[0].parse()?;
-        let mut immunes : BTreeSet<Special> = BTreeSet::new();
-        let mut weakness : BTreeSet<Special> = BTreeSet::new();
+        let mut immunes: BTreeSet<Special> = BTreeSet::new();
+        let mut weakness: BTreeSet<Special> = BTreeSet::new();
         let second_part = if hits_points_parts[1].starts_with('(') {
             let specials = hits_points_parts[1]
                 .trim_start_matches('(')
                 .split(')')
                 .collect::<Vec<&str>>();
-            let special_parts = specials[0]
-                .split("; ")
-                .collect::<Vec<&str>>();
+            let special_parts = specials[0].split("; ").collect::<Vec<&str>>();
             for special_part in special_parts {
-                let special_line = special_part
-                    .split(" to ")
-                    .collect::<Vec<&str>>();
+                let special_line = special_part.split(" to ").collect::<Vec<&str>>();
                 let special_type = SpecialType::from(special_line[0])?;
-                let specials_to_type = special_line[1]
-                    .split(", ")
-                    .collect::<Vec<&str>>();
+                let specials_to_type = special_line[1].split(", ").collect::<Vec<&str>>();
                 for special in specials_to_type {
                     let special_matched = Special::from(special)?;
                     match special_type {
@@ -300,8 +288,7 @@ impl Unit {
         let damage_type = Special::from(final_part[1])?;
         let initiative: u32 = final_part[5].parse()?;
 
-
-        Ok(Self { 
+        Ok(Self {
             units,
             hit_points,
             immunes,
@@ -309,14 +296,10 @@ impl Unit {
             damage_power,
             damage_type,
             initiative,
-            group_type
+            group_type,
         })
-
-
-
     }
 }
-
 
 #[cfg(test)]
 mod test {
@@ -346,7 +329,7 @@ mod test {
 
         // Act
         game.attack_selections(target_selections);
-        
+
         // Assert
         assert_eq!(game.immunes.units[0].units, 0);
         assert_eq!(game.immunes.units[1].units, 905);
@@ -360,7 +343,7 @@ mod test {
         // Arrange
         let input = fs::read_to_string("../../data/day24_test_data.txt")?;
         let mut game = Game::from(&input)?;
-    
+
         // Act
         let target_selections = game.find_target_selections();
         let units = game.get_ordered_units();
@@ -374,15 +357,15 @@ mod test {
         // Immune 1 attracks
         assert_eq!(units[target_selections[1].0].units, 17);
         // Infection 2 defend
-        assert_eq!(units[target_selections[1].1].units, 4_485);  
+        assert_eq!(units[target_selections[1].1].units, 4_485);
         // Infection 2 attracks
         assert_eq!(units[target_selections[2].0].units, 4_485);
         // Immune 2 defend
-        assert_eq!(units[target_selections[2].1].units, 989);              
+        assert_eq!(units[target_selections[2].1].units, 989);
         // Immune 2 attracks
         assert_eq!(units[target_selections[3].0].units, 989);
         // Infection 1 defend
-        assert_eq!(units[target_selections[3].1].units, 801);    
+        assert_eq!(units[target_selections[3].1].units, 801);
         Ok(())
     }
 
@@ -400,9 +383,9 @@ mod test {
         assert_eq!(units[0].group_type, GroupType::Inflection);
         assert_eq!(units[0].units, 801);
         assert_eq!(units[1].group_type, GroupType::Immune);
-        assert_eq!(units[1].units, 17);        
+        assert_eq!(units[1].units, 17);
         assert_eq!(units[2].group_type, GroupType::Inflection);
-        assert_eq!(units[2].units, 4_485);        
+        assert_eq!(units[2].units, 4_485);
         assert_eq!(units[3].group_type, GroupType::Immune);
         assert_eq!(units[3].units, 989);
         Ok(())
@@ -420,7 +403,7 @@ mod test {
             damage_power: 42,
             damage_type: Special::Slashing,
             initiative: 15,
-            group_type: GroupType::Immune
+            group_type: GroupType::Immune,
         };
 
         // Act
