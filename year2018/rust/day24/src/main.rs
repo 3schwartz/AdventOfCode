@@ -7,10 +7,14 @@ use std::{
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day24_data.txt")?;
 
-    let mut grame = Game::from(&input)?;
-    let part_1 = grame.play_game();
+    let mut game = Game::from(&input)?;
+    let part_1 = game.play_game();
 
     println!("Part 1: {}", part_1);
+
+    let part_2 = Game::bn(&input)?;
+
+    println!("Part 2: {}", part_2);
 
     Ok(())
 }
@@ -32,6 +36,44 @@ impl Game {
         })
     }
 
+    fn bn(input: &str) -> Result<u32> {
+        let mut start = 0;
+        let mut end = 10_000;
+        let mut units = 0;
+        while start < end {
+            let mid = start + (end - start) / 2;
+            let mut game = Game::from(input)?;
+            match game.play_with_boots(mid) {
+                Some(u) => {
+                    units = u;
+                    end = mid;
+                }
+                None => start = mid + 1,
+            }
+        }
+        Ok(units)
+    }
+
+    fn play_with_boots(&mut self, boost: u32) -> Option<u32> {
+        for ele in &mut self.immunes.units {
+            ele.damage_power += boost;
+        }
+
+        loop {
+            let did_round = self.play_round();
+            if did_round.is_none() {
+                return None;
+            }
+
+            if self.immunes.units.len() == 0 {
+                return None;
+            }
+            if self.inflections.units.len() == 0 {
+                return Some(self.immunes.units.iter().map(|u| u.units).sum::<u32>());
+            }
+        }
+    }
+
     fn play_game(&mut self) -> u32 {
         loop {
             self.play_round();
@@ -44,19 +86,25 @@ impl Game {
             }
         }
     }
-    fn play_round(&mut self) {
+
+    fn play_round(&mut self) -> Option<()> {
         // target selection
         let target_selections = self.find_target_selections();
 
         // attacking
-        self.attack_selections(target_selections);
+        let did_attack = self.attack_selections(target_selections);
+        if !did_attack {
+            return None;
+        }
 
         // remove dead
         self.immunes.units.retain(|u| u.units > 0);
         self.inflections.units.retain(|u| u.units > 0);
+
+        Some(())
     }
 
-    fn attack_selections(&mut self, target_selections: Vec<(usize, usize)>) {
+    fn attack_selections(&mut self, target_selections: Vec<(usize, usize)>) -> bool {
         let mut units = self.get_ordered_units();
 
         let mut attacking: Vec<(Unit, usize, usize)> = target_selections
@@ -67,12 +115,18 @@ impl Game {
             .collect();
         attacking.sort_by(|(a, _, _), (b, _, _)| b.initiative.cmp(&a.initiative));
 
+        let mut some_damaged = false;
         for (_, attacker_id, defender_id) in attacking {
             let attacker = units[attacker_id].clone();
             let defender = &mut units[defender_id];
             let damage = defender.calculate_damage_taken(&attacker);
+            // Avoid deadlock
+            if damage > 0 && damage >= defender.hit_points {
+                some_damaged = true;
+            }
             defender.apply_damage(damage);
         }
+        some_damaged
     }
 
     fn get_ordered_units(&mut self) -> Vec<&mut Unit> {
@@ -306,7 +360,19 @@ mod test {
     use super::*;
 
     #[test]
-    // #[ignore = "not ready"]
+    fn test_part_2() -> Result<()> {
+        // Arrange
+        let input = fs::read_to_string("../../data/day24_test_data.txt")?;
+
+        // Act
+        let units = Game::bn(&input)?;
+
+        // Assert
+        assert_eq!(units, 51);
+        Ok(())
+    }
+
+    #[test]
     fn test_part_1() -> Result<()> {
         // Arrange
         let input = fs::read_to_string("../../data/day24_test_data.txt")?;
