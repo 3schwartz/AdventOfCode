@@ -25,9 +25,13 @@ I mainly solve them for fun but I also use the challenges to improve my coding s
 - Python
 - C++
 
-## 2018
+## 2018 - completed
 
 - Rust
+
+## 2016
+
+- Haskell
 
 ## 2015 - completed
 

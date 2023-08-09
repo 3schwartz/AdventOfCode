@@ -25,8 +25,8 @@ fn main() -> Result<()> {
 }
 
 /// Map 3-dim down to one by only consider the range of each bot.
-/// At `bot_manhattan - radius` the bot is reachable and one exits its area at
-/// `bot_manhattan + radius + 1`
+/// At `projection - radius` the bot is reachable and one exits its area at
+/// `projection + radius + 1`
 /// Map all bots down to one dimension and then iterate from high to low accumulating
 /// enterred bots in reachable area.
 /// The area with highest amount of entered bots is the area one should be positioned.
@@ -34,11 +34,11 @@ fn find_best_location(bots: &Vec<Nanobot>) -> Result<i32> {
     let mut borders_count = BTreeMap::new();
     // Transform from 3-dim to 1 by consider min / max
     for bot in bots {
-        let bot_manhattan = bot.x.abs() + bot.y.abs() + bot.z.abs();
+        let projection = bot.x + bot.y + bot.z;
         // enter into reachable
-        *borders_count.entry(bot_manhattan - bot.r).or_insert(0) += 1;
+        *borders_count.entry(projection - bot.r).or_insert(0) += 1;
         // exited reachable area
-        *borders_count.entry(bot_manhattan + bot.r + 1).or_insert(0) -= 1;
+        *borders_count.entry(projection + bot.r + 1).or_insert(0) -= 1;
     }
 
     // for each distance find the sum of entered / exited
