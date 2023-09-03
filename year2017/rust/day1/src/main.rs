@@ -4,8 +4,7 @@ use anyhow::Result;
 
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day1_data.txt")?;
-    let numbers: Vec<u32> = input.chars().map(|c| (c as u32 - '0' as u32))
-        .collect();
+    let numbers: Vec<u32> = input.chars().map(|c| (c as u32 - '0' as u32)).collect();
 
     let part_1 = next_sum(&numbers);
     println!("Part 1: {}", part_1);
@@ -25,7 +24,7 @@ fn next_modulo(numbers: &Vec<u32>) -> u32 {
         if *number == other {
             sum += other;
         }
-    };
+    }
     sum
 }
 
