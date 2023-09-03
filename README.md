@@ -29,6 +29,10 @@ I mainly solve them for fun but I also use the challenges to improve my coding s
 
 - Rust
 
+## 2017
+
+- Rust
+
 ## 2016
 
 - Haskell
