@@ -1,4 +1,4 @@
-use std::{fs, collections::BTreeMap};
+use std::{collections::BTreeMap, fs};
 
 use anyhow::Result;
 fn main() -> Result<()> {
@@ -56,7 +56,6 @@ fn max_idx(vector: &Vec<u32>) -> usize {
     idx
 }
 
-
 #[cfg(test)]
 mod test {
     use std::collections::BTreeSet;
@@ -64,8 +63,8 @@ mod test {
     #[test]
     fn test_vec_in_btree_set() {
         // Arrange
-        let first = vec![1,2];
-        let second = vec![1,2];
+        let first = vec![1, 2];
+        let second = vec![1, 2];
         let mut set = BTreeSet::new();
         set.insert(first);
 

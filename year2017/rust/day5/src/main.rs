@@ -1,6 +1,6 @@
 use std::fs;
 
-use anyhow::{Result, Ok};
+use anyhow::{Ok, Result};
 
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day5_data.txt")?;
@@ -34,7 +34,7 @@ fn find_jump_count(mut instructions: Vec<i32>, part_2: bool) -> u32 {
         }
         idx = next as usize;
         if part_2 && *instruction >= 3 {
-            *instruction += -1;    
+            *instruction += -1;
         } else {
             *instruction += 1;
         }

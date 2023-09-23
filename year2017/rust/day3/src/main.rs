@@ -54,7 +54,9 @@ fn get_neigbors(x: i32, y: i32, map: &HashMap<(i32, i32), i32>) -> i32 {
             if _x == x && _y == y {
                 continue;
             }
-            let Some(neighbors) = map.get(&(_x,_y)) else { continue;};
+            let Some(neighbors) = map.get(&(_x, _y)) else {
+                continue;
+            };
             sum += neighbors;
         }
     }
