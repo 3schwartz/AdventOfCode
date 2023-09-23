@@ -569,3 +569,5 @@ dmypy.json
 
 # Haskell
 dist-newstyle
+
+.DS_Store
