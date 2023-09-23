@@ -1,4 +1,4 @@
-use std::{fs, collections::BTreeSet};
+use std::{fs, collections::BTreeMap};
 
 use anyhow::Result;
 fn main() -> Result<()> {
@@ -10,11 +10,13 @@ fn main() -> Result<()> {
         banks.push(int);
     }
 
-    let mut seen = BTreeSet::new();
+    let mut seen_map = BTreeMap::new();
     let bank_length = banks.len() as u32;
     let mut redistribution_cycles = 0;
+    let cycle_lengt: i32;
     loop {
-        if !seen.insert(banks.clone()) {
+        if let Some(seen_at) = seen_map.insert(banks.clone(), redistribution_cycles) {
+            cycle_lengt = redistribution_cycles - seen_at;
             break;
         }
         redistribution_cycles += 1;
@@ -37,6 +39,7 @@ fn main() -> Result<()> {
     }
 
     println!("Part 1: {}", redistribution_cycles);
+    println!("Part 2: {}", cycle_lengt);
 
     Ok(())
 }
@@ -56,7 +59,7 @@ fn max_idx(vector: &Vec<u32>) -> usize {
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use std::collections::BTreeSet;
 
     #[test]
     fn test_vec_in_btree_set() {
