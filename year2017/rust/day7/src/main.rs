@@ -4,6 +4,16 @@ use anyhow::Result;
 
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day7_data.txt")?;
+    let (programs, leafs_seen) = create_programs(&input)?;
+
+    let unique: HashSet<_> = programs.keys().filter(|&key| !leafs_seen.contains(key))
+        .collect();
+    println!("Part 1: {:#?}", unique);
+
+    Ok(())
+}
+
+fn create_programs<'a>(input: &'a str) -> Result<(HashMap<&'a str, Program<'a>>, HashSet<&'a str>)> {
     let mut programs: HashMap<&str, Program> = HashMap::new();
     let mut leafs_seen: HashSet<&str> = HashSet::new();
     for line in input.lines() {
@@ -14,10 +24,6 @@ fn main() -> Result<()> {
             .trim_end_matches(')')
             .parse()?;
 
-        // let program = programs.entry(first_parts[0])
-        //     .or_insert_with(|| Program { weight: 0, leafs: vec![] });
-        // program.weight = weight;
-
         let mut leafs = vec![];
         if parts.len() > 1 {
             for leaf in parts[1].split(", ") {
@@ -27,12 +33,7 @@ fn main() -> Result<()> {
         }
         programs.insert(first_parts[0], Program { weight, leafs });
     }
-    let unique: HashSet<_> = programs.keys().filter(|&key| !leafs_seen.contains(key))
-        .collect();
-
-    println!("Part 1: {:#?}", unique);
-
-    Ok(())
+    Ok((programs, leafs_seen))
 }
 
 struct Program<'a> {
