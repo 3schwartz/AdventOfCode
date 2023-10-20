@@ -35,6 +35,7 @@ I mainly solve them for fun but I also use the challenges to improve my coding s
 
 ## 2016
 
+- Dart
 - Haskell
 
 ## 2015 - completed
