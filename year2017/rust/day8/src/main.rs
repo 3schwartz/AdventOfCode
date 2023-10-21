@@ -1,17 +1,17 @@
-use std::{fs, collections::HashMap};
+use std::{collections::HashMap, fs};
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 
-fn main() -> Result<()>{
+fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day8_data.txt")?;
 
     let mut instructions = vec![];
     for line in input.lines() {
         let parts: Vec<&str> = line.split_whitespace().collect();
         if parts.len() != 7 {
-            return Err(anyhow!(line.to_string()))
+            return Err(anyhow!(line.to_string()));
         }
-        instructions.push(Instruction{
+        instructions.push(Instruction {
             registry: parts[0].to_string(),
             action: Action::from(parts[1])?,
             value: parts[2].parse()?,
@@ -20,7 +20,7 @@ fn main() -> Result<()>{
             value_condition: parts[6].parse()?,
         });
     }
-    
+
     let mut registries: HashMap<String, i32> = HashMap::new();
     let mut max_all = i32::MIN;
     for instruction in instructions {
@@ -57,15 +57,15 @@ impl Condition {
             ">=" => Condition::AboveOrEqual,
             "!=" => Condition::NotEqual,
             "==" => Condition::Equal,
-            _ => return Err(anyhow!(input.to_string()))
+            _ => return Err(anyhow!(input.to_string())),
         };
-        return Ok(condition)
+        return Ok(condition);
     }
 }
 
 enum Action {
     Inc,
-    Dec
+    Dec,
 }
 
 impl Action {
@@ -73,7 +73,7 @@ impl Action {
         let action = match input {
             "inc" => Action::Inc,
             "dec" => Action::Dec,
-            _ => return Err(anyhow!(input.to_string()))
+            _ => return Err(anyhow!(input.to_string())),
         };
         Ok(action)
     }
@@ -90,8 +90,7 @@ struct Instruction {
 
 impl Instruction {
     fn update_registry(&self, registries: &mut HashMap<String, i32>) {
-        let registry = registries.entry(self.registry.clone())
-            .or_insert(0);
+        let registry = registries.entry(self.registry.clone()).or_insert(0);
         let delta = match self.action {
             Action::Inc => self.value,
             Action::Dec => -self.value,
@@ -100,8 +99,7 @@ impl Instruction {
     }
 
     fn satisfy_conditon(&self, registries: &HashMap<String, i32>) -> bool {
-        let condition_registry = *registries.get(&self.registry_condition)
-            .unwrap_or(&0);
+        let condition_registry = *registries.get(&self.registry_condition).unwrap_or(&0);
 
         match self.condition {
             Condition::Below => condition_registry < self.value_condition,
