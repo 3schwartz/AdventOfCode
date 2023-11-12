@@ -14,7 +14,6 @@ bool isTls(String input) {
     if (input[i] == input[i + 3] &&
         input[i + 1] == input[i + 2] &&
         input[i] != input[i + 1]) {
-      
       if (isOutside) {
         hasOutside = true;
       } else {
@@ -38,11 +37,11 @@ bool isSsl(String input) {
         isOutside = true;
         break;
       default:
-        if (input[i] == input[i+2] && input[i] != input[i+1]) {
+        if (input[i] == input[i + 2] && input[i] != input[i + 1]) {
           if (isOutside) {
-            outside.add(input.substring(i, i+3));
+            outside.add(input.substring(i, i + 3));
           } else {
-            inside.add("${input[i+1]}${input[i]}${input[i+1]}");
+            inside.add("${input[i + 1]}${input[i]}${input[i + 1]}");
           }
         }
         break;

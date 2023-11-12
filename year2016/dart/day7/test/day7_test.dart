@@ -2,7 +2,6 @@ import 'package:day7/day7.dart';
 import 'package:test/test.dart';
 
 void main() {
-
   test('tls', () {
     // Arrange
     const input = "abba[mnop]qrst";
