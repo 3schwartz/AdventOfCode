@@ -28,4 +28,18 @@ void main() {
       });
     }
   });
+
+  group("tls", () {
+    var inputs = [
+      ("aba[bab]xyz", true),
+      ("xyx[xyx]xyx", false),
+      ("aaa[kek]eke", true),
+      ("zazbz[bzb]cdb", true)
+    ];
+    for (var input in inputs) {
+      test(input.$1, () {
+        expect(input.$2, isSsl(input.$1));
+      });
+    }
+  });
 }
