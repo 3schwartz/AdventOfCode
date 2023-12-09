@@ -43,9 +43,8 @@ struct Info<'a> {
 impl<'a> Info<'a> {
     fn find_min_location(&self) -> Result<u64> {
         let mut min_location = u64::MAX;
-        let mut cache = HashMap::new();
         for seed in &self.seeds {
-            let location = self.find_location("seed", *seed, &mut cache)?;
+            let location = self.find_location("seed", *seed)?;
             min_location = std::cmp::min(min_location, location);
         }
         Ok(min_location)
@@ -53,25 +52,19 @@ impl<'a> Info<'a> {
 
     fn find_range_min_location(&self) -> Result<u64> {
         let mut min_location = u64::MAX;
-        let mut cache = HashMap::new();
         for i in 0..self.seeds.len() / 2 {
             let idx = i * 2;
             println!("Position {}", idx);
             for shift in 0..self.seeds[idx + 1] {
                 let seed = self.seeds[idx] + shift;
-                let location = self.find_location("seed", seed, &mut cache)?;
+                let location = self.find_location("seed", seed)?;
                 min_location = std::cmp::min(min_location, location);
             }
         }
         Ok(min_location)
     }
 
-    fn find_location<'b>(
-        &'a self,
-        kind: &'a str,
-        source: u64,
-        cache: &'b mut HashMap<(&'a str, u64), u64>,
-    ) -> Result<u64> {
+    fn find_location(&'a self, kind: &'a str, source: u64) -> Result<u64> {
         let ranges = self
             .maps
             .get(kind)
@@ -88,9 +81,7 @@ impl<'a> Info<'a> {
             return Ok(dest);
         }
 
-        let location = self.find_location(new_kind, dest, cache)?;
-        cache.insert((kind, source), location);
-        Ok(location)
+        self.find_location(new_kind, dest)
     }
 
     fn find_destination(source: u64, ranges: &Vec<Interval>) -> u64 {
