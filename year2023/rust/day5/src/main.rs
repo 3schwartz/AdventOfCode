@@ -12,17 +12,65 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+struct Interval {
+    source_start: u64,
+    destination_start: u64,
+    range: u64,
+}
+
+impl Interval {
+    fn map(&self, source: u64) -> Option<u64> {
+        if source < self.source_start || source > self.source_start + self.range {
+            return None;
+        }
+        let destination = self.destination_start + source - self.source_start;
+        Some(destination)
+    }
+}
+
 struct Info<'a> {
-    maps: HashMap<&'a str, HashMap<u32, u32>>,
-    seeds: Vec<u32>,
+    maps: HashMap<&'a str, Vec<Interval>>,
+    seeds: Vec<u64>,
     lookup: HashMap<&'a str, &'a str>,
 }
 
 impl<'a> Info<'a> {
-    fn find_min_location(&self) -> Result<u32> {
-        let mut min_location = u32::MAX;
+
+    fn find_destination(source: u64, ranges: &Vec<Interval>) -> u64 {
+        for interval in ranges {
+            if let Some(destination) = interval.map(source) {
+                return destination;
+            }
+        }
+        source
+    }
+
+    fn find_location(
+        &self,
+        kind: &str,
+        source: u64,
+    ) -> Result<u64> {
+        let ranges = *&self.maps
+            .get(kind)
+            .ok_or_else(|| anyhow!("{} should be in maps", kind))?;
+
+        let dest = Info::find_destination(source, ranges);
+    
+        let new_kind = *self.lookup
+            .get(kind)
+            .ok_or_else(|| anyhow!("{} should be in lookups", kind))?;
+    
+        if new_kind == "location" {
+            return Ok(dest);
+        }
+    
+        self.find_location(new_kind, dest)
+    }
+
+    fn find_min_location(&self) -> Result<u64> {
+        let mut min_location = u64::MAX;
         for seed in &self.seeds {
-            let location = find_location("seed", *seed, &self.maps, &self.lookup)?;
+            let location = self.find_location("seed", *seed)?;
             min_location = std::cmp::min(min_location, location);
         }
         Ok(min_location)
@@ -30,8 +78,8 @@ impl<'a> Info<'a> {
 
     fn from(input: &str) -> Result<Info> {
         let mut lookup: HashMap<&str, &str> = HashMap::new();
-        let mut maps: HashMap<&str, HashMap<u32, u32>> = HashMap::new();
-        let mut seeds: Vec<u32> = vec![];
+        let mut maps: HashMap<&str, Vec<Interval>> = HashMap::new();
+        let mut seeds: Vec<u64> = vec![];
         let mut from = None;
         for (idx, line) in input.lines().enumerate() {
             if idx == 0 {
@@ -39,7 +87,7 @@ impl<'a> Info<'a> {
                     .split(": ")
                     .map(|l| {
                         l.split_whitespace()
-                            .map(|c| c.parse::<u32>())
+                            .map(|c| c.parse::<u64>())
                             .filter_map(|c| c.ok())
                     })
                     .flatten()
@@ -55,22 +103,18 @@ impl<'a> Info<'a> {
                 from = Some(parts[0]);
                 continue;
             }
-            let parts: Vec<u32> = line
+            let parts: Vec<u64> = line
                 .split_whitespace()
-                .map(|c| c.parse::<u32>())
+                .map(|c| c.parse::<u64>())
                 .into_iter()
-                .collect::<Result<Vec<u32>, _>>()?;
+                .collect::<Result<Vec<u64>, _>>()?;
             let destination = parts[0];
             let source = parts[1];
             let range = parts[2];
             let from_entry = maps
                 .entry(from.ok_or_else(|| anyhow!("from should be set"))?)
-                .or_insert_with(|| HashMap::new());
-            for i in 0..range {
-                let d = destination + i;
-                let s = source + i;
-                from_entry.insert(s, d);
-            }
+                .or_insert_with(|| vec![]);
+            from_entry.push(Interval { source_start: source, destination_start: destination, range });
         }
         Ok(Info {
             maps,
@@ -80,28 +124,6 @@ impl<'a> Info<'a> {
     }
 }
 
-fn find_location(
-    kind: &str,
-    source: u32,
-    maps: &HashMap<&str, HashMap<u32, u32>>,
-    lookup: &HashMap<&str, &str>,
-) -> Result<u32> {
-    let range = maps
-        .get(kind)
-        .ok_or_else(|| anyhow!("{} should be in maps", kind))?;
-
-    let dest = *range.get(&source).unwrap_or(&source);
-
-    let new_kind = *lookup
-        .get(kind)
-        .ok_or_else(|| anyhow!("{} should be in lookups", kind))?;
-
-    if new_kind == "location" {
-        return Ok(dest);
-    }
-
-    find_location(new_kind, dest, maps, lookup)
-}
 
 #[cfg(test)]
 mod test {
