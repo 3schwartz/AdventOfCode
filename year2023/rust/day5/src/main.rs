@@ -6,9 +6,13 @@ fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day5_data.txt")?;
 
     let info = Info::from(&input)?;
+    
     let min_location = info.find_min_location()?;
-
     println!("Part 1: {}", min_location);
+
+    let range_min_location = info.find_range_min_location()?;
+    println!("Part 2: {}", range_min_location);
+
     Ok(())
 }
 
@@ -35,6 +39,30 @@ struct Info<'a> {
 }
 
 impl<'a> Info<'a> {
+
+    fn find_range_min_location(&self) -> Result<u64> {
+        let mut min_location = u64::MAX;
+        for i in 0..self.seeds.len() / 2 {
+            let idx = i * 2;
+            println!("Position {}", idx);
+            for shift in 0..self.seeds[idx+1] {
+                let seed = self.seeds[idx] + shift;
+                let location = self.find_location("seed", seed)?;
+                min_location = std::cmp::min(min_location, location);    
+            }
+        }
+        Ok(min_location)
+    }    
+
+    fn find_min_location(&self) -> Result<u64> {
+        let mut min_location = u64::MAX;
+        for seed in &self.seeds {
+            let location = self.find_location("seed", *seed)?;
+            min_location = std::cmp::min(min_location, location);
+        }
+        Ok(min_location)
+    }
+
     fn find_destination(source: u64, ranges: &Vec<Interval>) -> u64 {
         for interval in ranges {
             if let Some(destination) = interval.map(source) {
@@ -62,15 +90,6 @@ impl<'a> Info<'a> {
         }
 
         self.find_location(new_kind, dest)
-    }
-
-    fn find_min_location(&self) -> Result<u64> {
-        let mut min_location = u64::MAX;
-        for seed in &self.seeds {
-            let location = self.find_location("seed", *seed)?;
-            min_location = std::cmp::min(min_location, location);
-        }
-        Ok(min_location)
     }
 
     fn from(input: &str) -> Result<Info> {
@@ -140,4 +159,18 @@ mod test {
         assert_eq!(min_location, 35);
         Ok(())
     }
+
+    #[test]
+    fn test_part_2() -> Result<()> {
+        // Arrange
+        let input = fs::read_to_string("../../data/day5_data_test.txt")?;
+        let info = Info::from(&input)?;
+
+        // Act
+        let min_location = info.find_range_min_location()?;
+
+        // Assert
+        assert_eq!(min_location, 46);
+        Ok(())
+    }    
 }
