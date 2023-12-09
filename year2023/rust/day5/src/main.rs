@@ -35,7 +35,6 @@ struct Info<'a> {
 }
 
 impl<'a> Info<'a> {
-
     fn find_destination(source: u64, ranges: &Vec<Interval>) -> u64 {
         for interval in ranges {
             if let Some(destination) = interval.map(source) {
@@ -45,25 +44,23 @@ impl<'a> Info<'a> {
         source
     }
 
-    fn find_location(
-        &self,
-        kind: &str,
-        source: u64,
-    ) -> Result<u64> {
-        let ranges = *&self.maps
+    fn find_location(&self, kind: &str, source: u64) -> Result<u64> {
+        let ranges = self
+            .maps
             .get(kind)
             .ok_or_else(|| anyhow!("{} should be in maps", kind))?;
 
         let dest = Info::find_destination(source, ranges);
-    
-        let new_kind = *self.lookup
+
+        let new_kind = *self
+            .lookup
             .get(kind)
             .ok_or_else(|| anyhow!("{} should be in lookups", kind))?;
-    
+
         if new_kind == "location" {
             return Ok(dest);
         }
-    
+
         self.find_location(new_kind, dest)
     }
 
@@ -85,12 +82,11 @@ impl<'a> Info<'a> {
             if idx == 0 {
                 seeds = line
                     .split(": ")
-                    .map(|l| {
+                    .flat_map(|l| {
                         l.split_whitespace()
                             .map(|c| c.parse::<u64>())
                             .filter_map(|c| c.ok())
                     })
-                    .flatten()
                     .collect();
                 continue;
             }
@@ -106,15 +102,18 @@ impl<'a> Info<'a> {
             let parts: Vec<u64> = line
                 .split_whitespace()
                 .map(|c| c.parse::<u64>())
-                .into_iter()
                 .collect::<Result<Vec<u64>, _>>()?;
             let destination = parts[0];
             let source = parts[1];
             let range = parts[2];
             let from_entry = maps
                 .entry(from.ok_or_else(|| anyhow!("from should be set"))?)
-                .or_insert_with(|| vec![]);
-            from_entry.push(Interval { source_start: source, destination_start: destination, range });
+                .or_insert_with(Vec::new);
+            from_entry.push(Interval {
+                source_start: source,
+                destination_start: destination,
+                range,
+            });
         }
         Ok(Info {
             maps,
@@ -123,7 +122,6 @@ impl<'a> Info<'a> {
         })
     }
 }
-
 
 #[cfg(test)]
 mod test {
