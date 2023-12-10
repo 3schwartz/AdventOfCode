@@ -88,7 +88,7 @@ impl Hand {
         if let Some(jokers) = map.remove(&'J') {
             if jokers == 5 {
                 map.insert(&'A', jokers);
-                return Ok(())
+                return Ok(());
             }
             for _ in 0..jokers {
                 let max_key = map
@@ -178,7 +178,6 @@ impl Game {
 
     fn total_winning(&mut self) -> u64 {
         self.hands.sort();
-        // println!("{:?}", self.hands);
         self.hands
             .iter()
             .enumerate()
