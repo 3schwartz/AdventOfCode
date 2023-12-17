@@ -11,13 +11,14 @@ fn main() -> Result<()> {
 
     println!("Part 1: {}", steps);
 
-    let starts: Vec<Vec<u64>> = network.nodes
+    let starts: Vec<Vec<u64>> = network
+        .nodes
         .values()
         .filter(|n| n.is_start)
-        .map(|v| network.get_ghost_paths(&v, 5))
+        .map(|v| network.get_ghost_paths(v, 5))
         .collect::<Result<Vec<Vec<u64>>, _>>()?
         .iter()
-        .map(|n| get_diff(n))
+        .map(get_diff)
         .collect();
 
     println!("{:?}", starts);
@@ -31,35 +32,35 @@ fn main() -> Result<()> {
 
 fn find_common_lcm(v: Vec<u64>) -> u64 {
     let mut out = v[0];
-    for i in 1..v.len() {
-        out = lcm(out, v[i]);
+    for i in v.iter().skip(1) {
+        out = lcm(out, *i);
     }
     out
 }
 
 fn gcd(mut a: u64, mut b: u64) -> u64 {
-    if a == b { return a; }
+    if a == b {
+        return a;
+    }
     if b > a {
-        let temp = a;
-        a = b;
-        b = temp;
+        std::mem::swap(&mut a, &mut b);
     }
     while b > 0 {
         let temp = a;
         a = b;
         b = temp % b;
     }
-    return a;
+    a
 }
 
 fn lcm(a: u64, b: u64) -> u64 {
-    return a * ( b / gcd(a, b));
+    a * (b / gcd(a, b))
 }
 
 fn get_diff(v: &Vec<u64>) -> Vec<u64> {
     let mut difference = Vec::new();
     for i in 0..v.len() - 1 {
-        let diff = v[i+1] - v[i];
+        let diff = v[i + 1] - v[i];
         difference.push(diff)
     }
     difference
@@ -125,10 +126,10 @@ impl Network {
 
     fn get_cycles_in_ghost_paths(&self) -> Result<Vec<u64>> {
         self.nodes
-        .values()
-        .filter(|n| n.is_start)
-        .map(|v| self.get_ghost_path(&v))
-        .collect::<Result<Vec<u64>>>()
+            .values()
+            .filter(|n| n.is_start)
+            .map(|v| self.get_ghost_path(v))
+            .collect::<Result<Vec<u64>>>()
     }
 
     fn get_ghost_path(&self, start: &Node) -> Result<u64> {
@@ -142,14 +143,14 @@ impl Network {
         loop {
             for c in self.actions.chars() {
                 steps += 1;
-                let s = self.get_node(&f)?;
+                let s = self.get_node(f)?;
                 let n = s.next(c)?;
                 let next = self.get_node(n)?;
                 if next.is_end {
                     ends.push(steps);
                 }
                 if ends.len() == count {
-                    return Ok(ends)
+                    return Ok(ends);
                 }
                 f = next.name.as_str();
             }
@@ -173,31 +174,9 @@ impl Network {
     }
 
     fn get_node(&self, key: &str) -> Result<&Node> {
-        self
-        .nodes
-        .get(key)
-        .ok_or_else(|| anyhow!("{} should be present", key))
-    }
-
-    fn get_ghost_steps(&self) -> Result<u64> {
-        let mut starts: Vec<&Node> = self.nodes.values().filter(|v| v.is_start).collect();
-        let mut steps = 0;
-        loop {
-            for c in self.actions.chars() {
-                steps += 1;
-                let mut nexts = vec![];
-                for s in &starts {
-                    let s = self.get_node(&s.name)?;
-                    let n = s.next(c)?;
-                    let next = self.get_node(n)?;
-                    nexts.push(next);
-                }
-                if nexts.iter().all(|n| n.is_end) {
-                    return Ok(steps)
-                }
-                starts = nexts;
-            }
-        }
+        self.nodes
+            .get(key)
+            .ok_or_else(|| anyhow!("{} should be present", key))
     }
 }
 
@@ -233,20 +212,6 @@ mod test {
 
         // Assert
         assert_eq!(6, ghost_steps);
-        Ok(())
-    }
-    
-    #[test]
-    fn test_part_2() -> Result<()> {
-        // Arrange
-        let input = fs::read_to_string("../../data/day8_data_test3.txt")?;
-
-        // Act
-        let network = Network::new(&input);
-        let steps = network.get_ghost_steps()?;
-
-        // Assert
-        assert_eq!(6, steps);
         Ok(())
     }
 }
