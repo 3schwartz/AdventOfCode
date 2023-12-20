@@ -1,13 +1,20 @@
-use std::{collections::HashMap, fs};
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Ok, Result};
+use std::{
+    collections::{HashMap, HashSet},
+    fs,
+};
 
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day10_data.txt")?;
     let pipe_map = PipeMap::from(&input)?;
 
-    let actual = pipe_map.get_steps_to_farthest_point()?;
+    let actual = pipe_map.get_max_distance()?;
 
     println!("Part 1: {}", actual);
+
+    let part_2 = pipe_map.get_inside()?;
+
+    println!("Part 2: {}", part_2);
 
     Ok(())
 }
@@ -160,22 +167,73 @@ impl PipeMap {
         Err(anyhow!("not match for {:?}", self.animal))
     }
 
-    fn get_steps_to_farthest_point(&self) -> Result<u64> {
+    fn get_pipe_loop(&self) -> Result<HashSet<Coord>> {
         let mut previous = self.animal;
         let mut next = self.get_next_from_animal()?;
-        let mut steps = 1;
+        let mut set = HashSet::from([next]);
         loop {
             let next_c = self.get_pipe(next);
             if next_c == 'S' {
                 break;
             }
-            steps += 1;
             let temp = next;
             next = next.next(previous, &next_c)?;
             previous = temp;
+            set.insert(next);
         }
+        Ok(set)
+    }
 
-        Ok(steps / 2)
+    fn get_max_distance(&self) -> Result<u64> {
+        let set = self.get_pipe_loop()?;
+        Ok(set.len() as u64 / 2)
+    }
+
+    /// To validate if a point is within an enclosing shape the
+    /// count of borders it crosses in any direction needs to be an odd number.
+    ///
+    /// Now since we also needs to handle corners following logic is used.
+    /// If a '7', or 'L' is meet then a 'F', or 'J' needs to come (or '|', '-') for the ppint
+    /// to be within the shape. This because the points can "followed" around the line of
+    /// '7' and 'L' and a  'F', or 'J' will "stop" this.
+    fn get_inside(&self) -> Result<u64> {
+        let set = self.get_pipe_loop()?;
+        let max_x = self
+            .map
+            .keys()
+            .map(|c| c.x)
+            .max()
+            .ok_or_else(|| anyhow!("not able to find max x"))?;
+        let max_y = self
+            .map
+            .keys()
+            .map(|c| c.y)
+            .max()
+            .ok_or_else(|| anyhow!("not able to find max y"))?;
+        let mut inside = 0;
+        for y in 0..=max_y {
+            for x in 0..=max_x {
+                if set.contains(&Coord::new(x, y)) {
+                    continue;
+                }
+                let mut xt = x;
+                let mut yt = y;
+                let mut borders = 0;
+                while xt <= max_x && yt <= max_y {
+                    let ct = Coord::new(xt, yt);
+                    let c = self.get_pipe(ct);
+                    if set.contains(&ct) && c != '7' && c != 'L' {
+                        borders += 1;
+                    }
+                    xt += 1;
+                    yt += 1;
+                }
+                if borders % 2 == 1 {
+                    inside += 1;
+                }
+            }
+        }
+        Ok(inside)
     }
 }
 
@@ -184,13 +242,28 @@ mod test {
     use super::*;
 
     #[test]
+    fn test_part_2() -> Result<()> {
+        for (file, expected) in [("test3", 8), ("test4", 10)] {
+            // Arrange
+            let input = fs::read_to_string(format!("../../data/day10_data_{file}.txt"))?;
+            let pipe_map = PipeMap::from(&input)?;
+            // Act
+            let actual = pipe_map.get_inside()?;
+
+            // Assert
+            assert_eq!(expected, actual);
+        }
+        Ok(())
+    }
+
+    #[test]
     fn test_part_1() -> Result<()> {
         for (file, expected) in [("test1", 4), ("test2", 8)] {
             // Arrange
             let input = fs::read_to_string(format!("../../data/day10_data_{file}.txt"))?;
             let pipe_map = PipeMap::from(&input)?;
             // Act
-            let actual = pipe_map.get_steps_to_farthest_point()?;
+            let actual = pipe_map.get_max_distance()?;
 
             // Assert
             assert_eq!(expected, actual);
