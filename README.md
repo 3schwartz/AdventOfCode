@@ -4,6 +4,10 @@ This repository contains my solutions to [Advent of Code](https://adventofcode.c
 
 I mainly solve them for fun but I also use the challenges to improve my coding skills either to write high performance code, clean code or to learn a whole new programming language. This is also why I solve some of the challenges in several languages.
 
+## 2023
+
+- Rust
+
 ## 2022 - completed
 
 - Go
