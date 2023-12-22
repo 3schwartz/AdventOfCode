@@ -53,12 +53,11 @@ fn find_shortest_distance(distances: &HashMap<CoordPair, i64>) -> Result<i64> {
     
     let mut min = i64::MAX;
     let mut cache = BTreeMap::new();
-    let mut cache_min = BTreeMap::new();
     for n in &coords {
         let mut clone = coords.clone();
         clone.remove(&n);
         let state = State{current: *n, missing: clone, steps: 0, current_min: min};
-        let path = dfs(state, &lookup, &mut cache, &mut cache_min)?;
+        let path = dfs(state, &lookup, &mut cache)?;
         if path < min {
             min = path;
         }
@@ -99,7 +98,6 @@ fn dfs(
     state: State,
     lookup: &HashMap<Coord, HashMap<Coord, i64>>,
     cache: &mut BTreeMap<CacheState, i64>,
-    cache_min: &mut BTreeMap<CacheState, i64>,
 ) -> Result<i64> {
     let mut current_min = state.current_min;
     
@@ -128,7 +126,7 @@ fn dfs(
         }
         *cache_entry = total_dist;
 
-        let path_min = dfs(state_updated, lookup, cache, cache_min)?;
+        let path_min = dfs(state_updated, lookup, cache)?;
         if path_min < current_min {
             current_min = path_min;
         }
