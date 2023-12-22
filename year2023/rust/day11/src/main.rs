@@ -6,14 +6,104 @@ use std::collections::{HashMap, HashSet};
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day11_data.txt")?;
 
-    let (rows, columns) = generate_rows_and_columns(&input);
-    let galaxy = generate_galaxy_map(&input, rows, columns)?;
+    let part_1 = find_distances_sum(&input, 2)?;
+    println!("Part 1: {}", part_1);
+
+    let part_2 = find_distances_sum(&input, 1_000_000)?;
+    println!("Part 2: {}", part_2);
+
+    let shortest = find_shortest(&input)?;
+    println!("Shortest path: {}", shortest);
+
+    Ok(())
+}
+
+fn find_distances(input: &str, larger_by: i64) -> Result<HashMap<CoordPair, i64>> {
+    let (rows, columns) = generate_rows_and_columns(input);
+    let galaxy = generate_galaxy_map(input, rows, columns, larger_by)?;
     let pairs = CoordPair::generate_pairs(galaxy);
     let distances = CoordPair::generate_distance_map(&pairs);
-    let distance_sum: i32 = distances.values().sum();
+    Ok(distances)
+}
 
-    print!("Part 1: {}", distance_sum);
-    Ok(())
+fn find_distances_sum(input: &str, larger_by: i64) -> Result<i64> {
+    let distances = find_distances(input, larger_by)?;
+    let distance_sum: i64 = distances.values().sum();
+    Ok(distance_sum)
+}
+
+fn find_shortest(input: &str) -> Result<i64> {
+    let distances = find_distances(input, 1)?;
+    find_shortest_distance(&distances)
+}
+
+fn find_shortest_distance(distances: &HashMap<CoordPair, i64>) -> Result<i64> {
+    let mut coords = HashSet::new();
+    let mut lookup: HashMap<Coord, HashMap<Coord, i64>> = HashMap::new();
+    for (k, v) in distances {
+        let f = lookup.entry(k.first)
+            .or_insert_with(|| HashMap::new());
+        f.insert(k.second, *v);
+        let s = lookup.entry(k.second)
+            .or_insert_with(|| HashMap::new());
+        s.insert(k.first, *v);
+        coords.insert(k.first);
+        coords.insert(k.second);
+    }
+    
+    let mut min = i64::MAX;
+    for n in &coords {
+        let mut clone = coords.clone();
+        clone.remove(&n);
+        let state = State{current: *n, missing: clone, steps: 0, current_min: min};
+        let path = dfs(state, &lookup)?;
+        if path < min {
+            min = path;
+        }
+    }
+
+    Ok(min)
+}
+
+struct State {
+    current: Coord,
+    missing: HashSet<Coord>,
+    steps: i64,
+    current_min: i64,
+}
+
+impl State {
+    fn update(&self, next: Coord, dist: i64, current_min: i64) -> Self {
+        let mut new_missing = self.missing.clone();
+        new_missing.remove(&next);
+        Self { current: next, missing: new_missing, steps: self.steps + dist, current_min }
+    }
+}
+
+fn dfs(
+    state: State,
+    lookup: &HashMap<Coord, HashMap<Coord, i64>>) -> Result<i64> {
+    let mut current_min = state.current_min;
+    
+    for next in &state.missing {
+        let dist = lookup.get(&state.current)
+            .ok_or(anyhow!("{:?} not in from", state.current))?
+            .get(&next)
+            .ok_or(anyhow!("{:?} not in to", next))?;
+        let total_dist = state.steps + dist;
+        if total_dist >= state.current_min {
+            continue;
+        }
+        if state.missing.len() == 1 && state.steps < total_dist {
+            return Ok(total_dist)
+        }
+        let state_updated = state.update(*next, *dist, current_min);
+        let path_min = dfs(state_updated, lookup)?;
+        if path_min < current_min {
+            current_min = path_min;
+        }
+    }
+    Ok(current_min)
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
@@ -61,11 +151,11 @@ impl CoordPair {
         }
     }
 
-    fn manhattan_distance(&self) -> i32 {
+    fn manhattan_distance(&self) -> i64 {
         self.first.manhattan_distance(&self.second)
     }
 
-    fn generate_distance_map(pairs: &HashSet<CoordPair>) -> HashMap<CoordPair, i32> {
+    fn generate_distance_map(pairs: &HashSet<CoordPair>) -> HashMap<CoordPair, i64> {
         let mut distances = HashMap::new();
         for pair in pairs {
             distances.insert(*pair, pair.manhattan_distance());
@@ -74,18 +164,18 @@ impl CoordPair {
     }
 }
 
-#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 struct Coord {
-    x: i32,
-    y: i32,
+    x: i64,
+    y: i64,
 }
 
 impl Coord {
-    fn new(x: i32, y: i32) -> Self {
+    fn new(x: i64, y: i64) -> Self {
         Self { x, y }
     }
 
-    fn manhattan_distance(&self, other: &Coord) -> i32 {
+    fn manhattan_distance(&self, other: &Coord) -> i64 {
         (self.x - other.x).abs() + (self.y - other.y).abs()
     }
 }
@@ -113,10 +203,12 @@ fn generate_galaxy_map(
     input: &str,
     rows: HashMap<usize, Vec<char>>,
     columns: HashMap<usize, Vec<char>>,
+    mut larger_by: i64,
 ) -> Result<HashSet<Coord>> {
     let empty = '.';
     let mut row_incs = 0;
     let mut galazy_set = HashSet::new();
+    larger_by = larger_by - 1;
     for (row, line) in input.lines().enumerate() {
         let mut column_incs = 0;
         let empty_row = rows
@@ -125,14 +217,14 @@ fn generate_galaxy_map(
             .iter()
             .all(|p| *p == empty);
         if empty_row {
-            row_incs += 1;
+            row_incs += larger_by;
             continue;
         }
         for (column, c) in line.chars().enumerate() {
             if c != '.' {
                 galazy_set.insert(Coord::new(
-                    row as i32 + row_incs,
-                    column as i32 + column_incs,
+                    row as i64 + row_incs,
+                    column as i64 + column_incs,
                 ));
                 continue;
             }
@@ -142,7 +234,7 @@ fn generate_galaxy_map(
                 .iter()
                 .all(|p| *p == empty);
             if empty_column {
-                column_incs += 1;
+                column_incs += larger_by;
             }
         }
     }
@@ -154,19 +246,31 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_part_1() -> Result<()> {
+    fn test_find_shortest_path() -> Result<()> {
         // Arrange
         let input = fs::read_to_string("../../data/day11_data_test.txt")?;
 
         // Act
-        let (rows, columns) = generate_rows_and_columns(&input);
-        let galaxy = generate_galaxy_map(&input, rows, columns)?;
-        let pairs = CoordPair::generate_pairs(galaxy);
-        let distances = CoordPair::generate_distance_map(&pairs);
-        let distance_sum: i32 = distances.values().sum();
+        let actual = find_shortest(&input)?;
 
         // Assert
-        assert_eq!(374, distance_sum);
+        assert_eq!(35, actual);
+        Ok(())
+
+    }
+
+    #[test]
+    fn test_solutions() -> Result<()> {
+        // Arrange
+        let input = fs::read_to_string("../../data/day11_data_test.txt")?;
+
+        for (expected, inc) in vec![(374, 2), (1030, 10), (8410, 100)] {
+            // Act
+            let actual = find_distances_sum(&input, inc)?;
+
+            // Assert
+            assert_eq!(expected, actual);
+        }
         Ok(())
     }
 }
