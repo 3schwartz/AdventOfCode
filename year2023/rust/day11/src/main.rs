@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, collections::{BTreeMap, BTreeSet}};
 
 use anyhow::{anyhow, Result};
 use std::collections::{HashMap, HashSet};
@@ -52,11 +52,13 @@ fn find_shortest_distance(distances: &HashMap<CoordPair, i64>) -> Result<i64> {
     }
     
     let mut min = i64::MAX;
+    let mut cache = BTreeMap::new();
+    let mut cache_min = BTreeMap::new();
     for n in &coords {
         let mut clone = coords.clone();
         clone.remove(&n);
         let state = State{current: *n, missing: clone, steps: 0, current_min: min};
-        let path = dfs(state, &lookup)?;
+        let path = dfs(state, &lookup, &mut cache, &mut cache_min)?;
         if path < min {
             min = path;
         }
@@ -72,6 +74,19 @@ struct State {
     current_min: i64,
 }
 
+#[derive(PartialEq, PartialOrd, Eq, Ord)]
+struct CacheState {
+    current: Coord,
+    missing: BTreeSet<Coord>,
+}
+
+impl CacheState {
+    fn from(state: &State) -> Self {
+        let missing: BTreeSet<Coord> = state.missing.iter().map(|n| *n).collect();
+        Self { current: state.current, missing }
+    }
+}
+
 impl State {
     fn update(&self, next: Coord, dist: i64, current_min: i64) -> Self {
         let mut new_missing = self.missing.clone();
@@ -82,7 +97,10 @@ impl State {
 
 fn dfs(
     state: State,
-    lookup: &HashMap<Coord, HashMap<Coord, i64>>) -> Result<i64> {
+    lookup: &HashMap<Coord, HashMap<Coord, i64>>,
+    cache: &mut BTreeMap<CacheState, i64>,
+    cache_min: &mut BTreeMap<CacheState, i64>,
+) -> Result<i64> {
     let mut current_min = state.current_min;
     
     for next in &state.missing {
@@ -91,14 +109,26 @@ fn dfs(
             .get(&next)
             .ok_or(anyhow!("{:?} not in to", next))?;
         let total_dist = state.steps + dist;
-        if total_dist >= state.current_min {
+        // Check if next length above min
+        if total_dist >= current_min {
             continue;
         }
+        // Validate below and final
         if state.missing.len() == 1 && state.steps < total_dist {
             return Ok(total_dist)
         }
+        // Check cache
         let state_updated = state.update(*next, *dist, current_min);
-        let path_min = dfs(state_updated, lookup)?;
+        let cache_state = CacheState::from(&state_updated);
+        let cache_entry = cache.entry(cache_state)
+            .or_insert(total_dist);
+
+        if total_dist > *cache_entry {
+            continue;
+        }
+        *cache_entry = total_dist;
+
+        let path_min = dfs(state_updated, lookup, cache, cache_min)?;
         if path_min < current_min {
             current_min = path_min;
         }
@@ -164,7 +194,7 @@ impl CoordPair {
     }
 }
 
-#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, PartialOrd, Ord)]
 struct Coord {
     x: i64,
     y: i64,
