@@ -1,4 +1,7 @@
-use std::{fs, collections::{BTreeMap, BTreeSet}};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fs,
+};
 
 use anyhow::{anyhow, Result};
 use std::collections::{HashMap, HashSet};
@@ -12,8 +15,8 @@ fn main() -> Result<()> {
     let part_2 = find_distances_sum(&input, 1_000_000)?;
     println!("Part 2: {}", part_2);
 
-    let shortest = find_shortest(&input)?;
-    println!("Shortest path: {}", shortest);
+    // let shortest = find_shortest(&input)?;
+    // println!("Shortest path: {}", shortest);
 
     Ok(())
 }
@@ -32,6 +35,7 @@ fn find_distances_sum(input: &str, larger_by: i64) -> Result<i64> {
     Ok(distance_sum)
 }
 
+#[allow(dead_code)]
 fn find_shortest(input: &str) -> Result<i64> {
     let distances = find_distances(input, 1)?;
     find_shortest_distance(&distances)
@@ -41,22 +45,25 @@ fn find_shortest_distance(distances: &HashMap<CoordPair, i64>) -> Result<i64> {
     let mut coords = HashSet::new();
     let mut lookup: HashMap<Coord, HashMap<Coord, i64>> = HashMap::new();
     for (k, v) in distances {
-        let f = lookup.entry(k.first)
-            .or_insert_with(|| HashMap::new());
+        let f = lookup.entry(k.first).or_insert(HashMap::new());
         f.insert(k.second, *v);
-        let s = lookup.entry(k.second)
-            .or_insert_with(|| HashMap::new());
+        let s = lookup.entry(k.second).or_insert(HashMap::new());
         s.insert(k.first, *v);
         coords.insert(k.first);
         coords.insert(k.second);
     }
-    
+
     let mut min = i64::MAX;
     let mut cache = BTreeMap::new();
     for n in &coords {
         let mut clone = coords.clone();
-        clone.remove(&n);
-        let state = State{current: *n, missing: clone, steps: 0, current_min: min};
+        clone.remove(n);
+        let state = State {
+            current: *n,
+            missing: clone,
+            steps: 0,
+            current_min: min,
+        };
         let path = dfs(state, &lookup, &mut cache)?;
         if path < min {
             min = path;
@@ -81,8 +88,11 @@ struct CacheState {
 
 impl CacheState {
     fn from(state: &State) -> Self {
-        let missing: BTreeSet<Coord> = state.missing.iter().map(|n| *n).collect();
-        Self { current: state.current, missing }
+        let missing: BTreeSet<Coord> = state.missing.iter().copied().collect();
+        Self {
+            current: state.current,
+            missing,
+        }
     }
 }
 
@@ -90,7 +100,12 @@ impl State {
     fn update(&self, next: Coord, dist: i64, current_min: i64) -> Self {
         let mut new_missing = self.missing.clone();
         new_missing.remove(&next);
-        Self { current: next, missing: new_missing, steps: self.steps + dist, current_min }
+        Self {
+            current: next,
+            missing: new_missing,
+            steps: self.steps + dist,
+            current_min,
+        }
     }
 }
 
@@ -100,11 +115,12 @@ fn dfs(
     cache: &mut BTreeMap<CacheState, i64>,
 ) -> Result<i64> {
     let mut current_min = state.current_min;
-    
+
     for next in &state.missing {
-        let dist = lookup.get(&state.current)
+        let dist = lookup
+            .get(&state.current)
             .ok_or(anyhow!("{:?} not in from", state.current))?
-            .get(&next)
+            .get(next)
             .ok_or(anyhow!("{:?} not in to", next))?;
         let total_dist = state.steps + dist;
         // Check if next length above min
@@ -113,13 +129,12 @@ fn dfs(
         }
         // Validate below and final
         if state.missing.len() == 1 && state.steps < total_dist {
-            return Ok(total_dist)
+            return Ok(total_dist);
         }
         // Check cache
         let state_updated = state.update(*next, *dist, current_min);
         let cache_state = CacheState::from(&state_updated);
-        let cache_entry = cache.entry(cache_state)
-            .or_insert(total_dist);
+        let cache_entry = cache.entry(cache_state).or_insert(total_dist);
 
         if total_dist > *cache_entry {
             continue;
@@ -236,7 +251,7 @@ fn generate_galaxy_map(
     let empty = '.';
     let mut row_incs = 0;
     let mut galazy_set = HashSet::new();
-    larger_by = larger_by - 1;
+    larger_by -= 1;
     for (row, line) in input.lines().enumerate() {
         let mut column_incs = 0;
         let empty_row = rows
@@ -284,7 +299,6 @@ mod test {
         // Assert
         assert_eq!(35, actual);
         Ok(())
-
     }
 
     #[test]
