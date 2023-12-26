@@ -3,19 +3,22 @@ use anyhow::{Result, anyhow};
 
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day12_data.txt")?;
-    let combinations = find_combinations(&input)?;
+    let part_1 = find_combinations(&input, 1)?;
 
-    println!("Part 1: {}", combinations);
+    println!("Part 1: {}", part_1);
+
+    let part_2 = find_combinations(&input, 5)?;
+    println!("Part 2: {}", part_2);
 
     Ok(())
 }
 
-fn find_combinations(input: &str) -> Result<i32> {
+fn find_combinations(input: &str, count: u32) -> Result<i64> {
     let mut cache = BTreeMap::new();
     
     let mut combinations = 0;
     for line in input.lines() {
-        let state = State::from(&line)?;
+        let state = State::from(&line, count)?;
         combinations += state.find_next_combinations(&mut cache);
     }
 
@@ -23,31 +26,42 @@ fn find_combinations(input: &str) -> Result<i32> {
 }
 
 #[derive(Ord, PartialEq, PartialOrd, Eq, Clone)]
-struct State<'a> {
-    // chars: Vec<char>,
-    sequence: &'a str,
-    groups: Vec<i32>,
+struct State {
+    sequence: String,
+    groups: Vec<i64>,
 }
 
-impl<'a> State<'a> {
-    fn from(input: &'a str) -> Result<Self> {
+impl State {
+    fn from(input: &str, repeats: u32) -> Result<Self> {
         let parts: Vec<&str> = input.split(" ")
             .collect();
         if parts.len() != 2 {
             return Err(anyhow!("{} not able to split by space", input));
         };
-        let groups = parts[1]
+        let group = parts[1]
             .split(",")
             .map(|c| c.parse())
-            .collect::<Result<Vec<i32>, _>>()?;
-        Ok(Self { sequence: parts[0], groups }
+            .collect::<Result<Vec<i64>, _>>()?;
+        let mut sequences = vec![];
+        let mut g = vec![];
+        let mut count = 0;
+        while count < repeats {
+            g.push(group.clone());
+            sequences.push(parts[0]);
+            count+=1;
+        }
+
+        let groups = g.iter().flatten().map(|c| *c).collect();
+        let sequence = sequences.join("?");
+
+        Ok(Self { sequence, groups }
         )
     }
 
     /// Check group size is below total length.
     /// Also account for spacing between damaged groups.
     fn is_group_size_below_remaining(&self) -> bool {
-        let left = self.sequence.len() as i32 - self.groups.iter().sum::<i32>() - self.groups.len() as i32 + 1;
+        let left = self.sequence.len() as i64 - self.groups.iter().sum::<i64>() - self.groups.len() as i64 + 1;
         left < 0
     }
 
@@ -58,21 +72,21 @@ impl<'a> State<'a> {
         !self.sequence[..self.groups[0] as usize].contains(".")
     }
 
-    fn find_next_combinations<'b>(&self, cache: &'b mut BTreeMap<State<'a>, i32>) -> i32 {
+    fn find_next_combinations<'b>(&self, cache: &'b mut BTreeMap<State, i64>) -> i64 {
         if let Some(c) = cache.get(self) {
             return *c;
         };
         // When no groups are left check if there are none
         // damage left.
         if self.groups.is_empty() {
-            return !self.sequence.contains("#") as i32
+            return !self.sequence.contains("#") as i64
         }
         if self.is_group_size_below_remaining() {
             return 0;
         }
         let next_slice_damaged_or_unknown = self.next_slice_damaged_or_unknown();
-        if self.sequence.len() as i32 == self.groups[0] {
-            return next_slice_damaged_or_unknown as i32;
+        if self.sequence.len() as i64 == self.groups[0] {
+            return next_slice_damaged_or_unknown as i64;
         }
 
         // When first isn't '#' it can be either '.' or a '?' which
@@ -82,7 +96,7 @@ impl<'a> State<'a> {
                 .sequence[1..]
                 .trim_start_matches(".");
             let n = State{
-                sequence: c,
+                sequence: c.to_string(),
                 groups: self.groups.clone()
             };
             n.find_next_combinations(cache)
@@ -104,7 +118,7 @@ impl<'a> State<'a> {
                 .copied()
                 .collect();
             let s = State {
-                sequence: c,
+                sequence: c.to_string(),
                 groups: v
             };
             s.find_next_combinations(cache)
@@ -123,8 +137,16 @@ mod test {
     use super::*;
 
     #[test]
-    fn vec_is_equal() {
-        assert_eq!(vec![1,5,2], vec![1,5,2]);
+    fn test_part_2() -> Result<()> {
+        // Arrange
+        let input = fs::read_to_string("../../data/day12_data_test.txt")?;
+        
+        // Act
+        let combinations = find_combinations(&input, 5)?;
+
+        // Assert
+        assert_eq!(combinations, 525152);
+        Ok(())
     }
 
     #[test]
@@ -133,7 +155,7 @@ mod test {
         let input = fs::read_to_string("../../data/day12_data_test.txt")?;
         
         // Act
-        let combinations = find_combinations(&input)?;
+        let combinations = find_combinations(&input, 1)?;
 
         // Assert
         assert_eq!(combinations, 21);
@@ -147,7 +169,7 @@ mod test {
         let mut cache = BTreeMap::new();
         
         // Act
-        let state = State::from(&input)?;
+        let state = State::from(&input, 1)?;
         let actual = state.find_next_combinations(&mut cache);
 
         // Assert
