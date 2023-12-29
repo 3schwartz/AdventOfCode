@@ -2,19 +2,21 @@ use anyhow::{anyhow, Result};
 use std::fs;
 
 fn main() -> Result<()> {
-    let input = fs::read_to_string("../../data/day13_data.txt")?;
+    let input = fs::read_to_string("../data/day13_data.txt")?;
     let squares = get_squares(&input);
 
-    // let mut total = 0;
-    // for s in &squares {
-    //     let square = Square::new(s, None);
-    //     total += square.find_reflection()?;
-    // }
+    let mut total = 0;
+    for s in &squares {
+        let square = Square::new(s);
+        let reflection = square.find_reflection()?;
+        total += reflection.0 + reflection.1;
+    }
+
+    println!("Part 1: {}", total);
 
     let mut total = 0;
-    // total = 0;
     for s in &squares {
-        let square = Square::new(s, None);
+        let mut square = Square::new(s);
         total += square.find_smudge()?;
     }
 
@@ -29,57 +31,57 @@ struct Square {
     column_max: i32,
     rows: Vec<Vec<char>>,
     columns: Vec<Vec<char>>,
-    input: String,
 }
 
 impl Square {
-    fn find_smudge(&self) -> Result<i32> {
-        let own_reflection = self.find_reflection()?;
-        for row in 0..self.row_max {
-            for column in 0..self.column_max {
-                let s = Square::new(&self.input, Some((row as usize, column as usize)));
-                if let Some(r) = s.reflection(Some(own_reflection)) {
-                    return Ok(r);
+    fn find_smudge(&mut self) -> Result<i32> {
+        let (row_own, column_own) = self.find_reflection()?;
+        for row in 0..=self.row_max {
+            for column in 0..=self.column_max {
+                let r_s = self.rows[row as usize][column as usize];
+                let c_s = self.columns[column as usize][row as usize];
+                if r_s != c_s {
+                    return Err(anyhow!("({},{}) not same char in {:?}", row, column, self));
                 }
+                let opposite = Square::get_opposite(r_s);
+                self.rows[row as usize][column as usize] = opposite;
+                self.columns[column as usize][row as usize] = opposite;
+
+                if let Some(column_r) =
+                    self.range_equals(self.column_max, &self.columns, column_own - 1)
+                {
+                    return Ok(column_r + 1);
+                }
+                if let Some(row_r) = self.range_equals(self.row_max, &self.rows, row_own / 100 - 1)
+                {
+                    return Ok((row_r + 1) * 100);
+                }
+
+                self.rows[row as usize][column as usize] = r_s;
+                self.columns[column as usize][row as usize] = c_s;
             }
+        }
+        Err(anyhow!("No solution for square {:?}", self))
+    }
+
+    fn get_opposite(c: char) -> char {
+        if c == '#' {
+            return '.';
+        }
+        '#'
+    }
+
+    fn find_reflection(&self) -> Result<(i32, i32)> {
+        if let Some(column) = self.range_equals(self.column_max, &self.columns, -1) {
+            return Ok((0, column + 1));
+        }
+        if let Some(row) = self.range_equals(self.row_max, &self.rows, -1) {
+            return Ok(((row + 1) * 100, 0));
         }
         Err(anyhow!("{:?}", self))
     }
 
-    fn reflection(&self, avoid: Option<i32>) -> Option<i32> {
-        if let Some(column) = self.range_equals(self.column_max, &self.columns) {
-            let result = column + 1;
-            match avoid {
-                Some(a) => {
-                    if a != result {
-                        return Some(result);
-                    };
-                }
-                None => return Some(result),
-            }
-        }
-        if let Some(row) = self.range_equals(self.row_max, &self.rows) {
-            let result = (row + 1) * 100;
-            match avoid {
-                Some(a) => {
-                    if a != result {
-                        return Some(result);
-                    };
-                }
-                None => return Some(result),
-            }
-        }
-        None
-    }
-
-    fn find_reflection(&self) -> Result<i32> {
-        match self.reflection(None) {
-            Some(r) => Ok(r),
-            None => Err(anyhow!("{:?}", self)),
-        }
-    }
-
-    fn range_equals(&self, max: i32, range: &Vec<Vec<char>>) -> Option<i32> {
+    fn range_equals(&self, max: i32, range: &[Vec<char>], not: i32) -> Option<i32> {
         for i in 0..max {
             let line = i;
             let mut inc = 0;
@@ -100,14 +102,14 @@ impl Square {
                 }
                 inc += 1;
             }
-            if is_match {
+            if is_match && line != not {
                 return Some(line);
             }
         }
         None
     }
 
-    fn new(input: &str, substitute: Option<(usize, usize)>) -> Square {
+    fn new(input: &str) -> Square {
         let mut rows = Vec::new();
         let mut columns = Vec::new();
 
@@ -118,23 +120,12 @@ impl Square {
             let mut row = Vec::new();
             for (y, c) in line.chars().enumerate() {
                 column_max = y as i32;
-                let cc = match substitute {
-                    Some((x_s, y_s)) => {
-                        if x_s == x && y_s == y && c == '.' {
-                            '#'
-                        } else if x_s == x && y_s == y && c == '#' {
-                            '.'
-                        } else {
-                            c
-                        }
-                    }
-                    None => c,
-                };
-                row.push(cc);
+                row.push(c);
                 if x == 0 {
-                    columns.push(Vec::from([cc]))
+                    columns.push(Vec::from([c]))
+                } else {
+                    columns[y].push(c);
                 }
-                columns[y].push(cc);
             }
             rows.push(row);
         }
@@ -143,7 +134,6 @@ impl Square {
             column_max,
             rows,
             columns,
-            input: input.to_string(),
         }
     }
 }
@@ -166,8 +156,9 @@ mod test {
 
         let mut total = 0;
         for s in squares {
-            let square = Square::new(s, None);
-            total += square.find_reflection()?;
+            let square = Square::new(s);
+            let reflection = square.find_reflection()?;
+            total += reflection.0 + reflection.1;
         }
         // Assert
         assert_eq!(405, total);
@@ -184,7 +175,7 @@ mod test {
 
         let mut total = 0;
         for s in squares {
-            let square = Square::new(s, None);
+            let mut square = Square::new(s);
             total += square.find_smudge()?;
         }
         // Assert
