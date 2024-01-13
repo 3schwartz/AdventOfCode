@@ -39,17 +39,19 @@ fn empty_grid(rows: usize, cols: usize) -> Vec<Vec<char>> {
     grid
 }
 
-/// Rotate counter clockwise in coordinate system is going from
-/// (x,y) to (y,-x). In our case it will be going from
-/// [row][column], (y,x) to [-column][row] , (-x,y).
-/// To only have positive coordinate we shift the [row] index
-/// by R - 1 - [column].
+/// Rotate clockwise in coordinate with y axis in opposite direction
+/// is going from (x,y) to (-y,x) where x is column and y is row.
+/// The grid is structured as [row][column]. Hence clockwise
+/// rotation becomes [column][-row].
+/// To only have positive coordinate we shift the final [column] index
+/// by R - 1 - [row].
 fn rotate(grid: &Vec<Vec<char>>) -> Vec<Vec<char>> {
     let rows = grid.len();
     let cols = grid[0].len();
     let mut empty = empty_grid(cols, rows);
     for (r, row) in grid.iter().enumerate() {
         for (c, item) in row.iter().enumerate() {
+            // [row][column]
             empty[c][rows - 1 - r] = *item;
         }
     }
