@@ -3,7 +3,9 @@ use std::fs;
 use anyhow::Result;
 
 fn main() -> Result<()> {
-    let input = fs::read_to_string("../data/day15_data.txt")?.trim_end().to_string();
+    let input = fs::read_to_string("../data/day15_data.txt")?
+        .trim_end()
+        .to_string();
 
     let mut part_1 = 0;
     for seq in input.split(',') {
