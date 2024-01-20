@@ -76,10 +76,26 @@ fn perimeter(steps: &[Step]) -> i64 {
     steps.iter().map(|s| s.steps).sum()
 }
 
-/// [shoelace_formula] gives interier but only half of the
-/// area in the perimeter. Hence we need to add half of the
-/// size of the perimeter.
-/// 1 is added to account for the starting point.
+/// Pick's theorem says that the area A of a polygon is
+/// A = i + b / 2 - 1
+/// where i is the number of integer points interier to the polygon
+/// and b is the number of integer points on its boundary.
+/// https://en.wikipedia.org/wiki/Pick%27s_theorem
+/// 
+/// We see the coordinate system as points in the center of 
+/// squares. Since we want to calculate the area covered by squares
+/// we want to find the sum of the squares on the boundary plus
+/// the sum of interier integer points. Hence
+/// i + b
+/// 
+/// By rearranging Picks theorem I have
+/// i = A - b / 2 + 1
+/// and then by adding b to both sides I have
+/// i + b = A + b / 2 + 1
+/// 
+/// Hence I need to find A and b.
+/// b is just the sum of the squares on the boundary.
+/// A can be found by using [shoelace_formula].
 fn get_area(steps: &Vec<Step>) -> i64 {
     shoelace_formula(steps) + perimeter(steps) / 2 + 1
 }
