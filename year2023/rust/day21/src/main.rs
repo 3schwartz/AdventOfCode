@@ -52,11 +52,11 @@ fn find_reachable_garden_plots(
                     }
                     if row_shift.abs() == LIMIT_EXPANSION && col_shift.abs() == LIMIT_EXPANSION {
                         plots +=
-                            find_solutions(distance, false, steps, columns as u64, &mut cached);
+                            find_solutions(distance, true, steps, columns as u64, &mut cached);
                     } else if row_shift.abs() == LIMIT_EXPANSION
                         || col_shift.abs() == LIMIT_EXPANSION
                     {
-                        plots += find_solutions(distance, true, steps, columns as u64, &mut cached);
+                        plots += find_solutions(distance, false, steps, columns as u64, &mut cached);
                     }
                 }
             }
@@ -69,23 +69,23 @@ fn find_solutions(
     distance: u64,
     is_corner: bool,
     steps: u64,
-    size: u64,
+    grid_size: u64,
     cached: &mut HashMap<(u64, bool, u64), u64>,
 ) -> u64 {
-    let amt = (steps - distance) / size;
+    let reachable_grids = (steps - distance) / grid_size;
 
     if let Some(c) = cached.get(&(distance, is_corner, steps)) {
         return *c;
     }
-    let mut ret = 0;
-    for x in 1..amt + 1 {
-        let range = distance + size * x;
-        if range <= steps && range % 2 == steps % 2 {
-            ret += if is_corner { 1 } else { x + 1 }
+    let mut plots = 0;
+    for grid_inc in 1..reachable_grids + 1 {
+        let border_grid_inc = distance + grid_size * grid_inc;
+        if border_grid_inc <= steps && border_grid_inc % 2 == steps % 2 {
+            plots += if is_corner { grid_inc + 1 } else { 1 }
         }
     }
-    cached.insert((distance, is_corner, steps), ret);
-    ret
+    cached.insert((distance, is_corner, steps), plots);
+    plots
 }
 
 #[derive(Hash, Clone, PartialEq, Eq)]
