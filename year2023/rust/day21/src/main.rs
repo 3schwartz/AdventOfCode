@@ -25,6 +25,12 @@ const LIMIT_EXPANSION: i64 = MAX_EXPANSION - 1;
 const EXPANSIONS: [i64; 7] = [-3, -2, -1, 0, 1, 2, 3];
 const NEIGHBORS: [(i64, i64); 4] = [(-1, 0), (0, -1), (1, 0), (0, 1)];
 
+/// Since the borders are '.', then at some points you can go the the borders, "walk" along them
+/// and then go inside the quadrant again.
+/// 
+/// Hence when we are below the [`MAX_EXPANSION`] we brute-force the solution.
+/// When we are at the [`MAX_EXPANSION`] for shift we assume that the shortest path from here
+/// would be to walk along the borders.
 fn find_reachable_garden_plots(
     steps: u64,
     grid: &Vec<Vec<char>>,
@@ -47,13 +53,17 @@ fn find_reachable_garden_plots(
                     if distance > steps {
                         continue;
                     }
+                    // inside a quadrant
                     if distance % 2 == steps % 2 && distance <= steps {
                         plots += 1;
                     }
+                    // corner
                     if row_shift.abs() == LIMIT_EXPANSION && col_shift.abs() == LIMIT_EXPANSION {
                         plots +=
                             find_solutions(distance, true, steps, columns as u64, &mut cached);
-                    } else if row_shift.abs() == LIMIT_EXPANSION
+                    } 
+                    // edge
+                    else if row_shift.abs() == LIMIT_EXPANSION
                         || col_shift.abs() == LIMIT_EXPANSION
                     {
                         plots += find_solutions(distance, false, steps, columns as u64, &mut cached);
