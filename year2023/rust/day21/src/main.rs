@@ -27,7 +27,7 @@ const NEIGHBORS: [(i64, i64); 4] = [(-1, 0), (0, -1), (1, 0), (0, 1)];
 
 /// Since the borders are '.', then at some points you can go the the borders, "walk" along them
 /// and then go inside the quadrant again.
-/// 
+///
 /// Hence when we are below the [`MAX_EXPANSION`] we brute-force the solution.
 /// When we are at the [`MAX_EXPANSION`] for shift we assume that the shortest path from here
 /// would be to walk along the borders.
@@ -59,14 +59,14 @@ fn find_reachable_garden_plots(
                     }
                     // corner
                     if row_shift.abs() == LIMIT_EXPANSION && col_shift.abs() == LIMIT_EXPANSION {
-                        plots +=
-                            find_solutions(distance, true, steps, columns as u64, &mut cached);
-                    } 
+                        plots += find_solutions(distance, true, steps, columns as u64, &mut cached);
+                    }
                     // edge
                     else if row_shift.abs() == LIMIT_EXPANSION
                         || col_shift.abs() == LIMIT_EXPANSION
                     {
-                        plots += find_solutions(distance, false, steps, columns as u64, &mut cached);
+                        plots +=
+                            find_solutions(distance, false, steps, columns as u64, &mut cached);
                     }
                 }
             }
