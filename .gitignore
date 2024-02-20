@@ -570,3 +570,6 @@ dmypy.json
 dist-newstyle
 
 .DS_Store
+
+# Elixir / Erlang
+erl_crash.dump

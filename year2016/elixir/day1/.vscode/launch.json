@@ -6,6 +6,20 @@
     "configurations": [
         {
             "type": "mix_task",
+            "name": "mix run",
+            "request": "launch",
+            "task": "run",
+            "taskArgs": [
+                "day1.exs"
+            ],
+            "startApps": true,
+            "projectDir": "${workspaceRoot}",
+            "requireFiles": [
+                "day1.exs"
+            ]
+        },
+        {
+            "type": "mix_task",
             "name": "mix (Default task)",
             "request": "launch",
             "projectDir": "${workspaceRoot}"
