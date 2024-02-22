@@ -42,6 +42,7 @@ I mainly solve them for fun, but I also use the challenges to improve my coding 
 
 - Dart
 - Haskell
+- Elixir
 
 ## 2015 - completed
 
