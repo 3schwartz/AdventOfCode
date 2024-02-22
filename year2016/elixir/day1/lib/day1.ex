@@ -1,5 +1,4 @@
 defmodule Day1 do
-
   @spec manhattan_distance({number, number}) :: number
   def manhattan_distance({x, y}) do
     abs(x) + abs(y)
@@ -17,12 +16,13 @@ defmodule Day1 do
   def apply_movement(move, {px, py}, {dx, dy}) do
     count = String.slice(move, 1..-1)
     count = String.to_integer(count)
-    new_px = px + (dx * count)
-    new_py = py + (dy * count)
+    new_px = px + dx * count
+    new_py = py + dy * count
     {new_px, new_py}
   end
 
-  @spec apply_action(String.t(), {{number, number}, {number, number}}) :: {{number, number}, {number, number}}
+  @spec apply_action(String.t(), {{number, number}, {number, number}}) ::
+          {{number, number}, {number, number}}
   def apply_action(move, {{px, py}, {dx, dy}}) do
     {dxn, dyn} = rotate(move, {dx, dy})
     {pxn, pyn} = apply_movement(move, {px, py}, {dxn, dyn})
@@ -34,7 +34,10 @@ defmodule Day1 do
   def apply_movement_with_set(move, {px, py}, {dx, dy}, set) do
     count = String.slice(move, 1..-1)
     count = String.to_integer(count)
-    case Enum.reduce_while(1..count, {{px, py}, {dx, dy}, set}, fn _c, state -> apply_move(state) end) do
+
+    case Enum.reduce_while(1..count, {{px, py}, {dx, dy}, set}, fn _, state ->
+           apply_move(state)
+         end) do
       {:found, x, y} -> {:found, {x, y}}
       {{npx, npy}, {ndx, ndy}, nset} -> {{npx, npy}, {ndx, ndy}, nset}
     end
@@ -46,13 +49,13 @@ defmodule Day1 do
   def apply_move({{px, py}, {dx, dy}, set}) do
     nx = px + dx
     ny = py + dy
+
     if MapSet.member?(set, {nx, ny}) do
       {:halt, {:found, nx, ny}}
     else
       {:cont, {{nx, ny}, {dx, dy}, MapSet.put(set, {nx, ny})}}
     end
   end
-
 
   @spec apply_action_with_set(binary(), {{any(), any()}, {number(), number()}, any()}) ::
           {:cont, {{any(), any()}, {any(), any()}, any()}} | {:halt, {:found, {any(), any()}}}
@@ -64,5 +67,4 @@ defmodule Day1 do
       {{npx, npy}, {ndx, ndy}, nset} -> {:cont, {{npx, npy}, {ndx, ndy}, nset}}
     end
   end
-
 end
