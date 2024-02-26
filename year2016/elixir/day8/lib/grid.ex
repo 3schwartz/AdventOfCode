@@ -58,6 +58,7 @@ defmodule Grid do
     end)
   end
 
+  @spec parse_command(map :: map(), command :: binary()) :: map()
   def parse_command(map, "rotate column x=" <> rest) do
     {col, count} = parse_numbers(rest, " by ")
 
@@ -79,6 +80,7 @@ defmodule Grid do
     turn_on_lights(map, column, row)
   end
 
+  @spec print(Map.t({integer(), integer()}, String.t()), integer(), integer()) :: :ok
   def print(map, row, col) do
     0..(row - 1)
     |> Enum.each(fn r ->
@@ -89,7 +91,5 @@ defmodule Grid do
     end)
 
     IO.puts("\n")
-    IO.puts("\n")
-    map
   end
 end
