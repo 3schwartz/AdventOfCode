@@ -15,10 +15,9 @@ defmodule Grid do
     Enum.reduce(list, map, fn {c, e}, m -> Map.put(m, c, e) end)
   end
 
-  def rotate(list, 0), do: list
-
-  def rotate([first | rest], count) do
-    rotate(rest ++ [first], count - 1)
+  def rotate(list, count) do
+    {first, second} = Enum.split(list, count)
+    second ++ first
   end
 
   def rotate_row(list, count) do
