@@ -1,4 +1,5 @@
 use anyhow::Result;
+use std::fmt::Write;
 use std::fs;
 
 fn main() -> Result<()> {
@@ -37,19 +38,17 @@ fn main() -> Result<()> {
         let xored = chunk.iter().fold(0, |acc, &x| acc ^ x);
         elements.push(xored)
     }
-    let hex_string: String = elements.iter().map(|x| format!("{:02x}", x)).collect();
+    let mut hex_string = String::new();
+    for x in &elements {
+        write!(&mut hex_string, "{:02x}", x).unwrap();
+    }
 
-    println!("{}", hex_string);
+    println!("Part 2: {}", hex_string);
 
     Ok(())
 }
 
-fn execute_round(
-    list: &mut Vec<u8>,
-    lengths: &Vec<usize>,
-    cursor: &mut usize,
-    skip_size: &mut usize,
-) {
+fn execute_round(list: &mut [u8], lengths: &[usize], cursor: &mut usize, skip_size: &mut usize) {
     let list_length = list.len();
 
     for length in lengths.iter().copied() {
