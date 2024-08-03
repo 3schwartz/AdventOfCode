@@ -1,17 +1,30 @@
 use anyhow::{anyhow, Result};
-use std::fs;
+use std::{cmp::Ordering, collections::BTreeSet, fs};
 
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day11_data.txt")?;
 
+    let mut visited: BTreeSet<Coordinate> = BTreeSet::new();
+
     let final_coord = input
         .split(',')
-        .try_fold(Coordinate::init(0, 0), |acc, dir| acc.movement(dir.trim()))?;
+        .try_fold(Coordinate::init(0, 0), |acc, dir| {
+            let updated = acc.movement(dir.trim())?;
+            visited.insert(updated.clone());
+            Ok::<Coordinate, anyhow::Error>(updated)
+        })?;
+
+    let furthest = visited
+        .iter()
+        .max()
+        .ok_or_else(|| anyhow!("not able to find max"))?;
 
     println!("Part 1: {}", final_coord.manhattan());
+    println!("Part 2: {}", furthest.manhattan());
     Ok(())
 }
 
+#[derive(Clone, PartialEq, Eq)]
 struct Coordinate {
     col: i32,
     row: i32,
@@ -42,6 +55,18 @@ impl Coordinate {
         } else {
             std::cmp::max(self.col.abs(), self.row.abs()) as u32
         }
+    }
+}
+
+impl Ord for Coordinate {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.manhattan().cmp(&other.manhattan())
+    }
+}
+
+impl PartialOrd for Coordinate {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 
