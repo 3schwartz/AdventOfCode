@@ -32,7 +32,7 @@ struct Coordinate {
 
 impl Coordinate {
     fn init(col: i32, row: i32) -> Self {
-        return Self { col, row };
+        Self { col, row }
     }
 
     fn movement(&self, direction: &str) -> Result<Coordinate> {
