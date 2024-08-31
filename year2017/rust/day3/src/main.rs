@@ -25,8 +25,8 @@ fn part2(final_position: i32) -> i32 {
     loop {
         for _ in 1u8..=2 {
             for __ in 1..=steps {
-                x = x + dx;
-                y = y + dy;
+                x += dx;
+                y += dy;
                 last_sum = get_neigbors(x, y, &map);
                 if last_sum >= final_position {
                     found = true;
@@ -73,8 +73,8 @@ fn part1(final_position: i32) -> i32 {
     loop {
         for _ in 1u8..=2 {
             for __ in 1..=steps {
-                x = x + dx;
-                y = y + dy;
+                x += dx;
+                y += dy;
                 position += 1;
                 if position == final_position {
                     found = true;
@@ -92,6 +92,5 @@ fn part1(final_position: i32) -> i32 {
         steps += 1;
     }
 
-    let manhattan = x.abs() + y.abs();
-    return manhattan;
+    x.abs() + y.abs()
 }

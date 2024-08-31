@@ -59,7 +59,7 @@ impl Condition {
             "==" => Condition::Equal,
             _ => return Err(anyhow!(input.to_string())),
         };
-        return Ok(condition);
+        Ok(condition)
     }
 }
 

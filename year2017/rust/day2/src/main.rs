@@ -14,7 +14,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn find_checksum_evenly(input: &String) -> Result<u32> {
+fn find_checksum_evenly(input: &str) -> Result<u32> {
     let mut checksum = 0;
     for line in input.lines() {
         let evenly = find_evenly(line)?;
@@ -35,10 +35,10 @@ fn find_evenly(input: &str) -> Result<u32> {
             }
         }
     }
-    return Err(anyhow!("{input}"));
+    Err(anyhow!("{input}"))
 }
 
-fn find_checksum_min_max(input: &String) -> Result<u32> {
+fn find_checksum_min_max(input: &str) -> Result<u32> {
     let mut checksum = 0;
     for line in input.lines() {
         let (min, max) = find_min_max(line)?;
@@ -60,6 +60,5 @@ fn find_numbers(input: &str) -> Result<Vec<u32>> {
     input
         .split_whitespace()
         .map(|s| s.parse::<u32>().map_err(|e| anyhow!(e)))
-        .into_iter()
         .collect::<Result<Vec<u32>>>()
 }

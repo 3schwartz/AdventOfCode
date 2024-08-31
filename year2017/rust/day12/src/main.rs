@@ -12,22 +12,19 @@ fn main() -> Result<()> {
 
     let mut visited = HashSet::<u32>::new();
     let mut queue: Vec<u32> = Vec::from([0]);
-    loop {
-        if let Some(next) = queue.pop() {
-            if visited.contains(&next) {
-                continue;
-            }
-            visited.insert(next);
 
-            if let Some(connections) = connection_map.get(&next) {
-                for connection in connections {
-                    queue.push(*connection);
-                }
-            } else {
-                continue;
+    while let Some(next) = queue.pop() {
+        if visited.contains(&next) {
+            continue;
+        }
+        visited.insert(next);
+
+        if let Some(connections) = connection_map.get(&next) {
+            for connection in connections {
+                queue.push(*connection);
             }
         } else {
-            break;
+            continue;
         }
     }
 
@@ -65,5 +62,5 @@ fn create_connection_map(input: &str) -> Result<HashMap<u32, HashSet<u32>>> {
         }
     }
 
-    return Ok(connection_map);
+    Ok(connection_map)
 }

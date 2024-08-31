@@ -15,7 +15,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn next_modulo(numbers: &Vec<u32>) -> u32 {
+fn next_modulo(numbers: &[u32]) -> u32 {
     let len = numbers.len();
     let step = len / 2;
     let mut sum = 0;

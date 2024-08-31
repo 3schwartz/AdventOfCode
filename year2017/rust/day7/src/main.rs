@@ -26,9 +26,7 @@ fn get_unique<'a>(programs: &'a HashMap<&str, Program>, leafs_seen: HashSet<&str
     unique[0]
 }
 
-fn create_programs<'a>(
-    input: &'a str,
-) -> Result<(HashMap<&'a str, Program<'a>>, HashSet<&'a str>)> {
+fn create_programs(input: &str) -> Result<(HashMap<&str, Program>, HashSet<&str>)> {
     let mut programs: HashMap<&str, Program> = HashMap::new();
     let mut leafs_seen: HashSet<&str> = HashSet::new();
     for line in input.lines() {
@@ -64,8 +62,7 @@ impl Node {
         let leafs: Result<Vec<Node>> = program
             .leafs
             .iter()
-            .map(|leaf| Node::from(&leaf, programs))
-            .into_iter()
+            .map(|leaf| Node::from(leaf, programs))
             .collect();
         Ok(Self {
             _name: node.to_string(),
@@ -85,7 +82,7 @@ impl Node {
         let mut weights: HashMap<u32, Vec<u32>> = HashMap::new();
         for leaf in &mut self.leafs {
             let leaf_weight = leaf.get_total_weight();
-            let weights = weights.entry(leaf_weight).or_insert(vec![]);
+            let weights = weights.entry(leaf_weight).or_default();
             weights.push(leaf.weight);
         }
         if weights.len() == 1 {

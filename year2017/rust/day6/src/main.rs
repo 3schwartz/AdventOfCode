@@ -44,7 +44,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn max_idx(vector: &Vec<u32>) -> usize {
+fn max_idx(vector: &[u32]) -> usize {
     let mut idx = 0;
     let mut max = u32::MIN;
     for (i, int) in vector.iter().enumerate() {
