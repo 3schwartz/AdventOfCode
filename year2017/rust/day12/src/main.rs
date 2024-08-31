@@ -10,8 +10,33 @@ fn main() -> Result<()> {
 
     let connection_map = create_connection_map(&input)?;
 
+    let group_0 = find_group_members(0, &connection_map);
+
+    println!("Part 1: {}", group_0.len());
+
+    let group_count = find_group_count(&connection_map);
+
+    println!("Part 2: {}", group_count);
+    Ok(())
+}
+
+fn find_group_count(connection_map: &HashMap<u32, HashSet<u32>>) -> u32 {
     let mut visited = HashSet::<u32>::new();
-    let mut queue: Vec<u32> = Vec::from([0]);
+    let mut group_count = 0;
+    for start in connection_map.keys() {
+        if visited.contains(start) {
+            continue;
+        }
+        group_count += 1;
+        let group_visisted = find_group_members(*start, connection_map);
+        visited.extend(group_visisted);
+    }
+    group_count
+}
+
+fn find_group_members(start: u32, connection_map: &HashMap<u32, HashSet<u32>>) -> HashSet<u32> {
+    let mut visited = HashSet::<u32>::new();
+    let mut queue: Vec<u32> = Vec::from([start]);
 
     while let Some(next) = queue.pop() {
         if visited.contains(&next) {
@@ -27,9 +52,7 @@ fn main() -> Result<()> {
             continue;
         }
     }
-
-    println!("Part 1: {}", visited.len());
-    Ok(())
+    visited
 }
 
 fn create_connection_map(input: &str) -> Result<HashMap<u32, HashSet<u32>>> {
