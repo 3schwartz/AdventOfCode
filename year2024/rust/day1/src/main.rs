@@ -27,15 +27,18 @@ fn main() -> Result<()> {
     first.sort();
     second.sort();
 
-    let mut diff = 0;
-    let mut similaraity = 0;
-    for i in 0..first.len() {
-        diff += (first[i] - second[i]).abs();
-        similaraity += first[i] * second_map.get(&first[i]).unwrap_or(&0)
-    }
+    let diff = first
+        .iter()
+        .zip(&second)
+        .map(|(a, b)| (a - b).abs())
+        .sum::<i32>();
+    let similarity = first
+        .iter()
+        .map(|v| v * second_map.get(v).unwrap_or(&0))
+        .sum::<i32>();
 
     println!("Part 1: {}", diff);
-    println!("Part 2: {}", similaraity);
+    println!("Part 2: {}", similarity);
 
     Ok(())
 }
