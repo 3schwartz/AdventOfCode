@@ -18,10 +18,7 @@ fn main() -> Result<()> {
         first.push(parts[0]);
         second.push(parts[1]);
 
-        second_map
-            .entry(parts[1])
-            .and_modify(|e| *e += 1)
-            .or_insert(1);
+        *second_map.entry(parts[1]).or_insert(0) += 1;
     }
 
     first.sort();
