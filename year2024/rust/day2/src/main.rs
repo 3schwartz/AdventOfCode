@@ -41,7 +41,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn is_line_save(parts: &Vec<i32>) -> bool {
+fn is_line_save(parts: &[i32]) -> bool {
     let mut is_negative = None;
 
     for i in 1..parts.len() {
@@ -58,5 +58,5 @@ fn is_line_save(parts: &Vec<i32>) -> bool {
             return false;
         }
     }
-    return true;
+    true
 }
