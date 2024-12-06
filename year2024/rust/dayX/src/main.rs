@@ -10,3 +10,24 @@ fn main() -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_part_1() -> Result<()> {
+        // Arrange
+        // Act
+        // Assert
+        Ok(())
+    }
+
+    #[test]
+    fn test_part_2() -> Result<()> {
+        // Arrange
+        // Act
+        // Assert
+        Ok(())
+    }
+}
