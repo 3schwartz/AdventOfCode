@@ -63,10 +63,10 @@ fn correct(test_value: u128, numbers: &[u128], part_2: bool) -> bool {
         };
     }
 
-    return false;
+    false
 }
 
-fn check(test_value: u128, numbers: &Vec<u128>, part_2: bool) -> bool {
+fn check(test_value: u128, numbers: &[u128], part_2: bool) -> bool {
     let combinations = if part_2 {
         generate_operator_combinations_e(numbers.len())
     } else {
@@ -96,16 +96,6 @@ fn check(test_value: u128, numbers: &Vec<u128>, part_2: bool) -> bool {
         }
     }
     false
-}
-
-fn smallest_power_of_ten(n: u128) -> u128 {
-    let mut power = 1;
-
-    while power < n {
-        power *= 10;
-    }
-
-    power
 }
 
 fn generate_operator_combinations_e(n: usize) -> Vec<String> {
@@ -168,18 +158,6 @@ mod test {
         // Arrange
         // Act
         // Assert
-        Ok(())
-    }
-
-    #[test]
-    fn test_array() -> Result<()> {
-        let a = [1, 2];
-
-        let b = &a[2..];
-        let c = &a[1..];
-
-        assert_eq!(b, []);
-
         Ok(())
     }
 
