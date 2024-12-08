@@ -4,33 +4,69 @@ use std::fs;
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day7_data.txt")?;
 
-    let mut total_calibration_1: u64 = 0;
-    let mut total_calibration_2: u64 = 0;
+    let mut total_calibration_1: u128 = 0;
+    let mut total_calibration_2: u128 = 0;
+    let mut total_calibration_2_v2: u128 = 0;
 
     for line in input.lines() {
         let parts: Vec<&str> = line.split(": ").collect();
         assert_eq!(2, parts.len());
-        let test_value = parts[0].parse::<u64>()?;
+        let test_value = parts[0].parse::<u128>()?;
         let numbers = parts[1]
             .split(' ')
-            .map(|c| c.parse::<u64>())
-            .collect::<Result<Vec<u64>, _>>()?;
+            .map(|c| c.parse::<u128>())
+            .collect::<Result<Vec<u128>, _>>()?;
 
-        if check(test_value, &numbers, false) {
+        if correct(test_value, &numbers, false) {
             total_calibration_1 += test_value;
         }
         if check(test_value, &numbers, true) {
             total_calibration_2 += test_value;
         }
+        if correct(test_value, &numbers, true) {
+            total_calibration_2_v2 += test_value;
+        }
     }
 
     println!("Part 1: {}", total_calibration_1);
     println!("Part 2: {}", total_calibration_2);
+    println!("Part 2: {}", total_calibration_2_v2);
 
     Ok(())
 }
 
-fn check(test_value: u64, numbers: &Vec<u64>, part_2: bool) -> bool {
+fn correct(test_value: u128, numbers: &[u128], part_2: bool) -> bool {
+    if numbers.len() == 1 {
+        return test_value == numbers[0];
+    };
+    if numbers[0] > test_value {
+        return false;
+    }
+
+    let mut sum = Vec::from([numbers[0] + numbers[1]]);
+    sum.extend_from_slice(&numbers[2..]);
+    if correct(test_value, &sum, part_2) {
+        return true;
+    };
+
+    let mut prod = Vec::from([numbers[0] * numbers[1]]);
+    prod.extend_from_slice(&numbers[2..]);
+    if correct(test_value, &prod, part_2) {
+        return true;
+    };
+
+    if part_2 {
+        let mut concat = Vec::from([format!("{}{}", numbers[0], numbers[1]).parse().unwrap()]);
+        concat.extend_from_slice(&numbers[2..]);
+        if correct(test_value, &concat, part_2) {
+            return true;
+        };
+    }
+
+    return false;
+}
+
+fn check(test_value: u128, numbers: &Vec<u128>, part_2: bool) -> bool {
     let combinations = if part_2 {
         generate_operator_combinations_e(numbers.len())
     } else {
@@ -39,8 +75,7 @@ fn check(test_value: u64, numbers: &Vec<u64>, part_2: bool) -> bool {
     for combination in combinations {
         assert_eq!(combination.len() + 1, numbers.len());
 
-        let mut total: u64 = numbers[0];
-
+        let mut total: u128 = numbers[0];
         for (i, c) in combination.chars().enumerate() {
             if c == '+' {
                 total += numbers[i + 1]
@@ -48,14 +83,10 @@ fn check(test_value: u64, numbers: &Vec<u64>, part_2: bool) -> bool {
                 total *= numbers[i + 1]
             } else if c == '|' {
                 let n = numbers[i + 1];
-                let smallest = smallest_power_of_ten(n);
-                if let Some(next) = total.checked_mul(smallest) {
-                    total = next + n;
-                } else {
-                    break;
-                }
+                let f = format!("{}{}", total, n).parse().unwrap();
+                total = f;
             }
-            if total >= test_value {
+            if total > test_value {
                 break;
             }
         }
@@ -67,7 +98,7 @@ fn check(test_value: u64, numbers: &Vec<u64>, part_2: bool) -> bool {
     false
 }
 
-fn smallest_power_of_ten(n: u64) -> u64 {
+fn smallest_power_of_ten(n: u128) -> u128 {
     let mut power = 1;
 
     while power < n {
@@ -128,6 +159,8 @@ fn generate_operator_combinations(n: usize) -> Vec<String> {
 
 #[cfg(test)]
 mod test {
+    use anyhow::Ok;
+
     use super::*;
 
     #[test]
@@ -139,19 +172,31 @@ mod test {
     }
 
     #[test]
+    fn test_array() -> Result<()> {
+        let a = [1, 2];
+
+        let b = &a[2..];
+        let c = &a[1..];
+
+        assert_eq!(b, []);
+
+        Ok(())
+    }
+
+    #[test]
     fn test_part_2() -> Result<()> {
         let input = fs::read_to_string("../../data/day7_test_data.txt")?;
 
-        let mut total_calibration: u64 = 0;
+        let mut total_calibration: u128 = 0;
 
         for line in input.lines() {
             let parts: Vec<&str> = line.split(": ").collect();
             assert_eq!(2, parts.len());
-            let test_value = parts[0].parse::<u64>()?;
+            let test_value = parts[0].parse::<u128>()?;
             let numbers = parts[1]
                 .split(' ')
-                .map(|c| c.parse::<u64>())
-                .collect::<Result<Vec<u64>, _>>()?;
+                .map(|c| c.parse::<u128>())
+                .collect::<Result<Vec<u128>, _>>()?;
 
             if check(test_value, &numbers, true) {
                 total_calibration += test_value;
