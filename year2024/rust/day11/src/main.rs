@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use std::fs;
+use std::{collections::HashMap, fs};
 
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day11_data.txt")?;
@@ -10,7 +10,7 @@ fn main() -> Result<()> {
 
     println!("Part 1: {}", count);
 
-    let count = stone_count(&stones, 75);
+    let count = stone_map(&stones, 75);
 
     println!("Part 2: {}", count);
 
@@ -23,6 +23,40 @@ fn stones(input: &str) -> Result<Vec<u64>> {
         .map(|c| c.parse::<u64>())
         .collect::<Result<Vec<u64>, _>>()
         .map_err(|e| anyhow!(e))
+}
+
+fn stone_map(input: &[u64], count: u64) -> u64 {
+    let mut stones = HashMap::new();
+    for i in input {
+        stones.entry(*i).and_modify(|e| *e += 1).or_insert(1);
+    }
+    for _ in 0..count {
+        let mut next_stones = HashMap::new();
+        for (stone, l) in stones {
+            if stone == 0 {
+                next_stones.entry(1).and_modify(|e| *e += l).or_insert(l);
+            } else if has_even(stone) {
+                let new_stones = split_into_parts(stone);
+                for new_stone in new_stones {
+                    next_stones
+                        .entry(new_stone)
+                        .and_modify(|e| *e += l)
+                        .or_insert(l);
+                }
+            } else {
+                next_stones
+                    .entry(stone * 2024)
+                    .and_modify(|e| *e += l)
+                    .or_insert(l);
+            }
+        }
+        stones = next_stones;
+    }
+    let mut count = 0;
+    for v in stones.values() {
+        count += v;
+    }
+    count
 }
 
 fn stone_count(stones: &[u64], count: u64) -> usize {
