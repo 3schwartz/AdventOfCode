@@ -114,10 +114,9 @@ impl Game {
         if determinant == 0 {
             return None;
         }
-        let invers_without_det = [[coef[1][1], -coef[0][1]], [-coef[1][0], coef[0][0]]];
 
-        let a = (invers_without_det[0][0] * f_x + invers_without_det[0][1] * f_y) / determinant;
-        let b = (invers_without_det[1][0] * f_x + invers_without_det[1][1] * f_y) / determinant;
+        let a = (coef[1][1] * f_x - coef[0][1] * f_y) / determinant;
+        let b = (-coef[1][0] * f_x + coef[0][0] * f_y) / determinant;
         if self.a.0 * a + self.b.0 * b != f_x || self.a.1 * a + self.b.1 * b != f_y {
             return None;
         }
@@ -135,9 +134,6 @@ impl Game {
             if queue.is_empty() {
                 break;
             }
-            // if cost > 500 {
-            //     break;
-            // }
             if !queue.contains_key(&cost) {
                 cost += 1;
                 continue;
