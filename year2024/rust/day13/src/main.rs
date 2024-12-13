@@ -9,21 +9,31 @@ fn main() -> Result<()> {
 
     let games = Game::make_games(&input);
     let mut cost = 0;
+    let mut cost_det = 0;
+    let mut part_2 = 0;
     for game in games {
         if let Some(c) = game.find_cost() {
             cost += c;
         }
+        if let Some(c) = game.find_cost_using_determinant(0) {
+            cost_det += c;
+        }
+        if let Some(c) = game.find_cost_using_determinant(10000000000000) {
+            part_2 += c;
+        }
     }
 
     println!("Part 1: {}", cost);
+    println!("Part 1: {}", cost_det);
+    println!("Part 2: {}", part_2);
 
     Ok(())
 }
 
 struct Game {
-    a: (u32, u32),
-    b: (u32, u32),
-    f: (u32, u32),
+    a: (i128, i128),
+    b: (i128, i128),
+    f: (i128, i128),
 }
 
 impl Game {
@@ -45,12 +55,12 @@ impl Game {
             let a_x = a_parts[0]
                 .strip_prefix("X+")
                 .unwrap()
-                .parse::<u32>()
+                .parse::<i128>()
                 .unwrap();
             let a_y = a_parts[1]
                 .strip_prefix("Y+")
                 .unwrap()
-                .parse::<u32>()
+                .parse::<i128>()
                 .unwrap();
 
             let b_parts = lines[1]
@@ -61,12 +71,12 @@ impl Game {
             let b_x = b_parts[0]
                 .strip_prefix("X+")
                 .unwrap()
-                .parse::<u32>()
+                .parse::<i128>()
                 .unwrap();
             let b_y = b_parts[1]
                 .strip_prefix("Y+")
                 .unwrap()
-                .parse::<u32>()
+                .parse::<i128>()
                 .unwrap();
 
             let f_parts = lines[2]
@@ -77,12 +87,12 @@ impl Game {
             let f_x = f_parts[0]
                 .strip_prefix("X=")
                 .unwrap()
-                .parse::<u32>()
+                .parse::<i128>()
                 .unwrap();
             let f_y = f_parts[1]
                 .strip_prefix("Y=")
                 .unwrap()
-                .parse::<u32>()
+                .parse::<i128>()
                 .unwrap();
             games.push(Game {
                 a: (a_x, a_y),
@@ -93,7 +103,28 @@ impl Game {
         games
     }
 
-    fn find_cost(&self) -> Option<u32> {
+    /// The game has unique solutions, which can be determined by solving the
+    /// corresponding system of linear equations.
+    fn find_cost_using_determinant(&self, shift: i128) -> Option<i128> {
+        let f_x = self.f.0 + shift;
+        let f_y = self.f.1 + shift;
+
+        let coef = [[self.a.0, self.b.0], [self.a.1, self.b.1]];
+        let determinant = coef[0][0] * coef[1][1] - coef[0][1] * coef[1][0];
+        if determinant == 0 {
+            return None;
+        }
+        let invers_without_det = [[coef[1][1], -coef[0][1]], [-coef[1][0], coef[0][0]]];
+
+        let a = (invers_without_det[0][0] * f_x + invers_without_det[0][1] * f_y) / determinant;
+        let b = (invers_without_det[1][0] * f_x + invers_without_det[1][1] * f_y) / determinant;
+        if self.a.0 * a + self.b.0 * b != f_x || self.a.1 * a + self.b.1 * b != f_y {
+            return None;
+        }
+        Some(a * 3 + b)
+    }
+
+    fn find_cost(&self) -> Option<i128> {
         let mut queue = HashMap::new();
         queue.insert(0, HashSet::from([(0, 0)]));
         let mut seen = HashSet::from([(0, 0)]);
