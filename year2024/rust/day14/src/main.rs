@@ -1,19 +1,42 @@
 use anyhow::Result;
-use std::{collections::BTreeMap, fs};
+
+use std::{
+    collections::BTreeMap,
+    fs,
+    time::{self},
+};
 
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day14_data.txt")?;
 
     let hall = Hall::make_map(&input, 101, 103);
+    println!("Map made");
+
     let updated = hall.rotate(100);
     let count = updated.quandrant_count();
 
     println!("Part 1: {}", count);
 
+    let updated = hall.rotate_memo(1_000_000);
+    let count = updated.quandrant_count();
+    println!("Part 2: {}", count);
+
+    let time_2 = time::Instant::now();
+    let updated = hall.rotate(1_000_000);
+    let count = updated.quandrant_count();
+
+    println!(
+        "Part 2 Elapsed: {}",
+        time::Instant::now()
+            .saturating_duration_since(time_2)
+            .as_millis()
+    );
+    println!("Part 2: {}", count);
+
     Ok(())
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, PartialOrd, Eq, Ord)]
 struct Robot {
     x: i32,
     y: i32,
@@ -25,7 +48,7 @@ impl Robot {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, PartialOrd, Eq, Ord)]
 struct Hall {
     map: BTreeMap<(i32, i32), Vec<Robot>>,
     x_size: i32,
@@ -61,7 +84,37 @@ impl Hall {
             }
             counts[i] = q_count;
         }
-        counts.iter().fold(1, |acc, e| acc * e)
+        counts.iter().product::<usize>()
+    }
+
+    fn rotate_memo(&self, rotations: usize) -> Self {
+        let mut current = self.clone();
+        let mut seen = BTreeMap::new();
+        let mut r = 0;
+        let mut has_jumped = false;
+        loop {
+            if r == rotations {
+                break;
+            }
+            if has_jumped {
+                current = current.update_map();
+            } else if let Some(step) = seen.get(&current) {
+                let jump = r - step;
+                let inc = (rotations - r) / jump;
+                r += jump * inc;
+                has_jumped = true;
+                continue;
+            } else {
+                seen.insert(current.clone(), r);
+                current = current.update_map();
+            }
+
+            r += 1;
+        }
+        for _ in 0..rotations {
+            if seen.contains_key(&current) {}
+        }
+        current
     }
 
     fn rotate(&self, rotations: usize) -> Self {
@@ -140,6 +193,21 @@ mod test {
         // Act
         let hall = Hall::make_map(&input, 11, 7);
         let updated = hall.rotate(100);
+        let count = updated.quandrant_count();
+
+        // Assert
+        assert_eq!(count, 12);
+        Ok(())
+    }
+
+    #[test]
+    fn test_part_1_memo() -> Result<()> {
+        // Arrange
+        let input = fs::read_to_string("../../data/day14_test_data.txt")?;
+
+        // Act
+        let hall = Hall::make_map(&input, 11, 7);
+        let updated = hall.rotate_memo(100);
         let count = updated.quandrant_count();
 
         // Assert
