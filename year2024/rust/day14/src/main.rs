@@ -1,8 +1,10 @@
 use anyhow::Result;
 
+use std::fs::File;
+use std::io::Write;
 use std::{
     collections::BTreeMap,
-    fs,
+    fs::{self},
     time::{self},
 };
 
@@ -16,6 +18,8 @@ fn main() -> Result<()> {
     let count = updated.quandrant_count();
 
     println!("Part 1: {}", count);
+
+    let _ = hall.rotate_with_print(300);
 
     let updated = hall.rotate_memo(1_000_000);
     let count = updated.quandrant_count();
@@ -117,6 +121,33 @@ impl Hall {
         current
     }
 
+    fn rotate_with_print(&self, rotations: usize) -> Self {
+        let mut current = self.clone();
+        let mut file = File::create("output.txt").unwrap();
+        for r in 0..rotations {
+            current = current.update_map();
+            writeln!(file, "Rotations: {}", r).unwrap();
+            // println!("Rotations: {}", r);
+            current.print(&mut file);
+        }
+        current
+    }
+
+    fn print(&self, file: &mut File) {
+        for y in 0..self.y_size {
+            for x in 0..self.x_size {
+                if self.map.contains_key(&(x, y)) {
+                    write!(file, "#").unwrap();
+                } else {
+                    write!(file, ".").unwrap();
+                }
+            }
+            write!(file, "\n").unwrap();
+        }
+        write!(file, "\n").unwrap();
+        write!(file, "\n").unwrap();
+    }
+
     fn rotate(&self, rotations: usize) -> Self {
         let mut current = self.clone();
         for _ in 0..rotations {
@@ -186,6 +217,11 @@ mod test {
     use super::*;
 
     #[test]
+    fn test_vec_equal() {
+        assert_eq!(vec![4, 2, 42], vec![4, 2, 42])
+    }
+
+    #[test]
     fn test_part_1() -> Result<()> {
         // Arrange
         let input = fs::read_to_string("../../data/day14_test_data.txt")?;
@@ -212,6 +248,22 @@ mod test {
 
         // Assert
         assert_eq!(count, 12);
+        Ok(())
+    }
+
+    #[test]
+    fn test_memo_compare() -> Result<()> {
+        // Arrange
+        let input = fs::read_to_string("../../data/day14_data.txt")?;
+
+        // Act
+        let hall = Hall::make_map(&input, 101, 103);
+
+        // Assert
+        assert_eq!(
+            hall.rotate_memo(1_000).quandrant_count(),
+            hall.rotate(1_000).quandrant_count()
+        );
         Ok(())
     }
 
