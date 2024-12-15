@@ -1,15 +1,17 @@
 use anyhow::Result;
 
+use std::collections::HashSet;
 use std::fs::File;
 use std::io::Write;
 use std::{
     collections::BTreeMap,
     fs::{self},
-    time::{self},
 };
 
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day14_data.txt")?;
+
+    println!("Count: {}", input.lines().count());
 
     let hall = Hall::make_map(&input, 101, 103);
     println!("Map made");
@@ -19,23 +21,7 @@ fn main() -> Result<()> {
 
     println!("Part 1: {}", count);
 
-    let _ = hall.rotate_with_print(300);
-
-    let updated = hall.rotate_memo(1_000_000);
-    let count = updated.quandrant_count();
-    println!("Part 2: {}", count);
-
-    let time_2 = time::Instant::now();
-    let updated = hall.rotate(1_000_000);
-    let count = updated.quandrant_count();
-
-    println!(
-        "Part 2 Elapsed: {}",
-        time::Instant::now()
-            .saturating_duration_since(time_2)
-            .as_millis()
-    );
-    println!("Part 2: {}", count);
+    let _ = hall.rotate_with_print(10_000, 300);
 
     Ok(())
 }
@@ -60,6 +46,8 @@ struct Hall {
 }
 
 impl Hall {
+    const N: [(i32, i32); 4] = [(0, 1), (0, -1), (1, 0), (-1, 0)];
+
     fn quandrant_count(&self) -> usize {
         let mut x_to = self.x_size / 2;
         let x_from = self.x_size / 2 + 1;
@@ -91,6 +79,7 @@ impl Hall {
         counts.iter().product::<usize>()
     }
 
+    #[cfg(test)]
     fn rotate_memo(&self, rotations: usize) -> Self {
         let mut current = self.clone();
         let mut seen = BTreeMap::new();
@@ -121,16 +110,47 @@ impl Hall {
         current
     }
 
-    fn rotate_with_print(&self, rotations: usize) -> Self {
+    fn rotate_with_print(&self, rotations: usize, area_threshold: u32) -> Self {
         let mut current = self.clone();
         let mut file = File::create("output.txt").unwrap();
         for r in 0..rotations {
             current = current.update_map();
-            writeln!(file, "Rotations: {}", r).unwrap();
-            // println!("Rotations: {}", r);
-            current.print(&mut file);
+            if current.areas() < area_threshold {
+                writeln!(file, "Rotations: {}", r + 1).unwrap();
+                current.print(&mut file);
+            }
         }
         current
+    }
+
+    fn areas(&self) -> u32 {
+        let mut seen = HashSet::new();
+        let mut areas = 0;
+        for y in 0..self.y_size {
+            for x in 0..self.x_size {
+                if !self.map.contains_key(&(x, y)) {
+                    continue;
+                }
+                if !seen.insert((x, y)) {
+                    continue;
+                }
+                areas += 1;
+                let mut queue = vec![(x, y)];
+                while let Some(next) = queue.pop() {
+                    for n in Hall::N {
+                        let next_n: (i32, i32) = (next.0 + n.0, next.1 + n.1);
+                        if !self.map.contains_key(&next_n) {
+                            continue;
+                        }
+                        if !seen.insert(next_n) {
+                            continue;
+                        }
+                        queue.push(next_n);
+                    }
+                }
+            }
+        }
+        areas
     }
 
     fn print(&self, file: &mut File) {
@@ -142,10 +162,10 @@ impl Hall {
                     write!(file, ".").unwrap();
                 }
             }
-            write!(file, "\n").unwrap();
+            writeln!(file).unwrap();
         }
-        write!(file, "\n").unwrap();
-        write!(file, "\n").unwrap();
+        writeln!(file).unwrap();
+        writeln!(file).unwrap();
     }
 
     fn rotate(&self, rotations: usize) -> Self {
