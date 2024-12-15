@@ -1,8 +1,6 @@
 use anyhow::Result;
 
 use std::collections::HashSet;
-use std::fs::File;
-use std::io::Write;
 use std::{
     collections::BTreeMap,
     fs::{self},
@@ -112,12 +110,11 @@ impl Hall {
 
     fn rotate_with_print(&self, rotations: usize, area_threshold: u32) -> Self {
         let mut current = self.clone();
-        let mut file = File::create("output.txt").unwrap();
         for r in 0..rotations {
             current = current.update_map();
             if current.areas() < area_threshold {
-                writeln!(file, "Rotations: {}", r + 1).unwrap();
-                current.print(&mut file);
+                println!("Rotations: {}", r + 1);
+                current.print();
             }
         }
         current
@@ -153,19 +150,19 @@ impl Hall {
         areas
     }
 
-    fn print(&self, file: &mut File) {
+    fn print(&self) {
         for y in 0..self.y_size {
             for x in 0..self.x_size {
                 if self.map.contains_key(&(x, y)) {
-                    write!(file, "#").unwrap();
+                    print!("#");
                 } else {
-                    write!(file, ".").unwrap();
+                    print!(".");
                 }
             }
-            writeln!(file).unwrap();
+            println!();
         }
-        writeln!(file).unwrap();
-        writeln!(file).unwrap();
+        println!();
+        println!();
     }
 
     fn rotate(&self, rotations: usize) -> Self {
