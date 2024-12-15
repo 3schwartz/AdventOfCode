@@ -13,6 +13,12 @@ fn main() -> Result<()> {
     let count = warehouse.gps_sum();
 
     println!("Part 1: {}", count);
+
+    let mut warehouse = BigWarehouse::from_str(&input)?;
+    warehouse.invoke(false);
+    let count = warehouse.gps_sum();
+
+    println!("Part 2: {}", count);
     Ok(())
 }
 
@@ -39,13 +45,14 @@ impl BigWarehouse {
             };
             let mut levels = HashMap::new();
             let positions = HashSet::from([self.robot]);
-            let updated = self.update(positions, n, 0, &mut levels);
+            let mut extras = HashSet::new();
+            let updated = self.update(positions, n, 0, &mut levels, &mut extras);
             if !updated {
                 continue;
             };
 
             let mut updates = HashMap::new();
-            for (level, u) in levels {
+            for u in levels.values() {
                 for u_ in u {
                     let p = (u_.0, u_.1);
                     let next = (p.0 + n.0, p.1 + n.1);
@@ -55,6 +62,9 @@ impl BigWarehouse {
             }
             for (k, v) in updates {
                 self.grid[k.1 as usize][k.0 as usize] = v;
+            }
+            for e in extras {
+                self.grid[e.1 as usize][e.0 as usize] = '.'
             }
 
             let next = (self.robot.0 + n.0, self.robot.1 + n.1);
@@ -73,6 +83,7 @@ impl BigWarehouse {
         d: (i32, i32),
         level: u32,
         levels: &mut HashMap<u32, HashSet<(i32, i32)>>,
+        extras: &mut HashSet<(i32, i32)>,
     ) -> bool {
         let mut shifts: HashSet<(i32, i32)> =
             positions.iter().map(|p| (p.0 + d.0, p.1 + d.1)).collect();
@@ -82,17 +93,17 @@ impl BigWarehouse {
         {
             return false;
         }
+        levels.insert(level, positions);
+
         if shifts
             .iter()
             .all(|&(x, y)| self.grid[y as usize][x as usize] == '.')
         {
-            levels.insert(level, positions);
             return true;
         }
 
         if d.0 != 0 {
-            levels.insert(level, positions);
-            return self.update(shifts, d, level + 1, levels);
+            return self.update(shifts, d, level + 1, levels, extras);
         }
 
         let mut updates = HashSet::new();
@@ -104,11 +115,14 @@ impl BigWarehouse {
                 updates.insert((shift.0 - 1, shift.1));
             }
         }
+
         for update in updates {
-            shifts.insert(update);
+            if shifts.insert(update) {
+                extras.insert(update);
+            }
         }
 
-        return self.update(shifts, d, level + 1, levels);
+        return self.update(shifts, d, level + 1, levels, extras);
     }
 
     fn gps_sum(&self) -> usize {
@@ -363,7 +377,7 @@ mod test {
 
         // Act
         let mut warehouse = BigWarehouse::from_str(&input)?;
-        warehouse.invoke(false);
+        warehouse.invoke(true);
         let count = warehouse.gps_sum();
 
         // Assert
