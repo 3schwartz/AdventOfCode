@@ -1,7 +1,8 @@
 use anyhow::Result;
 use std::{
     collections::{HashMap, HashSet},
-    fs,
+    fs::{self, File},
+    io::Write,
     str::FromStr,
 };
 
@@ -30,9 +31,15 @@ struct BigWarehouse {
 
 impl BigWarehouse {
     fn invoke(&mut self, debug: bool) {
-        if debug {
-            self.print();
-            println!("{}", self.actions);
+        let mut debug = if debug {
+            Some(File::create("output.txt").unwrap())
+        } else {
+            None
+        };
+
+        if let Some(ref mut file) = debug {
+            self.print(file);
+            write!(file, "{}", self.actions).unwrap();
         }
 
         for a in self.actions.chars() {
@@ -43,36 +50,37 @@ impl BigWarehouse {
                 '>' => (1, 0),
                 _ => panic!("Didn't expect movement: {}", a),
             };
-            let mut levels = HashMap::new();
+            let mut levels = vec![];
             let positions = HashSet::from([self.robot]);
-            let mut extras = HashSet::new();
-            let updated = self.update(positions, n, 0, &mut levels, &mut extras);
+            let updated = self.update(positions, n, &mut levels);
             if !updated {
+                if let Some(ref mut file) = debug {
+                    writeln!(file, "Move {} (no update)", a).unwrap();
+                    self.print(file);
+                }
                 continue;
             };
 
             let mut updates = HashMap::new();
-            for u in levels.values() {
-                for u_ in u {
-                    let p = (u_.0, u_.1);
-                    let next = (p.0 + n.0, p.1 + n.1);
-                    let next_c = self.grid[p.1 as usize][p.0 as usize];
-                    updates.insert(next, next_c);
+            for level in levels {
+                for coord in level {
+                    let next = (coord.0 + n.0, coord.1 + n.1);
+                    updates
+                        .entry(next)
+                        .or_insert_with(|| self.grid[coord.1 as usize][coord.0 as usize]);
+                    updates.entry(coord).or_insert_with(|| '.');
                 }
             }
             for (k, v) in updates {
                 self.grid[k.1 as usize][k.0 as usize] = v;
             }
-            for e in extras {
-                self.grid[e.1 as usize][e.0 as usize] = '.'
-            }
 
             let next = (self.robot.0 + n.0, self.robot.1 + n.1);
             self.robot = next;
 
-            if debug {
-                println!("Move {}", a);
-                self.print();
+            if let Some(ref mut file) = debug {
+                writeln!(file, "Move {}", a).unwrap();
+                self.print(file);
             }
         }
     }
@@ -81,11 +89,9 @@ impl BigWarehouse {
         &self,
         positions: HashSet<(i32, i32)>,
         d: (i32, i32),
-        level: u32,
-        levels: &mut HashMap<u32, HashSet<(i32, i32)>>,
-        extras: &mut HashSet<(i32, i32)>,
+        levels: &mut Vec<HashSet<(i32, i32)>>,
     ) -> bool {
-        let mut shifts: HashSet<(i32, i32)> =
+        let shifts: HashSet<(i32, i32)> =
             positions.iter().map(|p| (p.0 + d.0, p.1 + d.1)).collect();
         if shifts
             .iter()
@@ -93,7 +99,7 @@ impl BigWarehouse {
         {
             return false;
         }
-        levels.insert(level, positions);
+        levels.push(positions);
 
         if shifts
             .iter()
@@ -103,26 +109,22 @@ impl BigWarehouse {
         }
 
         if d.0 != 0 {
-            return self.update(shifts, d, level + 1, levels, extras);
+            return self.update(shifts, d, levels);
         }
 
         let mut updates = HashSet::new();
         for shift in &shifts {
             if self.grid[shift.1 as usize][shift.0 as usize] == '[' {
                 updates.insert((shift.0 + 1, shift.1));
+                updates.insert(*shift);
             }
             if self.grid[shift.1 as usize][shift.0 as usize] == ']' {
                 updates.insert((shift.0 - 1, shift.1));
+                updates.insert(*shift);
             }
         }
 
-        for update in updates {
-            if shifts.insert(update) {
-                extras.insert(update);
-            }
-        }
-
-        return self.update(shifts, d, level + 1, levels, extras);
+        return self.update(updates, d, levels);
     }
 
     fn gps_sum(&self) -> usize {
@@ -137,19 +139,19 @@ impl BigWarehouse {
         gps_sum
     }
 
-    fn print(&self) {
+    fn print(&self, file: &mut File) {
         for y in 0..self.grid.len() {
             for x in 0..self.grid[0].len() {
                 if self.robot == (x as i32, y as i32) {
-                    print!("{}", '@');
+                    write!(file, "{}", '@').unwrap();
                 } else {
-                    print!("{}", self.grid[y][x])
+                    write!(file, "{}", self.grid[y][x]).unwrap();
                 }
             }
-            println!();
+            writeln!(file).unwrap();
         }
-        println!();
-        println!();
+        writeln!(file).unwrap();
+        writeln!(file).unwrap();
     }
 }
 
@@ -366,7 +368,7 @@ mod test {
         let count = warehouse.gps_sum();
 
         // Assert
-        assert_eq!(count, 2028);
+        assert_eq!(count, 618);
         Ok(())
     }
 
