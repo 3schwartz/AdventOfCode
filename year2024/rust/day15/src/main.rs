@@ -124,7 +124,7 @@ impl BigWarehouse {
             }
         }
 
-        return self.update(updates, d, levels);
+        self.update(updates, d, levels)
     }
 
     fn gps_sum(&self) -> usize {
@@ -143,7 +143,7 @@ impl BigWarehouse {
         for y in 0..self.grid.len() {
             for x in 0..self.grid[0].len() {
                 if self.robot == (x as i32, y as i32) {
-                    write!(file, "{}", '@').unwrap();
+                    write!(file, "@").unwrap();
                 } else {
                     write!(file, "{}", self.grid[y][x]).unwrap();
                 }
@@ -276,7 +276,7 @@ impl Warehouse {
         for y in 0..self.grid.len() {
             for x in 0..self.grid[0].len() {
                 if self.robot == (x as i32, y as i32) {
-                    print!("{}", '@');
+                    print!("@");
                 } else {
                     print!("{}", self.grid[y][x])
                 }
