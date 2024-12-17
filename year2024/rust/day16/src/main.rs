@@ -1,4 +1,5 @@
 use anyhow::Result;
+use std::collections::HashMap;
 use std::fs;
 
 fn main() -> Result<()> {
@@ -8,6 +9,10 @@ fn main() -> Result<()> {
     let score = maze.find_end();
 
     println!("Part 1: {}", score);
+
+    let seats = maze.find_seats();
+
+    println!("Part 2: {}", seats);
 
     Ok(())
 }
@@ -26,8 +31,61 @@ struct Maze {
 }
 
 impl Maze {
+    fn find_seats(&self) -> usize {
+        let mut queue =
+            BTreeMap::from([(0, vec![(self.start, (1, 0), HashSet::from([self.start]))])]);
+        let mut seen = HashMap::new();
+        let mut best_paths = vec![];
+        let mut cost_best = None;
+        while let Some((cost, positions)) = queue.pop_first() {
+            for (position, direction, path) in positions {
+                if position == self.end {
+                    cost_best = Some(cost);
+                    best_paths.push(path);
+                    continue;
+                }
+                if let Some(prior_cost) = seen.get(&(position, direction)) {
+                    if cost > *prior_cost {
+                        continue;
+                    }
+                } else {
+                    seen.insert((position, direction), cost);
+                }
+                if let Some(c_b) = cost_best {
+                    if c_b < cost {
+                        queue.clear();
+                    } else {
+                        continue;
+                    }
+                }
+                if self.grid[position.1 as usize][position.0 as usize] == '#' {
+                    continue;
+                }
+                let forward = Maze::forward(position, direction);
+                let mut path_clone = path.clone();
+                path_clone.insert(position);
+                queue
+                    .entry(cost + 1)
+                    .and_modify(|v| v.push((forward, direction, path_clone.clone())))
+                    .or_insert_with(|| vec![(forward, direction, path_clone.clone())]);
+
+                for turn in [Maze::rotate_left(direction), Maze::rotate_right(direction)] {
+                    queue
+                        .entry(cost + 1_000)
+                        .and_modify(|v| v.push((position, turn, path_clone.clone())))
+                        .or_insert_with(|| vec![(position, turn, path_clone.clone())]);
+                }
+            }
+        }
+        let mut seats = HashSet::from([self.start, self.end]);
+        for path in best_paths {
+            seats.extend(path);
+        }
+        seats.len()
+    }
+
     fn find_end(&self) -> u32 {
-        let mut queue = BTreeMap::from([(0, vec![((self.start, (1, 0)))])]);
+        let mut queue = BTreeMap::from([(0, vec![(self.start, (1, 0))])]);
         let mut seen = HashSet::new();
         while let Some((cost, positions)) = queue.pop_first() {
             for (position, direction) in positions {
@@ -112,7 +170,7 @@ mod test {
     #[test]
     fn test_part_1() -> Result<()> {
         // Arrange
-        let input = fs::read_to_string("../../data/day16_data.txt")?;
+        let input = fs::read_to_string("../../data/day16_test_data.txt")?;
 
         // Act
         let maze = Maze::from_str(&input)?;
@@ -126,8 +184,14 @@ mod test {
     #[test]
     fn test_part_2() -> Result<()> {
         // Arrange
+        let input = fs::read_to_string("../../data/day16_test_data.txt")?;
+
         // Act
+        let maze = Maze::from_str(&input)?;
+        let seats = maze.find_seats();
+
         // Assert
+        assert_eq!(seats, 45);
         Ok(())
     }
 }
