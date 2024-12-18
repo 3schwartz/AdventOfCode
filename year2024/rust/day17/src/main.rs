@@ -10,9 +10,9 @@ fn main() -> Result<()> {
     println!("Part 1: {}", output.unwrap());
 
     let computer = Computer::from_str(&input)?;
-    let a = computer.find_a();
+    let part_2 = computer.solve();
 
-    println!("Part 2: {}", a);
+    println!("Part 2: {}", part_2);
 
     Ok(())
 }
@@ -22,17 +22,86 @@ use std::str::FromStr;
 
 #[derive(Clone)]
 struct Computer {
-    a: i32,
-    b: i32,
-    c: i32,
-    program: Vec<i32>,
+    a: u128,
+    b: u128,
+    c: u128,
+    program: Vec<u128>,
 }
 
 impl Computer {
-    fn find_a(&self) -> i32 {
+    fn solve(&self) -> u128 {
+        let mut queue = vec![(0, self.program.len())];
+        let mut solutions = vec![];
+        while let Some((prior_a, prior_index)) = queue.pop() {
+            if prior_index == 0 {
+                solutions.push(prior_a);
+                continue;
+            }
+            let index = prior_index - 1;
+            let expected_output = self.program[index];
+            for i in 0..8 {
+                // only look at last 3 bits
+                let a_in = (prior_a << 3) + i; // shift left since only i (and hence last 3 bits) should be evaluated
+                let (a_out, output) = Computer::decompile(a_in);
+                if output == expected_output && a_out == prior_a {
+                    queue.push((a_in, index));
+                }
+            }
+        }
+        *solutions.iter().min().unwrap()
+    }
+
+    /// The program execution only depends on the last three
+    /// bits of `a` since it starts with:
+    /// b = a % 8
+    ///
+    /// Later, we have:
+    /// c = a >> b
+    /// This introduces a dependency on higher bits of `a`.
+    /// Likewise:
+    /// b ^= c
+    /// may temporarily depend on higher bits. However, the final
+    /// modulo operation ensures only the last three bits of `b`
+    /// are used:
+    /// output = b % 8
+    ///
+    /// The value of `a` is then shifted for the next operation,
+    /// which can be seen as examining the next three bits:
+    /// a = a >> 3;
+    ///
+    /// Program: 2,4, 1,1, 7,5, 1,5, 0,3, 4,4, 5,5, 3,0
+    fn decompile(mut a: u128) -> (u128, u128) {
+        // 2,4: combo(4) % 8 -> B, B = A % 8
+        let mut b = a % 8; // or b = a and 7
+
+        // 1,1: B = B XOR 1
+        b ^= 1;
+
+        // 7,5: A / 2**combo(5) -> C, C = A / 2**B
+        let c = a / 2_u128.pow(b as u32); // or c = a >> b;
+
+        // 1,5: B = B XOR 5
+        b ^= 5;
+
+        // 0,3: A / 2**combo(3) -> A, A = A / 2**3
+        a /= 2_u128.pow(3); // or a = a >> 3;
+
+        // 4,4: B = B XOR C
+        b ^= c;
+
+        // 5,5: out -> B % 8
+        // 3,0: A == 0 -> noothing else pointer = 0
+        (a, b % 8)
+    }
+
+    #[cfg(test)]
+    fn find_a(&self) -> u128 {
         let mut a = 0;
         let expected = Self::output(&self.program);
         loop {
+            if a % 1_000_000 == 0 {
+                println!("{a}");
+            }
             let mut clone = self.clone();
             clone.a = a;
             let output = clone.run();
@@ -48,7 +117,7 @@ impl Computer {
 
     fn run(&mut self) -> Option<String> {
         let mut pointer = 0;
-        let mut output: Vec<i32> = vec![];
+        let mut output: Vec<u128> = vec![];
         let mut seen = HashSet::new();
 
         loop {
@@ -62,7 +131,7 @@ impl Computer {
             let operand = self.program[pointer + 1];
 
             match opcode {
-                0 => self.a = self.a / (2_i32.pow(self.combo_operand(operand) as u32)),
+                0 => self.a /= 2_u128.pow(self.combo_operand(operand) as u32),
                 1 => self.b ^= operand,
                 2 => self.b = self.combo_operand(operand) % 8,
                 3 => {
@@ -72,11 +141,9 @@ impl Computer {
                     }
                 }
                 4 => self.b ^= self.c,
-                5 => {
-                    output.push(self.combo_operand(operand) % 8);
-                }
-                6 => self.b = self.a / (2_i32.pow(self.combo_operand(operand) as u32)),
-                7 => self.c = self.a / (2_i32.pow(self.combo_operand(operand) as u32)),
+                5 => output.push(self.combo_operand(operand) % 8),
+                6 => self.b = self.a / (2_u128.pow(self.combo_operand(operand) as u32)),
+                7 => self.c = self.a / (2_u128.pow(self.combo_operand(operand) as u32)),
                 _ => panic!("got opcode {}", operand),
             };
 
@@ -86,7 +153,7 @@ impl Computer {
         Some(Self::output(&output))
     }
 
-    fn output(output: &Vec<i32>) -> String {
+    fn output(output: &[u128]) -> String {
         output
             .iter()
             .map(|num| num.to_string())
@@ -94,7 +161,7 @@ impl Computer {
             .join(",")
     }
 
-    fn combo_operand(&self, operand: i32) -> i32 {
+    fn combo_operand(&self, operand: u128) -> u128 {
         match operand {
             0..=3 => operand,
             4 => self.a,
@@ -113,9 +180,9 @@ impl FromStr for Computer {
         assert_eq!(parts.len(), 2);
         let registers = parts[0].split("\n").collect::<Vec<&str>>();
         assert_eq!(registers.len(), 3);
-        let a: i32 = registers[0].split(": ").collect::<Vec<&str>>()[1].parse()?;
-        let b: i32 = registers[1].split(": ").collect::<Vec<&str>>()[1].parse()?;
-        let c: i32 = registers[2].split(": ").collect::<Vec<&str>>()[1].parse()?;
+        let a: u128 = registers[0].split(": ").collect::<Vec<&str>>()[1].parse()?;
+        let b: u128 = registers[1].split(": ").collect::<Vec<&str>>()[1].parse()?;
+        let c: u128 = registers[2].split(": ").collect::<Vec<&str>>()[1].parse()?;
 
         let program = parts[1]
             .trim()
@@ -123,7 +190,7 @@ impl FromStr for Computer {
             .ok_or_else(|| anyhow!("not able to strip program"))?
             .split(',')
             .map(|n| n.parse())
-            .collect::<Result<Vec<i32>, _>>()?;
+            .collect::<Result<Vec<u128>, _>>()?;
 
         Ok(Self { a, b, c, program })
     }
