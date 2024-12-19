@@ -1,14 +1,17 @@
 use anyhow::Ok;
 use anyhow::Result;
+use std::collections::HashMap;
 use std::fs;
 
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day19_data.txt")?;
 
     let onsen = Onsen::from_str(&input)?;
-    let possible = onsen.possible_designs();
+
+    let (possible, total) = onsen.possible_designs();
 
     println!("Part 1: {possible}");
+    println!("Part 2: {total}");
 
     Ok(())
 }
@@ -21,31 +24,39 @@ struct Onsen {
 }
 
 impl Onsen {
-    fn possible_designs(&self) -> u32 {
+    fn possible_designs(&self) -> (u64, u64) {
         let mut possible = 0;
+        let mut total_possible = 0;
         for design in &self.designs {
-            if self.check_design(design) {
+            let mut cache = HashMap::new();
+            let p = self.check_design(design, &mut cache);
+            total_possible += p;
+            if p != 0 {
                 possible += 1;
             }
         }
-        possible
+        (possible, total_possible)
     }
 
-    fn check_design(&self, design: &str) -> bool {
-        if design == "" {
-            return true;
+    fn check_design<'a>(&self, design: &'a str, cache: &mut HashMap<&'a str, u64>) -> u64 {
+        if design.is_empty() {
+            return 1;
         }
+        if let Some(c) = cache.get(design) {
+            return *c;
+        }
+        let mut possible = 0;
         for i in 1..=design.len() {
             let sub_design = &design[0..i];
             if !self.patterns.contains(sub_design) {
                 continue;
             }
-            if self.check_design(&design[i..]) {
-                return true;
-            }
-        }
+            let e = self.check_design(&design[i..], cache);
+            cache.insert(&design[i..], e);
 
-        false
+            possible += e;
+        }
+        possible
     }
 }
 
@@ -91,15 +102,22 @@ mod test {
         let possible = onsen.possible_designs();
 
         // Assert
-        assert_eq!(possible, 6);
+        assert_eq!(possible.0, 6);
         Ok(())
     }
 
     #[test]
     fn test_part_2() -> Result<()> {
         // Arrange
+        let input = fs::read_to_string("../../data/day19_test_data.txt")?;
+
         // Act
+        let onsen = Onsen::from_str(&input)?;
+        let (possible, total) = onsen.possible_designs();
+
         // Assert
+        assert_eq!(possible, 6);
+        assert_eq!(total, 16);
         Ok(())
     }
 }

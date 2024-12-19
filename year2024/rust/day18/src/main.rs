@@ -29,7 +29,7 @@ impl MemorySpace {
     fn find_non_reachable(input: &str, x: i32, y: i32) -> Result<String> {
         let coords = input.lines().collect::<Vec<&str>>();
         for i in 1..=coords.len() {
-            let memory = MemorySpace::new(&input, i, x, y)?;
+            let memory = MemorySpace::new(input, i, x, y)?;
             if memory.steps().is_some() {
                 continue;
             };
