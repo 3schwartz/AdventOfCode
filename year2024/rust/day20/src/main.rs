@@ -1,24 +1,28 @@
+use anyhow::anyhow;
 use anyhow::Result;
 use std::fs;
+use std::time::Instant;
+use std::{
+    collections::{HashMap, HashSet, VecDeque},
+    str::FromStr,
+};
 
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day20_data.txt")?;
 
     let labyrint = Labyrint::from_str(&input)?;
 
+    let instant = Instant::now();
     let below = labyrint.find_cheats_below(100);
+    println!(
+        "Milliseconds: {}",
+        Instant::now().duration_since(instant).as_millis()
+    );
 
     println!("Part 1: {below}");
 
     Ok(())
 }
-
-use std::{
-    collections::{HashMap, HashSet, VecDeque},
-    str::FromStr,
-};
-
-use anyhow::anyhow;
 
 struct Labyrint {
     walls: HashSet<(i32, i32)>,
