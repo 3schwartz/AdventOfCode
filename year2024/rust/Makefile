@@ -25,3 +25,7 @@ run17:
 run19:
 	cargo run --manifest-path=./day19/Cargo.toml --release
 .PHONY:run19
+
+run20:
+	cargo run --manifest-path=./day20/Cargo.toml --release
+.PHONY:run20
