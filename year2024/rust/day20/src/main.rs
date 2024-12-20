@@ -155,6 +155,8 @@ mod test {
     fn test_part_1_below() -> Result<()> {
         // Arrange
         let expected_below = [
+            (0, 65),
+            (1, 64),
             (5, 20),
             (8, 12),
             (10, 10),
