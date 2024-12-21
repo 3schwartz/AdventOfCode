@@ -1,6 +1,5 @@
 use anyhow::anyhow;
 use anyhow::Result;
-use std::collections::BTreeSet;
 use std::fs;
 use std::time::Instant;
 use std::{
@@ -13,13 +12,13 @@ fn main() -> Result<()> {
 
     let labyrint = Labyrint::from_str(&input)?;
 
-    // let instant = Instant::now();
-    // let below = labyrint.find_cheats_below(100);
-    // println!(
-    //     "Milliseconds: {}",
-    //     Instant::now().duration_since(instant).as_millis()
-    // );
-    // println!("Part 1: {below}");
+    let instant = Instant::now();
+    let below = labyrint.find_cheats_below(100);
+    println!(
+        "Milliseconds: {}",
+        Instant::now().duration_since(instant).as_millis()
+    );
+    println!("Part 1: {below}");
 
     let actual = labyrint.find_multiple_cheats_below(100)?;
 
@@ -105,13 +104,17 @@ impl Labyrint {
                 continue;
             }
             if next == self.end {
-                cheats.insert((start, next));
-                continue;
+                if distance <= fastest - below {
+                    cheats.insert((start, next));
+                }
             }
             if !seen.insert((start, next, cheat_count)) {
                 continue;
             }
-
+            if start.is_none() {
+                assert!(!self.walls.contains(&next));
+                queue.push_back((distance, Some(next), 0, next));
+            }
             if start.is_some() && !self.walls.contains(&next) {
                 let distance_from = distances
                     .get(&next)
@@ -119,7 +122,6 @@ impl Labyrint {
                 if *distance_from <= fastest - below - distance {
                     cheats.insert((start, next));
                 }
-                // continue;
             }
             if cheat_count == 20 {
                 continue;
@@ -127,18 +129,10 @@ impl Labyrint {
             for n in Self::N {
                 let neighbor = (next.0 + n.0, next.1 + n.1);
                 if start.is_some() {
-                    // assert!(self.walls.contains(&next));
                     queue.push_back((distance + 1, start, cheat_count + 1, neighbor));
                     continue;
                 }
-                assert_eq!(cheat_count, 0);
-                if !start.is_none() {
-                    assert!(start.is_none());
-                }
-
-                if self.walls.contains(&neighbor) {
-                    queue.push_back((distance + 1, Some(next), 0, neighbor));
-                } else {
+                if !self.walls.contains(&neighbor) {
                     queue.push_back((distance + 1, None, 0, neighbor));
                 }
             }
@@ -273,8 +267,19 @@ mod test {
     #[test]
     fn test_part_2() -> Result<()> {
         // Arrange
-        let expected_below: Vec<(Result<usize>, i32)> =
-            vec![(Ok(29), 72), (Ok(7), 74), (Ok(3), 76)];
+        let expected_below: Vec<(Result<usize>, i32)> = vec![
+            (Ok(193), 56),
+            (Ok(154), 58),
+            (Ok(129), 60),
+            (Ok(106), 62),
+            (Ok(86), 64),
+            (Ok(67), 66),
+            (Ok(55), 68),
+            (Ok(41), 70),
+            (Ok(29), 72),
+            (Ok(7), 74),
+            (Ok(3), 76),
+        ];
         let input = fs::read_to_string("../../data/day20_test_data.txt")?;
 
         // Act
