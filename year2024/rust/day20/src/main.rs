@@ -15,12 +15,17 @@ fn main() -> Result<()> {
     let instant = Instant::now();
     let below = labyrint.find_cheats_below(100);
     println!(
-        "Milliseconds: {}",
+        "`find_cheats_below` Milliseconds: {}",
         Instant::now().duration_since(instant).as_millis()
     );
     println!("Part 1: {below}");
 
+    let instant = Instant::now();
     let actual = labyrint.find_multiple_cheats_below(100, 2)?;
+    println!(
+        "`find_multiple_cheats_below` Milliseconds: {}",
+        Instant::now().duration_since(instant).as_millis()
+    );
     println!("Part 1: {actual}");
 
     let actual = labyrint.find_multiple_cheats_below(100, 20)?;
@@ -41,7 +46,6 @@ struct Labyrint {
 impl Labyrint {
     const N: [(i32, i32); 4] = [(0, 1), (0, -1), (1, 0), (-1, 0)];
 
-    #[allow(dead_code)]
     fn find_cheats_below(&self, below: i32) -> i32 {
         let fastest = self.find_fastest();
         let cheats = self.find_cheats((None, self.start), Some((fastest, below)));
@@ -96,48 +100,54 @@ impl Labyrint {
         below: i32,
         max_cheats: u8,
     ) -> Result<usize> {
-        let mut cheats: HashSet<(Option<(i32, i32)>, (i32, i32))> = HashSet::new();
-        let mut queue: VecDeque<(i32, Option<(i32, i32)>, u8, (i32, i32))> =
-            VecDeque::from([(0, None, 0, self.start)]);
+        let mut cheats: HashSet<Cheat> = HashSet::new();
+        let mut queue: VecDeque<State> = VecDeque::from([State::new(0, None, 0, self.start)]);
         let mut seen = HashSet::new();
-        while let Some((distance, start, cheat_count, next)) = queue.pop_front() {
-            if next.0 < 0 || next.0 > self.x_max || next.1 < 0 || next.1 > self.y_max {
+        while let Some(state) = queue.pop_front() {
+            if state.next.0 < 0
+                || state.next.0 > self.x_max
+                || state.next.1 < 0
+                || state.next.1 > self.y_max
+            {
                 continue;
             }
-            if distance > fastest - below {
+            if state.distance > fastest - below {
                 continue;
             }
-            if next == self.end {
-                if distance <= fastest - below {
-                    cheats.insert((start, next));
-                }
+            if state.next == self.end && state.distance <= fastest - below {
+                cheats.insert(Cheat::new(state.start, state.next));
             }
-            if !seen.insert((start, next, cheat_count)) {
+            if !seen.insert((state.start, state.next, state.cheat_count)) {
                 continue;
             }
-            if start.is_none() {
-                assert!(!self.walls.contains(&next));
-                queue.push_back((distance, Some(next), 0, next));
+            if state.start.is_none() {
+                assert!(!self.walls.contains(&state.next));
+                queue.push_back(State::new(state.distance, Some(state.next), 0, state.next));
             }
-            if start.is_some() && !self.walls.contains(&next) {
+            if state.start.is_some() && !self.walls.contains(&state.next) {
                 let distance_from = distances
-                    .get(&next)
-                    .ok_or_else(|| anyhow!("{:?} missing", next))?;
-                if *distance_from <= fastest - below - distance {
-                    cheats.insert((start, next));
+                    .get(&state.next)
+                    .ok_or_else(|| anyhow!("{:?} missing", state.next))?;
+                if *distance_from <= fastest - below - state.distance {
+                    cheats.insert(Cheat::new(state.start, state.next));
                 }
             }
-            if cheat_count == max_cheats {
+            if state.cheat_count == max_cheats {
                 continue;
             }
             for n in Self::N {
-                let neighbor = (next.0 + n.0, next.1 + n.1);
-                if start.is_some() {
-                    queue.push_back((distance + 1, start, cheat_count + 1, neighbor));
+                let neighbor = (state.next.0 + n.0, state.next.1 + n.1);
+                if state.start.is_some() {
+                    queue.push_back(State::new(
+                        state.distance + 1,
+                        state.start,
+                        state.cheat_count + 1,
+                        neighbor,
+                    ));
                     continue;
                 }
                 if !self.walls.contains(&neighbor) {
-                    queue.push_back((distance + 1, None, 0, neighbor));
+                    queue.push_back(State::new(state.distance + 1, None, 0, neighbor));
                 }
             }
         }
@@ -188,6 +198,36 @@ impl Labyrint {
             }
         }
         rutes
+    }
+}
+
+#[derive(Hash, PartialEq, Eq)]
+struct Cheat {
+    start: Option<(i32, i32)>,
+    end: (i32, i32),
+}
+
+impl Cheat {
+    fn new(start: Option<(i32, i32)>, end: (i32, i32)) -> Self {
+        Self { start, end }
+    }
+}
+
+struct State {
+    distance: i32,
+    start: Option<(i32, i32)>,
+    cheat_count: u8,
+    next: (i32, i32),
+}
+
+impl State {
+    fn new(distance: i32, start: Option<(i32, i32)>, cheat_count: u8, next: (i32, i32)) -> Self {
+        Self {
+            distance,
+            start,
+            cheat_count,
+            next,
+        }
     }
 }
 
