@@ -13,14 +13,17 @@ fn main() -> Result<()> {
 
     let labyrint = Labyrint::from_str(&input)?;
 
-    let instant = Instant::now();
-    let below = labyrint.find_cheats_below(100);
-    println!(
-        "Milliseconds: {}",
-        Instant::now().duration_since(instant).as_millis()
-    );
+    // let instant = Instant::now();
+    // let below = labyrint.find_cheats_below(100);
+    // println!(
+    //     "Milliseconds: {}",
+    //     Instant::now().duration_since(instant).as_millis()
+    // );
+    // println!("Part 1: {below}");
 
-    println!("Part 1: {below}");
+    let actual = labyrint.find_multiple_cheats_below(100)?;
+
+    println!("Part 2: {actual}");
 
     Ok(())
 }
@@ -33,17 +36,10 @@ struct Labyrint {
     end: (i32, i32),
 }
 
-struct State {
-    steps: i32,
-    cheat_start: (i32, i32),
-    cheat_end: Option<(i32, i32)>,
-    cheat_path: BTreeSet<(i32, i32)>,
-    coord: (i32, i32),
-}
-
 impl Labyrint {
     const N: [(i32, i32); 4] = [(0, 1), (0, -1), (1, 0), (-1, 0)];
 
+    #[allow(dead_code)]
     fn find_cheats_below(&self, below: i32) -> i32 {
         let fastest = self.find_fastest();
         let cheats = self.find_cheats((None, self.start), Some((fastest, below)));
@@ -62,87 +58,92 @@ impl Labyrint {
         *steps
     }
 
-    fn find_multiple_cheats_below(&self, below: i32) -> i32 {
+    fn find_multiple_cheats_below(&self, below: i32) -> Result<usize> {
         let fastest = self.find_fastest();
-        let cheats = self.find_multiple_cheats(fastest, below);
-        cheats.iter().fold(0, |acc, (_, v)| acc + v)
+        let distances = self.find_distances();
+        self.find_multiple_cheats(&distances, fastest, below)
     }
 
-    fn find_multiple_cheats(&self, fastest: i32, limit: i32) -> HashMap<i32, i32> {
-        let mut queue = VecDeque::from([State {
-            steps: 0,
-            cheat_start: self.start,
-            cheat_end: None,
-            cheat_path: BTreeSet::new(),
-            coord: self.start,
-        }]);
-        let mut seen_with_end = HashSet::new();
-        let mut seen_without_end = HashSet::new();
-        let mut seen_cheats = HashSet::new();
-        let mut rutes = HashMap::new();
-        while let Some(state) = queue.pop_front() {
-            let next = state.coord;
-            let steps = state.steps;
-            let mut cheat_end = state.cheat_end;
-            let mut cheat_path = state.cheat_path;
+    fn find_distances(&self) -> HashMap<(i32, i32), i32> {
+        let mut distances = HashMap::new();
+        let mut queue = VecDeque::from([(0, self.end)]);
+        while let Some((distance, next)) = queue.pop_front() {
             if next.0 < 0 || next.0 > self.x_max || next.1 < 0 || next.1 > self.y_max {
                 continue;
             }
-            if steps > fastest - limit {
-                break;
-            }
-            if next == self.end {
-                rutes.entry(steps).and_modify(|e| *e += 1).or_insert(1);
-                continue;
-            }
-            // Either cheat is done and uniqueness should be on current, start and end or
-            // we need to look at the cheat path.
-            if state.cheat_end.is_some() {
-                if !seen_with_end.insert((state.cheat_start, state.cheat_end, state.coord)) {
-                    continue;
-                }
-            }
-            if cheat_path.contains(&state.coord) {
-                continue;
-            }
-            // Already cheated
-            if self.walls.contains(&next) && state.cheat_end.is_some() {
-                continue;
-            }
-            // Can't cheat more
-            if self.walls.contains(&next) && cheat_path.len() == 19 {
-                continue;
-            }
-            // Can cheat and push one more on the path
             if self.walls.contains(&next) {
-                cheat_path.insert(state.coord);
+                continue;
             }
-            // Currently cheating and end
-            if !self.walls.contains(&next) && cheat_path.len() > 0 && state.cheat_end.is_none() {
-                if !seen_cheats.insert((state.cheat_start, next)) {
-                    continue;
-                }
-                cheat_end = Some(state.coord)
+            if distances.contains_key(&next) {
+                continue;
             }
-            let cheat_start = if cheat_path.len() == 0 {
-                next
-            } else {
-                state.cheat_start
-            };
-
+            distances.insert(next, distance);
             for n in Self::N {
                 let neighbor = (next.0 + n.0, next.1 + n.1);
-                // and prior as start if some condition
-                queue.push_back(State {
-                    steps: steps + 1,
-                    cheat_start,
-                    cheat_end,
-                    cheat_path: cheat_path.clone(),
-                    coord: neighbor,
-                });
+                queue.push_back((distance + 1, neighbor));
             }
         }
-        rutes
+
+        distances
+    }
+
+    fn find_multiple_cheats(
+        &self,
+        distances: &HashMap<(i32, i32), i32>,
+        fastest: i32,
+        below: i32,
+    ) -> Result<usize> {
+        let mut cheats: HashSet<(Option<(i32, i32)>, (i32, i32))> = HashSet::new();
+        let mut queue: VecDeque<(i32, Option<(i32, i32)>, u16, (i32, i32))> =
+            VecDeque::from([(0, None, 0, self.start)]);
+        let mut seen = HashSet::new();
+        while let Some((distance, start, cheat_count, next)) = queue.pop_front() {
+            if next.0 < 0 || next.0 > self.x_max || next.1 < 0 || next.1 > self.y_max {
+                continue;
+            }
+            if distance > fastest - below {
+                continue;
+            }
+            if next == self.end {
+                cheats.insert((start, next));
+                continue;
+            }
+            if !seen.insert((start, next, cheat_count)) {
+                continue;
+            }
+
+            if start.is_some() && !self.walls.contains(&next) {
+                let distance_from = distances
+                    .get(&next)
+                    .ok_or_else(|| anyhow!("{:?} missing", next))?;
+                if *distance_from <= fastest - below - distance {
+                    cheats.insert((start, next));
+                }
+                // continue;
+            }
+            if cheat_count == 20 {
+                continue;
+            }
+            for n in Self::N {
+                let neighbor = (next.0 + n.0, next.1 + n.1);
+                if start.is_some() {
+                    // assert!(self.walls.contains(&next));
+                    queue.push_back((distance + 1, start, cheat_count + 1, neighbor));
+                    continue;
+                }
+                assert_eq!(cheat_count, 0);
+                if !start.is_none() {
+                    assert!(start.is_none());
+                }
+
+                if self.walls.contains(&neighbor) {
+                    queue.push_back((distance + 1, Some(next), 0, neighbor));
+                } else {
+                    queue.push_back((distance + 1, None, 0, neighbor));
+                }
+            }
+        }
+        Ok(cheats.len())
     }
 
     fn find_cheats(
@@ -272,7 +273,8 @@ mod test {
     #[test]
     fn test_part_2() -> Result<()> {
         // Arrange
-        let expected_below = [(3, 76)];
+        let expected_below: Vec<(Result<usize>, i32)> =
+            vec![(Ok(29), 72), (Ok(7), 74), (Ok(3), 76)];
         let input = fs::read_to_string("../../data/day20_test_data.txt")?;
 
         // Act
@@ -280,7 +282,9 @@ mod test {
         for (expected, below) in expected_below {
             let actual = labyrint.find_multiple_cheats_below(below);
             // Assert
-            assert_eq!(actual, expected);
+
+            // assert!(matches!(actual, expected));
+            assert_eq!(actual.unwrap(), expected.unwrap());
         }
         Ok(())
     }
