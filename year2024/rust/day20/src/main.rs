@@ -20,7 +20,10 @@ fn main() -> Result<()> {
     );
     println!("Part 1: {below}");
 
-    let actual = labyrint.find_multiple_cheats_below(100)?;
+    let actual = labyrint.find_multiple_cheats_below(100, 2)?;
+    println!("Part 1: {actual}");
+
+    let actual = labyrint.find_multiple_cheats_below(100, 20)?;
 
     println!("Part 2: {actual}");
 
@@ -57,10 +60,10 @@ impl Labyrint {
         *steps
     }
 
-    fn find_multiple_cheats_below(&self, below: i32) -> Result<usize> {
+    fn find_multiple_cheats_below(&self, below: i32, max_cheats: u8) -> Result<usize> {
         let fastest = self.find_fastest();
         let distances = self.find_distances();
-        self.find_multiple_cheats(&distances, fastest, below)
+        self.find_multiple_cheats(&distances, fastest, below, max_cheats)
     }
 
     fn find_distances(&self) -> HashMap<(i32, i32), i32> {
@@ -91,9 +94,10 @@ impl Labyrint {
         distances: &HashMap<(i32, i32), i32>,
         fastest: i32,
         below: i32,
+        max_cheats: u8,
     ) -> Result<usize> {
         let mut cheats: HashSet<(Option<(i32, i32)>, (i32, i32))> = HashSet::new();
-        let mut queue: VecDeque<(i32, Option<(i32, i32)>, u16, (i32, i32))> =
+        let mut queue: VecDeque<(i32, Option<(i32, i32)>, u8, (i32, i32))> =
             VecDeque::from([(0, None, 0, self.start)]);
         let mut seen = HashSet::new();
         while let Some((distance, start, cheat_count, next)) = queue.pop_front() {
@@ -123,7 +127,7 @@ impl Labyrint {
                     cheats.insert((start, next));
                 }
             }
-            if cheat_count == 20 {
+            if cheat_count == max_cheats {
                 continue;
             }
             for n in Self::N {
@@ -265,6 +269,32 @@ mod test {
     }
 
     #[test]
+    fn test_part_1() -> Result<()> {
+        // Arrange
+        let expected_below = [
+            (0, 65),
+            (1, 64),
+            (5, 20),
+            (8, 12),
+            (10, 10),
+            (14, 8),
+            (16, 6),
+            (30, 4),
+            (44, 2),
+        ];
+        let input = fs::read_to_string("../../data/day20_test_data.txt")?;
+
+        // Act
+        let labyrint = Labyrint::from_str(&input)?;
+        for (expected, below) in expected_below {
+            let actual = labyrint.find_multiple_cheats_below(below, 2);
+            // Assert
+            assert_eq!(actual.unwrap(), expected);
+        }
+        Ok(())
+    }
+
+    #[test]
     fn test_part_2() -> Result<()> {
         // Arrange
         let expected_below: Vec<(Result<usize>, i32)> = vec![
@@ -282,13 +312,12 @@ mod test {
         ];
         let input = fs::read_to_string("../../data/day20_test_data.txt")?;
 
-        // Act
         let labyrint = Labyrint::from_str(&input)?;
         for (expected, below) in expected_below {
-            let actual = labyrint.find_multiple_cheats_below(below);
-            // Assert
+            // Act
+            let actual = labyrint.find_multiple_cheats_below(below, 20);
 
-            // assert!(matches!(actual, expected));
+            // Assert
             assert_eq!(actual.unwrap(), expected.unwrap());
         }
         Ok(())
