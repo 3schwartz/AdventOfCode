@@ -1,5 +1,6 @@
 use anyhow::anyhow;
 use anyhow::Result;
+use std::collections::BTreeSet;
 use std::fs;
 use std::time::Instant;
 use std::{
@@ -32,6 +33,14 @@ struct Labyrint {
     end: (i32, i32),
 }
 
+struct State {
+    steps: i32,
+    cheat_start: (i32, i32),
+    cheat_end: Option<(i32, i32)>,
+    cheat_path: BTreeSet<(i32, i32)>,
+    coord: (i32, i32),
+}
+
 impl Labyrint {
     const N: [(i32, i32); 4] = [(0, 1), (0, -1), (1, 0), (-1, 0)];
 
@@ -51,6 +60,89 @@ impl Labyrint {
             panic!("should only have found one route")
         }
         *steps
+    }
+
+    fn find_multiple_cheats_below(&self, below: i32) -> i32 {
+        let fastest = self.find_fastest();
+        let cheats = self.find_multiple_cheats(fastest, below);
+        cheats.iter().fold(0, |acc, (_, v)| acc + v)
+    }
+
+    fn find_multiple_cheats(&self, fastest: i32, limit: i32) -> HashMap<i32, i32> {
+        let mut queue = VecDeque::from([State {
+            steps: 0,
+            cheat_start: self.start,
+            cheat_end: None,
+            cheat_path: BTreeSet::new(),
+            coord: self.start,
+        }]);
+        let mut seen_with_end = HashSet::new();
+        let mut seen_without_end = HashSet::new();
+        let mut seen_cheats = HashSet::new();
+        let mut rutes = HashMap::new();
+        while let Some(state) = queue.pop_front() {
+            let next = state.coord;
+            let steps = state.steps;
+            let mut cheat_end = state.cheat_end;
+            let mut cheat_path = state.cheat_path;
+            if next.0 < 0 || next.0 > self.x_max || next.1 < 0 || next.1 > self.y_max {
+                continue;
+            }
+            if steps > fastest - limit {
+                break;
+            }
+            if next == self.end {
+                rutes.entry(steps).and_modify(|e| *e += 1).or_insert(1);
+                continue;
+            }
+            // Either cheat is done and uniqueness should be on current, start and end or
+            // we need to look at the cheat path.
+            if state.cheat_end.is_some() {
+                if !seen_with_end.insert((state.cheat_start, state.cheat_end, state.coord)) {
+                    continue;
+                }
+            }
+            if cheat_path.contains(&state.coord) {
+                continue;
+            }
+            // Already cheated
+            if self.walls.contains(&next) && state.cheat_end.is_some() {
+                continue;
+            }
+            // Can't cheat more
+            if self.walls.contains(&next) && cheat_path.len() == 19 {
+                continue;
+            }
+            // Can cheat and push one more on the path
+            if self.walls.contains(&next) {
+                cheat_path.insert(state.coord);
+            }
+            // Currently cheating and end
+            if !self.walls.contains(&next) && cheat_path.len() > 0 && state.cheat_end.is_none() {
+                if !seen_cheats.insert((state.cheat_start, next)) {
+                    continue;
+                }
+                cheat_end = Some(state.coord)
+            }
+            let cheat_start = if cheat_path.len() == 0 {
+                next
+            } else {
+                state.cheat_start
+            };
+
+            for n in Self::N {
+                let neighbor = (next.0 + n.0, next.1 + n.1);
+                // and prior as start if some condition
+                queue.push_back(State {
+                    steps: steps + 1,
+                    cheat_start,
+                    cheat_end,
+                    cheat_path: cheat_path.clone(),
+                    coord: neighbor,
+                });
+            }
+        }
+        rutes
     }
 
     fn find_cheats(
@@ -180,8 +272,16 @@ mod test {
     #[test]
     fn test_part_2() -> Result<()> {
         // Arrange
+        let expected_below = [(3, 76)];
+        let input = fs::read_to_string("../../data/day20_test_data.txt")?;
+
         // Act
-        // Assert
+        let labyrint = Labyrint::from_str(&input)?;
+        for (expected, below) in expected_below {
+            let actual = labyrint.find_multiple_cheats_below(below);
+            // Assert
+            assert_eq!(actual, expected);
+        }
         Ok(())
     }
 }
