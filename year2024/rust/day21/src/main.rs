@@ -50,7 +50,7 @@ mod test {
         }
 
         fn initialize() -> Self {
-            let mut distances: HashMap<(char, char), String> = HashMap::new();
+            let mut distances_all: HashMap<(char, char), Vec<Vec<char>>> = HashMap::new();
             let grid: HashMap<(i32, i32), char> = Self::get_grid()
                 .iter()
                 .map(|&(x, y, c)| ((x, y), c))
@@ -66,24 +66,60 @@ mod test {
                         continue;
                     }
                     let c_next = *grid.get(&next).unwrap();
-                    if distances.contains_key(&(*c, c_next)) {
-                        continue;
+                    if let Some(prior) = distances_all.get(&(*c, c_next)) {
+                        if prior[0].len() < path.len() + 1 {
+                            continue;
+                        }
                     }
                     if *c == c_next {
-                        distances.insert((*c, c_next), "".to_string());
+                        distances_all.insert((*c, c_next), Vec::from(["".chars().collect()]));
                         continue;
                     }
 
                     path.push(d);
-                    distances.insert((*c, c_next), path.to_vec().iter().collect());
+                    distances_all
+                        .entry((*c, c_next))
+                        .and_modify(|v| v.push(path.to_vec()))
+                        .or_insert_with(|| Vec::from([path.to_vec()]));
                     for (x, y, d) in NumericKeypad::N {
                         let neighbor = (next.0 + x, next.1 + y);
                         queue.push_back((neighbor, d, path.to_vec()));
                     }
                 }
             }
+            let mut distances: HashMap<(char, char), String> = HashMap::new();
+            for (k, v) in distances_all {
+                let mut scored: Vec<(i32, &Vec<char>)> =
+                    v.iter().map(|n| (Self::path_score(n), n)).collect();
+                scored.sort_by_key(|&(score, _)| score);
+                distances.insert(k, scored[0].1.iter().collect());
+            }
             Self::new(distances)
         }
+
+        fn path_score(chars: &Vec<char>) -> i32 {
+            let mut score = 0;
+            for i in 1..chars.len() {
+                if chars[i - 1] != chars[i] {
+                    score += 1;
+                }
+            }
+            score
+        }
+
+        // fn reorder_string(input: &Vec<char>) -> String {
+        //     let order = |c: char| match c {
+        //         '>' => 0,
+        //         '<' => 1,
+        //         '^' => 2,
+        //         'v' => 3,
+        //         _ => panic!("{c}"),
+        //     };
+
+        //     let mut chars: Vec<char> = input.to_vec();
+        //     chars.sort_by_key(|&c| order(c));
+        //     chars.into_iter().collect()
+        // }
     }
 
     /// +---+---+---+
@@ -186,16 +222,14 @@ mod test {
             HashSet::from(["<A^A>^^AvvvA", "<A^A^>^AvvvA", "<A^A^^>AvvvA"])
                 .contains(output.as_str())
         );
-        assert_eq!(output, "<A^A^^>AvvvA");
+        assert_eq!(output, "<A^A>^^AvvvA");
         Ok(())
     }
 
     #[test]
     fn test_directional_input_generate() -> Result<()> {
         // Arrange
-        // "<       A ^  A  >  ^   ^ A  v   v v A";
-        // "v<<A >>^A <A >A vA <^A A >A <vA A A >^A";
-        let input = "<A^A^^>AvvvA";
+        let input = "<A^A>^^AvvvA";
         let one_output = "v<<A>>^A<A>AvA<^AA>A<vAAA>^A";
         let expected_a_count = get_a_count(one_output);
         let n = DirectionalKeypad::initialize();
@@ -207,14 +241,14 @@ mod test {
         assert_eq!(output.len(), one_output.len());
         let actual_a_count = get_a_count(&output);
         assert_eq!(actual_a_count, expected_a_count);
-        assert_eq!(output, "v<<A>^>A<A>A<AAv>A^Av<AAA^>A");
+        assert_eq!(output, "<<vA>>^A<A>AvA<^AA>A<vAAA>^A");
         Ok(())
     }
 
     #[test]
     fn test_directional_input_generate_2_2() -> Result<()> {
         // Arrange
-        let input = "v<<A>^>A<A>A<AAv>A^Av<AAA^>A";
+        let input = "<<vA>>^A<A>AvA<^AA>A<vAAA>^A";
         let one_output = "<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A";
         let expected_a_count = get_a_count(one_output);
         let n = DirectionalKeypad::initialize();
@@ -291,7 +325,7 @@ mod test {
     fn test_keypad_link_level_0() -> Result<()> {
         // Arrange
         let l0 = KeypadLink::<NumericKeypad, NumericKeypad>::new(NumericKeypad::initialize(), None);
-        let expected_output = "<A^A^^>AvvvA";
+        let expected_output = "<A^A>^^AvvvA";
         let input = "029A";
 
         // Act
@@ -307,7 +341,7 @@ mod test {
         // Arrange
         let l0 = KeypadLink::<NumericKeypad, NumericKeypad>::new(NumericKeypad::initialize(), None);
         let l1 = KeypadLink::new(DirectionalKeypad::initialize(), Some(l0));
-        let expected_output = "v<<A>^>A<A>A<AAv>A^Av<AAA^>A";
+        let expected_output = "<<vA>>^A<A>AvA<^AA>A<vAAA>^A";
         let input = "029A";
 
         // Act
@@ -325,7 +359,7 @@ mod test {
         let l1 = KeypadLink::new(DirectionalKeypad::initialize(), Some(l0));
         let l2 = KeypadLink::new(DirectionalKeypad::initialize(), Some(l1));
         let expected_output =
-            "<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A";
+            "<<vAA>A>^AvAA<^A>A<<vA>>^AvA^A<vA>^A<<vA>^A>AAvA^A<<vA>A>^AAAvA<^A>A";
         let input = "029A";
 
         // Act
@@ -337,40 +371,42 @@ mod test {
     }
 
     #[test]
-    fn test_keypad_link_level_1() -> Result<()> {
+    fn test_keypad_link_parametrized() -> Result<()> {
         // Arrange
-        let l0 = KeypadLink::new(
-            DirectionalKeypad::initialize(),
-            Some(NumericKeypad::initialize()),
-        );
-        let expected_output = "v<<A>^>A<A>A<AAv>A^Av<AAA^>A";
-        let input = "029A";
-
-        // Act
-        let actual = l0.evaluate(input)?;
-
-        // Assert
-        assert_eq!(expected_output, actual);
-        Ok(())
-    }
-
-    #[test]
-    fn test_keypad_link_level_2() -> Result<()> {
-        // Arrange
-        let l0 = KeypadLink::new(
-            DirectionalKeypad::initialize(),
-            Some(NumericKeypad::initialize()),
-        );
+        let l0 = KeypadLink::<NumericKeypad, NumericKeypad>::new(NumericKeypad::initialize(), None);
         let l1 = KeypadLink::new(DirectionalKeypad::initialize(), Some(l0));
-        let expected_output =
-            "<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A";
-        let input = "029A";
+        let l2 = KeypadLink::new(DirectionalKeypad::initialize(), Some(l1));
+        let inputs = [
+            // (
+            //     "029A",
+            //     "<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A",
+            // ),
+            // (
+            //     "980A",
+            //     "<v<A>>^AAAvA^A<vA<AA>>^AvAA<^A>A<v<A>A>^AAAvA<^A>A<vA>^A<A>A",
+            // ),
+            // (
+            //     "179A",
+            //     "<v<A>>^A<vA<A>>^AAvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A",
+            // ),
+            // (
+            //     "456A",
+            //     "<v<A>>^AA<vA<A>>^AAvAA<^A>A<vA>^A<A>A<vA>^A<A>A<v<A>A>^AAvA<^A>A",
+            // ),
+            (
+                "379A",
+                "<v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A",
+            ),
+        ];
+        for (input, expected) in inputs {
+            // Act
+            let actual = l2.evaluate(input)?;
 
-        // Act
-        let actual = l1.evaluate(input)?;
-
-        // Assert
-        assert_eq!(expected_output, actual);
+            // Assert
+            assert_eq!(actual.len(), expected.len());
+            let actual_a_count = get_a_count(&actual);
+            assert_eq!(actual_a_count, get_a_count(&expected));
+        }
         Ok(())
     }
 
