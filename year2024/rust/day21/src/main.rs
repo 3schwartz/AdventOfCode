@@ -129,8 +129,8 @@ mod test {
         }
     }
 
-    /// +---+---+
-    /// | ^ | A |
+    ///     +---+---+
+    ///     | ^ | A |
     /// +---+---+---+
     /// | < | v | > |
     /// +---+---+---+
@@ -173,21 +173,21 @@ mod test {
     }
 
     #[test]
-    fn test_numeric_input_generate() {
+    fn test_numeric_input_generate() -> Result<()> {
         // Arrange
         let input = "029A";
         let n = NumericKeypad::initialize();
 
         // Act
-        let output = n.generate(input);
+        let output = n.generate(input)?;
 
         // Assert
-        assert!(output.is_ok());
-        let result = output.unwrap();
         assert!(
             HashSet::from(["<A^A>^^AvvvA", "<A^A^>^AvvvA", "<A^A^^>AvvvA"])
-                .contains(result.as_str())
+                .contains(output.as_str())
         );
+        assert_eq!(output, "<A^A^^>AvvvA");
+        Ok(())
     }
 
     #[test]
@@ -197,6 +197,25 @@ mod test {
         // "v<<A >>^A <A >A vA <^A A >A <vA A A >^A";
         let input = "<A^A^^>AvvvA";
         let one_output = "v<<A>>^A<A>AvA<^AA>A<vAAA>^A";
+        let expected_a_count = get_a_count(one_output);
+        let n = DirectionalKeypad::initialize();
+
+        // Act
+        let output = n.generate(input)?;
+
+        // Assert
+        assert_eq!(output.len(), one_output.len());
+        let actual_a_count = get_a_count(&output);
+        assert_eq!(actual_a_count, expected_a_count);
+        assert_eq!(output, "v<<A>^>A<A>A<AAv>A^Av<AAA^>A");
+        Ok(())
+    }
+
+    #[test]
+    fn test_directional_input_generate_2_2() -> Result<()> {
+        // Arrange
+        let input = "v<<A>^>A<A>A<AAv>A^Av<AAA^>A";
+        let one_output = "<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A";
         let expected_a_count = get_a_count(one_output);
         let n = DirectionalKeypad::initialize();
 
@@ -237,23 +256,84 @@ mod test {
         })
     }
 
-    struct KeypadLink<K: Keypad, C: Keypad> {
-        keypad: K,
-        child: Option<C>,
+    trait KeypadChoice {
+        fn evaluate(&self, input: &str) -> Result<String>;
     }
 
-    impl<K: Keypad, C: Keypad> KeypadLink<K, C> {
-        fn new(keypad: K, child: Option<C>) -> Self {
+    struct KeypadLink<K: Keypad, KC: KeypadChoice> {
+        keypad: K,
+        child: Option<KC>,
+    }
+
+    impl<K: Keypad, KC: KeypadChoice> KeypadLink<K, KC> {
+        fn new(keypad: K, child: Option<KC>) -> Self {
             Self { keypad, child }
         }
+    }
 
+    impl<K: Keypad, KC: KeypadChoice> KeypadChoice for KeypadLink<K, KC> {
         fn evaluate(&self, input: &str) -> Result<String> {
             let e = match &self.child {
-                Some(c) => Cow::Owned(c.generate(input)?),
+                Some(c) => Cow::Owned(c.evaluate(input)?),
                 None => Cow::Borrowed(input),
             };
             self.keypad.generate(&e)
         }
+    }
+
+    impl<T: Keypad> KeypadChoice for T {
+        fn evaluate(&self, input: &str) -> Result<String> {
+            self.generate(input)
+        }
+    }
+
+    #[test]
+    fn test_keypad_link_level_0() -> Result<()> {
+        // Arrange
+        let l0 = KeypadLink::<NumericKeypad, NumericKeypad>::new(NumericKeypad::initialize(), None);
+        let expected_output = "<A^A^^>AvvvA";
+        let input = "029A";
+
+        // Act
+        let actual = l0.evaluate(input)?;
+
+        // Assert
+        assert_eq!(expected_output, actual);
+        Ok(())
+    }
+
+    #[test]
+    fn test_keypad_link_level_1_v2() -> Result<()> {
+        // Arrange
+        let l0 = KeypadLink::<NumericKeypad, NumericKeypad>::new(NumericKeypad::initialize(), None);
+        let l1 = KeypadLink::new(DirectionalKeypad::initialize(), Some(l0));
+        let expected_output = "v<<A>^>A<A>A<AAv>A^Av<AAA^>A";
+        let input = "029A";
+
+        // Act
+        let actual = l1.evaluate(input)?;
+
+        // Assert
+        assert_eq!(expected_output, actual);
+        Ok(())
+    }
+
+    #[test]
+    fn test_keypad_link_level_2_v2() -> Result<()> {
+        // Arrange
+        let l0 = KeypadLink::<NumericKeypad, NumericKeypad>::new(NumericKeypad::initialize(), None);
+        let l1 = KeypadLink::new(DirectionalKeypad::initialize(), Some(l0));
+        let l2 = KeypadLink::new(DirectionalKeypad::initialize(), Some(l1));
+        let expected_output =
+            "<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A";
+        let input = "029A";
+
+        // Act
+        let actual = l2.evaluate(input)?;
+
+        // Assert
+        assert_eq!(expected_output, actual);
+        Ok(())
     }
 
     #[test]
@@ -268,6 +348,26 @@ mod test {
 
         // Act
         let actual = l0.evaluate(input)?;
+
+        // Assert
+        assert_eq!(expected_output, actual);
+        Ok(())
+    }
+
+    #[test]
+    fn test_keypad_link_level_2() -> Result<()> {
+        // Arrange
+        let l0 = KeypadLink::new(
+            DirectionalKeypad::initialize(),
+            Some(NumericKeypad::initialize()),
+        );
+        let l1 = KeypadLink::new(DirectionalKeypad::initialize(), Some(l0));
+        let expected_output =
+            "<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A";
+        let input = "029A";
+
+        // Act
+        let actual = l1.evaluate(input)?;
 
         // Assert
         assert_eq!(expected_output, actual);
