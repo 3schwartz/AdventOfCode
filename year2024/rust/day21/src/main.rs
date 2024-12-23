@@ -144,6 +144,30 @@ mod test {
             (1, 0, '8'),
             (2, 0, '9'),
         ];
+
+        fn shortest_segment(&self, input: &str, debt: u16) -> Result<usize> {
+            let formatted: Vec<char> = format!("A{input}").chars().collect();
+            let d = DirectionalKeypad::initialize();
+
+            let mut final_count = 0;
+            for i in 1..formatted.len() {
+                let from = formatted[i - 1];
+                let to = formatted[i];
+                let paths = self
+                    .paths()
+                    .get(&(from, to))
+                    .ok_or_else(|| anyhow!("missing {:?}", (from, to)))?;
+                let mut shortest_path = usize::MAX;
+                for path in paths {
+                    let s = d.shortest_segment(path, debt, shortest_path)?;
+                    if s < shortest_path {
+                        shortest_path = s;
+                    }
+                }
+                final_count += shortest_path;
+            }
+            Ok(final_count)
+        }
     }
 
     impl Keypad for NumericKeypad {
@@ -196,10 +220,8 @@ mod test {
     #[test]
     fn test_1() -> Result<()> {
         // Arrange
-        let d = DirectionalKeypad::initialize();
         let n = NumericKeypad::initialize();
         let input = "029A";
-        let formatted: Vec<char> = format!("A{input}").chars().collect();
         let parameters = [
             ("<A^A>^^AvvvA".len(), 0),
             ("v<<A>>^A<A>AvA<^AA>A<vAAA>^A".len(), 1),
@@ -210,23 +232,10 @@ mod test {
         ];
 
         for (expected_length, debt) in parameters {
-            let mut final_count = 0;
-            for i in 1..formatted.len() {
-                let from = formatted[i - 1];
-                let to = formatted[i];
-                let paths = n
-                    .paths()
-                    .get(&(from, to))
-                    .ok_or_else(|| anyhow!("missing {:?}", (from, to)))?;
-                let mut shortest_path = usize::MAX;
-                for path in paths {
-                    let s = d.shortest_segment(path, debt, shortest_path)?;
-                    if s < shortest_path {
-                        shortest_path = s;
-                    }
-                }
-                final_count += shortest_path;
-            }
+            // Act
+            let final_count = n.shortest_segment(input, debt)?;
+
+            // Assert
             assert_eq!(expected_length, final_count);
         }
 
@@ -252,12 +261,7 @@ mod test {
             (2, 0, 'A'),
         ];
 
-        fn shortest_segment(
-            &self,
-            segment: &Vec<char>,
-            debt: u16,
-            mut best: usize,
-        ) -> Result<usize> {
+        fn shortest_segment(&self, segment: &Vec<char>, debt: u16, best: usize) -> Result<usize> {
             if debt == 0 {
                 return Ok(segment.len() - 1);
             }
@@ -278,7 +282,7 @@ mod test {
                 }
                 segment_size += shortest_path;
                 if segment_size > best {
-                    return Ok(best);
+                    return Ok(usize::MAX);
                 }
             }
 
@@ -573,6 +577,42 @@ mod test {
             assert_eq!(actual.len(), expected.len());
             let actual_a_count = get_a_count(&actual);
             assert_eq!(actual_a_count, get_a_count(&expected));
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_keypad_link_parametrized_shortest() -> Result<()> {
+        // Arrange
+        let n = NumericKeypad::initialize();
+        let inputs = [
+            (
+                "029A",
+                "<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A".len(),
+            ),
+            (
+                "980A",
+                "<v<A>>^AAAvA^A<vA<AA>>^AvAA<^A>A<v<A>A>^AAAvA<^A>A<vA>^A<A>A".len(),
+            ),
+            (
+                "179A",
+                "<v<A>>^A<vA<A>>^AAvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A".len(),
+            ),
+            (
+                "456A",
+                "<v<A>>^AA<vA<A>>^AAvAA<^A>A<vA>^A<A>A<vA>^A<A>A<v<A>A>^AAvA<^A>A".len(),
+            ),
+            (
+                "379A",
+                "<v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A".len(),
+            ),
+        ];
+        for (input, expected) in inputs {
+            // Act
+            let final_count = n.shortest_segment(input, 2)?;
+
+            // Assert
+            assert_eq!(final_count, expected);
         }
         Ok(())
     }
