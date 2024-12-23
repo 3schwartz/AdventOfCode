@@ -15,10 +15,11 @@ fn main() -> Result<()> {
 mod test {
     use super::*;
 
-    use anyhow::anyhow;
+    use anyhow::{anyhow, Ok};
     use std::{
         borrow::Cow,
         collections::{HashMap, HashSet, VecDeque},
+        u32, usize,
     };
 
     trait Keypad: Sized {
@@ -26,9 +27,14 @@ mod test {
 
         fn get_grid() -> Vec<(i32, i32, char)>;
 
-        fn new(distances: HashMap<(char, char), String>) -> Self;
+        fn new(
+            distances: HashMap<(char, char), String>,
+            paths: HashMap<(char, char), Vec<Vec<char>>>,
+        ) -> Self;
 
         fn distances(&self) -> &HashMap<(char, char), String>;
+
+        fn paths(&self) -> &HashMap<(char, char), Vec<Vec<char>>>;
 
         fn generate(&self, input: &str) -> Result<String> {
             let mut steps = vec!['A'];
@@ -44,7 +50,7 @@ mod test {
                     .get(&(from, to))
                     .ok_or_else(|| anyhow!("missing {:?}", (from, to)))?;
                 code.push(path.as_str());
-                code.push("A");
+                // code.push("A");
             }
             Ok(code.iter().map(|s| *s).collect())
         }
@@ -59,7 +65,7 @@ mod test {
                 let mut queue = VecDeque::new();
                 for (x, y, d) in Self::N {
                     let neighbor = (e.0 + x, e.1 + y);
-                    queue.push_back((neighbor, d, Vec::<char>::new()));
+                    queue.push_back((neighbor, d, Vec::<char>::from(['A'])));
                 }
                 while let Some((next, d, mut path)) = queue.pop_front() {
                     if !&grid.contains_key(&next) {
@@ -72,15 +78,17 @@ mod test {
                         }
                     }
                     if *c == c_next {
-                        distances_all.insert((*c, c_next), Vec::from(["".chars().collect()]));
+                        distances_all.insert((*c, c_next), Vec::from([vec!['A', 'A']]));
                         continue;
                     }
 
                     path.push(d);
+                    let mut path_to_insert = path.to_vec();
+                    path_to_insert.push('A');
                     distances_all
                         .entry((*c, c_next))
-                        .and_modify(|v| v.push(path.to_vec()))
-                        .or_insert_with(|| Vec::from([path.to_vec()]));
+                        .and_modify(|v| v.push(path_to_insert.to_vec()))
+                        .or_insert_with(|| Vec::from([path_to_insert]));
                     for (x, y, d) in NumericKeypad::N {
                         let neighbor = (next.0 + x, next.1 + y);
                         queue.push_back((neighbor, d, path.to_vec()));
@@ -88,13 +96,13 @@ mod test {
                 }
             }
             let mut distances: HashMap<(char, char), String> = HashMap::new();
-            for (k, v) in distances_all {
+            for (k, v) in &distances_all {
                 let mut scored: Vec<(i32, &Vec<char>)> =
                     v.iter().map(|n| (Self::path_score(n), n)).collect();
                 scored.sort_by_key(|&(score, _)| score);
-                distances.insert(k, scored[0].1.iter().collect());
+                distances.insert(*k, scored[0].1.iter().collect());
             }
-            Self::new(distances)
+            Self::new(distances, distances_all)
         }
 
         fn path_score(chars: &Vec<char>) -> i32 {
@@ -106,20 +114,6 @@ mod test {
             }
             score
         }
-
-        // fn reorder_string(input: &Vec<char>) -> String {
-        //     let order = |c: char| match c {
-        //         '>' => 0,
-        //         '<' => 1,
-        //         '^' => 2,
-        //         'v' => 3,
-        //         _ => panic!("{c}"),
-        //     };
-
-        //     let mut chars: Vec<char> = input.to_vec();
-        //     chars.sort_by_key(|&c| order(c));
-        //     chars.into_iter().collect()
-        // }
     }
 
     /// +---+---+---+
@@ -133,6 +127,7 @@ mod test {
     ///     +---+---+
     struct NumericKeypad {
         distances: HashMap<(char, char), String>,
+        paths: HashMap<(char, char), Vec<Vec<char>>>,
     }
 
     impl NumericKeypad {
@@ -156,13 +151,77 @@ mod test {
             Self::G.to_vec()
         }
 
-        fn new(distances: HashMap<(char, char), String>) -> Self {
-            Self { distances }
-        }
-
         fn distances(&self) -> &HashMap<(char, char), String> {
             &self.distances
         }
+
+        fn paths(&self) -> &HashMap<(char, char), Vec<Vec<char>>> {
+            &self.paths
+        }
+
+        fn new(
+            distances: HashMap<(char, char), String>,
+            paths: HashMap<(char, char), Vec<Vec<char>>>,
+        ) -> Self {
+            Self { distances, paths }
+        }
+    }
+
+    #[test]
+    fn test_shortest_debt_0() -> Result<()> {
+        // Arrange
+        let n = DirectionalKeypad::initialize();
+
+        // Act
+        let actual = n.shortest('<', 'A', 0, usize::MAX)?;
+
+        // Assert
+        assert_eq!(actual, 4);
+        Ok(())
+    }
+
+    #[test]
+    fn test_shortest_debt_1() -> Result<()> {
+        // Arrange
+        let n = DirectionalKeypad::initialize();
+
+        // Act
+        let actual = n.shortest('<', 'A', 1, usize::MAX)?;
+
+        // Assert
+        assert_eq!(actual, 8);
+        Ok(())
+    }
+
+    #[test]
+    fn test_1() -> Result<()> {
+        // Arrange
+        let d = DirectionalKeypad::initialize();
+        let n = NumericKeypad::initialize();
+        let input = "029A";
+        let formatted: Vec<char> = format!("A{input}").chars().collect();
+
+        let mut final_count = 0;
+        for i in 1..formatted.len() {
+            let from = formatted[i - 1];
+            let to = formatted[i];
+            let paths = n
+                .paths()
+                .get(&(from, to))
+                .ok_or_else(|| anyhow!("missing {:?}", (from, to)))?;
+            let mut shortest_path = usize::MAX;
+            for path in paths {
+                let s = d.shortest_segment(path, 0, shortest_path)?;
+                if s < shortest_path {
+                    shortest_path = s;
+                }
+            }
+            final_count += shortest_path;
+        }
+        assert_eq!("<A^A>^^AvvvA".len(), final_count);
+        // assert_eq!("v<<A>>^A<A>AvA<^AA>A<vAAA>^A".len(), final_count);
+
+        Ok(())
     }
 
     ///     +---+---+
@@ -172,6 +231,7 @@ mod test {
     /// +---+---+---+
     struct DirectionalKeypad {
         distances: HashMap<(char, char), String>,
+        paths: HashMap<(char, char), Vec<Vec<char>>>,
     }
 
     impl DirectionalKeypad {
@@ -182,6 +242,78 @@ mod test {
             (1, 0, '^'),
             (2, 0, 'A'),
         ];
+
+        fn shortest_segment(
+            &self,
+            segment: &Vec<char>,
+            debt: u16,
+            mut best: usize,
+        ) -> Result<usize> {
+            if debt == 0 {
+                return Ok(segment.len() - 1);
+            }
+            let mut segment_size = 0;
+            for i in 1..segment.len() {
+                let from = segment[i - 1];
+                let to = segment[i];
+                let paths = self
+                    .paths()
+                    .get(&(from, to))
+                    .ok_or_else(|| anyhow!("missing {:?}", (from, to)))?;
+                let mut shortest_path = usize::MAX;
+                for path in paths {
+                    let s = self.shortest_segment(path, debt - 1, best)?;
+                    if s < shortest_path {
+                        shortest_path = s;
+                    }
+                }
+                segment_size += shortest_path;
+                if segment_size > best {
+                    return Ok(best);
+                }
+            }
+
+            Ok(segment_size)
+        }
+
+        fn shortest(&self, from: char, to: char, debt: u16, best: usize) -> Result<usize> {
+            let paths = self
+                .paths()
+                .get(&(from, to))
+                .ok_or_else(|| anyhow!("missing {:?}", (from, to)))?;
+
+            if debt == 0 {
+                let p: String = paths[0].iter().collect();
+                return Ok(p.len());
+            }
+            let mut this_best = best;
+            for path in paths {
+                let p: String = path.iter().collect();
+                let mut steps = vec!['A'];
+                for c in p.chars() {
+                    steps.push(c);
+                }
+                let mut count = 0;
+                for i in 1..steps.len() {
+                    let from_n = steps[i - 1];
+                    let to_n = steps[i];
+                    count += self.shortest(from_n, to_n, debt - 1, this_best)?;
+                    if count >= this_best {
+                        break;
+                    }
+                }
+                if count >= this_best {
+                    continue;
+                }
+                this_best = count;
+            }
+
+            if this_best < best {
+                Ok(this_best)
+            } else {
+                Ok(best)
+            }
+        }
     }
 
     impl Keypad for DirectionalKeypad {
@@ -189,8 +321,15 @@ mod test {
             Self::G.to_vec()
         }
 
-        fn new(distances: HashMap<(char, char), String>) -> Self {
-            Self { distances }
+        fn paths(&self) -> &HashMap<(char, char), Vec<Vec<char>>> {
+            &self.paths
+        }
+
+        fn new(
+            distances: HashMap<(char, char), String>,
+            paths: HashMap<(char, char), Vec<Vec<char>>>,
+        ) -> Self {
+            Self { distances, paths }
         }
 
         fn distances(&self) -> &HashMap<(char, char), String> {
@@ -223,6 +362,25 @@ mod test {
                 .contains(output.as_str())
         );
         assert_eq!(output, "<A^A>^^AvvvA");
+        Ok(())
+    }
+
+    #[test]
+    fn test_directional_generate() -> Result<()> {
+        // Arrange
+        let input = "^>";
+        let one_output = "v<<A>>^A<A>AvA<^AA>A<vAAA>^A";
+        let expected_a_count = get_a_count(one_output);
+        let n = DirectionalKeypad::initialize();
+
+        // Act
+        let output = n.generate(input)?;
+
+        // Assert
+        assert_eq!(output.len(), one_output.len());
+        let actual_a_count = get_a_count(&output);
+        assert_eq!(actual_a_count, expected_a_count);
+        assert_eq!(output, "<<vA>>^A<A>AvA<^AA>A<vAAA>^A");
         Ok(())
     }
 
