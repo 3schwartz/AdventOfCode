@@ -120,8 +120,9 @@ trait Keypad: Sized {
 fn code_complexity(input: &[&str], debt: u16) -> Result<usize> {
     let n = NumericKeypad::initialize();
     let mut complexity = 0;
+    let mut cache: HashMap<(&str, u16), usize> = HashMap::new();
     for code in input {
-        let final_count = n.shortest_segment(code, debt)?;
+        let final_count = n.shortest_segment(code, debt, &mut cache)?;
         let numeric_code = numeric_code(code)?;
         complexity += final_count * numeric_code;
     }
@@ -273,7 +274,12 @@ impl NumericKeypad {
         (2, 0, '9'),
     ];
 
-    fn shortest_segment(&self, input: &str, debt: u16) -> Result<usize> {
+    fn shortest_segment(
+        &self,
+        input: &str,
+        debt: u16,
+        cache: &mut HashMap<(&str, u16), usize>,
+    ) -> Result<usize> {
         let formatted: Vec<char> = format!("A{input}").chars().collect();
         let d = DirectionalKeypad::initialize();
 
@@ -352,6 +358,8 @@ impl<T: Keypad> KeypadChoice for T {
 
 #[cfg(test)]
 mod test {
+    use std::collections::HashSet;
+
     use super::*;
 
     #[test]
@@ -393,10 +401,10 @@ mod test {
                 2,
             ),
         ];
-
+        let mut cache = HashMap::new();
         for (expected_length, debt) in parameters {
             // Act
-            let final_count = n.shortest_segment(input, debt)?;
+            let final_count = n.shortest_segment(input, debt, &mut cache)?;
 
             // Assert
             assert_eq!(expected_length, final_count);
@@ -665,9 +673,10 @@ mod test {
                 "<v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A".len(),
             ),
         ];
+        let mut cache = HashMap::new();
         for (input, expected) in inputs {
             // Act
-            let final_count = n.shortest_segment(input, 2)?;
+            let final_count = n.shortest_segment(input, 2, &mut cache)?;
 
             // Assert
             assert_eq!(final_count, expected);
