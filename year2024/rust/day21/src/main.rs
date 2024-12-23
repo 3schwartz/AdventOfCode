@@ -3,9 +3,9 @@ use anyhow::{anyhow, Ok};
 use std::fs;
 use std::{
     borrow::Cow,
-    collections::{HashMap, HashSet, VecDeque},
+    collections::{HashMap, VecDeque},
     num::ParseIntError,
-    u32, usize,
+    usize,
 };
 
 fn main() -> Result<()> {
@@ -15,6 +15,10 @@ fn main() -> Result<()> {
     let complexity = code_complexity(&codes, 2)?;
 
     println!("Part 1: {complexity}");
+
+    let complexity = code_complexity(&codes, 25)?;
+
+    println!("Part 2: {complexity}");
 
     Ok(())
 }
