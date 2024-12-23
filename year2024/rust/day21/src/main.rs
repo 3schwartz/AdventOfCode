@@ -200,26 +200,35 @@ mod test {
         let n = NumericKeypad::initialize();
         let input = "029A";
         let formatted: Vec<char> = format!("A{input}").chars().collect();
+        let parameters = [
+            ("<A^A>^^AvvvA".len(), 0),
+            ("v<<A>>^A<A>AvA<^AA>A<vAAA>^A".len(), 1),
+            (
+                "<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A".len(),
+                2,
+            ),
+        ];
 
-        let mut final_count = 0;
-        for i in 1..formatted.len() {
-            let from = formatted[i - 1];
-            let to = formatted[i];
-            let paths = n
-                .paths()
-                .get(&(from, to))
-                .ok_or_else(|| anyhow!("missing {:?}", (from, to)))?;
-            let mut shortest_path = usize::MAX;
-            for path in paths {
-                let s = d.shortest_segment(path, 0, shortest_path)?;
-                if s < shortest_path {
-                    shortest_path = s;
+        for (expected_length, debt) in parameters {
+            let mut final_count = 0;
+            for i in 1..formatted.len() {
+                let from = formatted[i - 1];
+                let to = formatted[i];
+                let paths = n
+                    .paths()
+                    .get(&(from, to))
+                    .ok_or_else(|| anyhow!("missing {:?}", (from, to)))?;
+                let mut shortest_path = usize::MAX;
+                for path in paths {
+                    let s = d.shortest_segment(path, debt, shortest_path)?;
+                    if s < shortest_path {
+                        shortest_path = s;
+                    }
                 }
+                final_count += shortest_path;
             }
-            final_count += shortest_path;
+            assert_eq!(expected_length, final_count);
         }
-        assert_eq!("<A^A>^^AvvvA".len(), final_count);
-        // assert_eq!("v<<A>>^A<A>AvA<^AA>A<vAAA>^A".len(), final_count);
 
         Ok(())
     }
