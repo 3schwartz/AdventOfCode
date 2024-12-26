@@ -65,24 +65,27 @@ fn make_sets(connections: &HashMap<String, HashSet<String>>) -> BTreeSet<BTreeSe
 fn find_best(connections: &HashMap<String, HashSet<String>>) -> String {
     let mut groups: BTreeSet<BTreeSet<&String>> = BTreeSet::new();
     let mut seen = BTreeSet::new();
-    for k in connections.keys() {
-        let mut queue = VecDeque::from([(k, BTreeSet::from([k]))]);
-        while let Some((prior, prior_group)) = queue.pop_front() {
+    for (k, d) in connections {
+        let mut queue = VecDeque::from([(d, BTreeSet::from([k]))]);
+        while let Some((prior_connects, prior_group)) = queue.pop_front() {
             if !seen.insert(prior_group.clone()) {
                 continue;
             }
-            let prior_connects = connections.get(prior).unwrap();
             for prior_connect in prior_connects {
-                if prior_group.contains(prior_connect) {
-                    groups.insert(prior_group.clone());
+                let next_connects = connections.get(prior_connect).unwrap();
+                if !prior_group.iter().all(|pg| next_connects.contains(*pg)) {
                     continue;
                 }
-                let next_connects = connections.get(prior_connect).unwrap();
-                if prior_group.iter().all(|pg| next_connects.contains(*pg)) {
-                    let mut cloned = prior_group.clone();
-                    cloned.insert(prior_connect);
-                    queue.push_back((prior_connect, cloned));
+                let mut cloned = prior_group.clone();
+                cloned.insert(prior_connect);
+
+                for nexct_connect in next_connects {
+                    if prior_group.contains(nexct_connect) {
+                        groups.insert(cloned.clone());
+                        continue;
+                    }
                 }
+                queue.push_back((next_connects, cloned));
             }
         }
     }
