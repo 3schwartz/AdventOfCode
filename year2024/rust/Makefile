@@ -45,3 +45,11 @@ test21:
 run23:
 	cargo run --manifest-path=./day23/Cargo.toml --release
 .PHONY:run23
+
+run24:
+	cargo run --manifest-path=./day24/Cargo.toml --release
+.PHONY:run24
+
+graph24: run24
+	brew install graphviz
+	dot -Tpng output.txt -o graph.png

@@ -574,3 +574,4 @@ dist-newstyle
 # Elixir / Erlang
 erl_crash.dump
 output.txt
+graph.png

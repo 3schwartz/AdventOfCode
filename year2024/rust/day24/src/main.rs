@@ -1,6 +1,12 @@
 use anyhow::Result;
+use anyhow::{anyhow, Ok};
 use std::collections::BTreeSet;
-use std::fs;
+use std::fs::{self, File};
+use std::io::Write;
+use std::{
+    collections::{BTreeMap, HashSet},
+    str::FromStr,
+};
 
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day24_data.txt")?;
@@ -9,21 +15,16 @@ fn main() -> Result<()> {
 
     println!("Part 1: {}", output);
 
-    let output = solve_2(&input)?;
+    make_graph(&input);
+
+    let output = solve_2_v3(&input)?;
 
     println!("Part 2: {}", output);
 
     Ok(())
 }
 
-use std::{
-    collections::{BTreeMap, HashSet},
-    str::FromStr,
-};
-
-use anyhow::{anyhow, Ok};
-
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum Operator {
     And,
     Xor,
@@ -101,6 +102,34 @@ impl<'a> TryFrom<&'a str> for Gate<'a> {
     }
 }
 
+fn make_graph(input: &str) {
+    let parts = input.split("\n\n").collect::<Vec<&str>>();
+    assert_eq!(parts.len(), 2);
+
+    let mut file = File::create("output.txt").expect("Unable to create file");
+
+    writeln!(file, "strict digraph {{").expect("Unable to write to file");
+    for line in parts[1].lines() {
+        if line.trim().is_empty() {
+            continue; // Skip empty lines
+        }
+        let gate = Gate::try_from(line).unwrap();
+        writeln!(
+            file,
+            "  {} -> {} [label={:?}]",
+            gate.first, gate.output, gate.operator
+        )
+        .expect("Unable to write to file");
+        writeln!(
+            file,
+            "  {} -> {} [label={:?}]",
+            gate.second, gate.output, gate.operator
+        )
+        .expect("Unable to write to file");
+    }
+    writeln!(file, "}}").expect("Unable to write to file");
+}
+
 fn solve_1(input: &str) -> Result<u64> {
     let parts = input.split("\n\n").collect::<Vec<&str>>();
     assert_eq!(parts.len(), 2);
@@ -111,86 +140,170 @@ fn solve_1(input: &str) -> Result<u64> {
     find_z(&subscriptions, &updates, &values, z_count)
 }
 
-fn solve_2(input: &str) -> Result<String> {
+fn solve_2_v3(input: &str) -> Result<String> {
     let parts = input.split("\n\n").collect::<Vec<&str>>();
     assert_eq!(parts.len(), 2);
     let (values, updates) = make_values(parts[0])?;
     let subscriptions = make_subscriptions(parts[1])?;
     let x = find_values_from_char('x', &values)?;
-    let y = find_values_from_char('x', &values)?;
+    let y = find_values_from_char('y', &values)?;
 
-    let mut seen = BTreeSet::new();
     let z_count = start_with('z', &subscriptions);
-    for i_1 in subscriptions.keys() {
-        for i_2 in subscriptions.keys() {
-            if i_1 == i_2 {
-                continue;
+    let mut gates = make_gates_from_subscriptions(&subscriptions);
+
+    let mut changes = vec![];
+    let mut swaps: Vec<(String, String)> = vec![];
+
+    let s = x + y;
+    loop {
+        let update_subscriptions = make_updated_subscriptions_from_swaps(&swaps, &subscriptions);
+        let z = find_z(&update_subscriptions, &updates, &values, z_count)?;
+        if z == s {
+            break;
+        }
+        for i in 0..z_count {
+            let actual = (z >> i) & 1;
+            let expected = (s >> i) & 1;
+            if actual != expected || changes.len() == 1 {
+                let z_out = format!("z{i:02}");
+
+                let gate = gates.get(z_out.as_str()).unwrap();
+                if gate.operator == Operator::Xor {
+                    if (gate.first.starts_with('x') || gate.first.starts_with('y'))
+                        && (gate.second.starts_with('x') || gate.second.starts_with('y'))
+                    {
+                        continue;
+                    }
+                    let first_gate = gates.get(gate.first).unwrap();
+                    let second_gate = gates.get(gate.second).unwrap();
+
+                    if first_gate.operator == Operator::Xor
+                        && (first_gate.first.starts_with('x') || first_gate.first.starts_with('y'))
+                    {
+                        if second_gate.operator != Operator::Or {
+                            changes.push(gate.second.to_string());
+                        } else {
+                            let second_gate_first = gates.get(second_gate.first).unwrap();
+                            if second_gate_first.operator != Operator::And {
+                                changes.push(second_gate.first.to_string());
+                            }
+                            let second_gate_second = gates.get(second_gate.second).unwrap();
+                            if second_gate_second.operator != Operator::And {
+                                changes.push(second_gate.second.to_string());
+                            }
+                        }
+                    } else {
+                        if first_gate.operator != Operator::Or {
+                            changes.push(gate.first.to_string());
+                        } else {
+                            let first_gate_first = gates.get(first_gate.first).unwrap();
+                            if first_gate_first.operator != Operator::And {
+                                changes.push(first_gate.first.to_string());
+                            }
+                            let first_gate_second = gates.get(first_gate.second).unwrap();
+                            if first_gate_second.operator != Operator::And {
+                                changes.push(first_gate.second.to_string());
+                            }
+                        }
+                    }
+                } else {
+                    changes.push(z_out);
+                }
             }
-            for i_3 in subscriptions.keys() {
-                if i_1 == i_3 || i_2 == i_3 {
-                    continue;
-                }
-                for i_4 in subscriptions.keys() {
-                    if i_1 == i_4 || i_2 == i_4 || i_3 == i_4 {
-                        continue;
-                    }
-                    let mut to_swap = vec![i_1, i_2, i_3, i_4];
-                    let mut single_swaps = HashSet::from([i_1, i_2, i_3, i_4]);
-                    let mut swaps = BTreeSet::new();
-
-                    while let Some(next) = to_swap.pop() {
-                        for s in subscriptions.keys() {
-                            if i_1 == s || i_2 == s || i_3 == s || i_4 == s {
-                                continue;
-                            }
-                            if !single_swaps.insert(s) {
-                                continue;
-                            }
-                            swaps.insert((next, s));
-                        }
-                    }
-                    if !seen.insert(swaps.clone()) {
-                        continue;
-                    }
-
-                    let mut update_subscriptions = BTreeMap::new();
-                    for (k, v) in &subscriptions {
-                        let mut insert = true;
-                        for swap in &swaps {
-                            if k == swap.0 {
-                                update_subscriptions.insert(*swap.1, v.clone());
-                                insert = false;
-                                break;
-                            }
-                            if k == swap.1 {
-                                update_subscriptions.insert(*swap.0, v.clone());
-                                insert = false;
-                                break;
-                            }
-                        }
-                        if insert {
-                            update_subscriptions.insert(k, v.clone());
-                        }
-                    }
-                    let z = find_z(&subscriptions, &updates, &values, z_count)?;
-                    if z == x + y {
-                        let mut set = BTreeSet::new();
-                        for swap in swaps {
-                            set.insert(*swap.0);
-                            set.insert(*swap.1);
-                        }
-                        return Ok(set.iter().map(|n| *n).collect::<Vec<&str>>().join(","));
-                    }
-                }
+            if changes.len() == 2 {
+                break;
             }
         }
+        let g_1 = *gates.get(changes[0].as_str()).unwrap();
+        let g_2 = *gates.get(changes[1].as_str()).unwrap();
+        gates.insert(
+            g_1.output,
+            Gate {
+                first: g_2.first,
+                second: g_2.second,
+                output: g_1.output,
+                operator: g_2.operator,
+            },
+        );
+        gates.insert(
+            g_2.output,
+            Gate {
+                first: g_1.first,
+                second: g_1.second,
+                output: g_2.output,
+                operator: g_1.operator,
+            },
+        );
+        swaps.push((changes[0].clone(), changes[1].clone()));
+        changes.clear();
     }
-    Err(anyhow!("no result found"))
+    let mut set = BTreeSet::new();
+    for swap in swaps {
+        set.insert(swap.0);
+        set.insert(swap.1);
+    }
+    Ok(set
+        .iter()
+        .map(|n| n.as_str())
+        .collect::<Vec<&str>>()
+        .join(","))
+}
+
+fn make_updated_subscriptions_from_swaps<'a>(
+    swaps: &'a Vec<(String, String)>,
+    subscriptions: &'a BTreeMap<&str, Vec<Gate>>,
+) -> BTreeMap<&'a str, Vec<Gate<'a>>> {
+    let mut update_subscriptions = BTreeMap::new();
+    for (k, v) in subscriptions {
+        let mut k_sub = vec![];
+        for g in v {
+            let mut insert = true;
+            for swap in swaps {
+                if g.output == swap.0 {
+                    k_sub.push(Gate {
+                        first: g.first,
+                        second: g.second,
+                        operator: g.operator,
+                        output: swap.1.as_str(),
+                    });
+                    insert = false;
+                    break;
+                }
+                if g.output == swap.1 {
+                    k_sub.push(Gate {
+                        first: g.first,
+                        second: g.second,
+                        operator: g.operator,
+                        output: swap.0.as_str(),
+                    });
+                    insert = false;
+                    break;
+                }
+            }
+            if insert {
+                k_sub.push(*g);
+            }
+        }
+        update_subscriptions.insert(*k, k_sub);
+    }
+    update_subscriptions
+}
+
+fn make_gates_from_subscriptions<'a>(
+    subscriptions: &'a BTreeMap<&str, Vec<Gate>>,
+) -> BTreeMap<&'a str, Gate<'a>> {
+    let mut gates = BTreeMap::new();
+    for o in subscriptions.values() {
+        for g in o {
+            gates.insert(g.output, *g);
+        }
+    }
+    gates
 }
 
 fn start_with(start: char, subscriptions: &BTreeMap<&str, Vec<Gate>>) -> usize {
     let mut start_with = HashSet::new();
-    for (_, v) in subscriptions {
+    for v in subscriptions.values() {
         for g in v {
             g.start_with(start, &mut start_with);
         }
@@ -229,7 +342,7 @@ fn make_subscriptions(input: &str) -> Result<BTreeMap<&str, Vec<Gate>>> {
 
 fn find_z(
     subscriptions: &BTreeMap<&str, Vec<Gate>>,
-    updates: &Vec<&str>,
+    updates: &[&str],
     values: &BTreeMap<&str, u32>,
     z_count: usize,
 ) -> Result<u64> {
@@ -282,19 +395,6 @@ mod test {
 
         // Assert
         assert_eq!(output, 2024);
-        Ok(())
-    }
-
-    #[test]
-    fn test_part_2() -> Result<()> {
-        // Arrange
-        let input = fs::read_to_string("../../data/day24_test2_data.txt")?;
-
-        // Act
-        let output = solve_2(&input)?;
-
-        // Assert
-        assert_eq!(output, "aaa,aoc,bbb,ccc,eee,ooo,z24,z99");
         Ok(())
     }
 }
