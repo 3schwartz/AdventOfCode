@@ -192,18 +192,16 @@ fn solve_2_v3(input: &str) -> Result<String> {
                                 changes.push(second_gate.second.to_string());
                             }
                         }
+                    } else if first_gate.operator != Operator::Or {
+                        changes.push(gate.first.to_string());
                     } else {
-                        if first_gate.operator != Operator::Or {
-                            changes.push(gate.first.to_string());
-                        } else {
-                            let first_gate_first = gates.get(first_gate.first).unwrap();
-                            if first_gate_first.operator != Operator::And {
-                                changes.push(first_gate.first.to_string());
-                            }
-                            let first_gate_second = gates.get(first_gate.second).unwrap();
-                            if first_gate_second.operator != Operator::And {
-                                changes.push(first_gate.second.to_string());
-                            }
+                        let first_gate_first = gates.get(first_gate.first).unwrap();
+                        if first_gate_first.operator != Operator::And {
+                            changes.push(first_gate.first.to_string());
+                        }
+                        let first_gate_second = gates.get(first_gate.second).unwrap();
+                        if first_gate_second.operator != Operator::And {
+                            changes.push(first_gate.second.to_string());
                         }
                     }
                 } else {
