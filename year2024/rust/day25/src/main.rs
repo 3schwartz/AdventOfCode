@@ -35,11 +35,10 @@ impl State {
         let mut keys = HashSet::new();
         for (c, lock_height) in lock.iter().enumerate() {
             let max_key_height = 5 - lock_height;
-            if max_key_height == 0 {
-                continue;
-            }
-            let key_heights_for_column =
-                self.keys.get(&c).expect(&format! {"expect height at {c}"});
+            let key_heights_for_column = self
+                .keys
+                .get(&c)
+                .unwrap_or_else(|| panic!("expect height at {c}"));
             let mut key_height_which_fits = HashSet::new();
             for (key_height, keys) in key_heights_for_column {
                 if *key_height > max_key_height {
@@ -69,7 +68,7 @@ impl FromStr for State {
         let mut locks: Vec<[usize; 5]> = vec![];
         let mut keys: BTreeMap<usize, BTreeMap<usize, HashSet<usize>>> = BTreeMap::new();
         for (i, part) in parts.iter().enumerate() {
-            let grid = make_grid(&part);
+            let grid = make_grid(part);
             let s = grid[0][0];
             let height_count = count_height(grid);
             match s {
@@ -88,7 +87,7 @@ fn update_keys(
     key: [usize; 5],
 ) {
     for (c, k) in key.iter().enumerate() {
-        let entry = keys.entry(c).or_insert_with(|| BTreeMap::new());
+        let entry = keys.entry(c).or_default();
         entry
             .entry(*k)
             .and_modify(|s| {
@@ -107,8 +106,8 @@ fn count_height(grid: Vec<Vec<char>>) -> [usize; 5] {
             }
         }
     }
-    for i in 0..s.len() {
-        s[i] -= 1;
+    for e in &mut s {
+        *e -= 1;
     }
     s
 }
@@ -142,14 +141,6 @@ mod test {
 
         // Assert
         assert_eq!(pairs, 3);
-        Ok(())
-    }
-
-    #[test]
-    fn test_part_2() -> Result<()> {
-        // Arrange
-        // Act
-        // Assert
         Ok(())
     }
 }
