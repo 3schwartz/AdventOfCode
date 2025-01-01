@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 use day10::make_knot_hash;
-use std::fmt::Write;
+use std::{collections::HashSet, fmt::Write};
 
 fn main() -> Result<()> {
     let input = "jzgqcdpd";
@@ -8,11 +8,22 @@ fn main() -> Result<()> {
     let used = count_used(input)?;
 
     println!("Part 1: {used}");
+
+    let used = find_used(input)?;
+    let regions = find_regions(&used);
+
+    println!("Part 2: {regions}");
     Ok(())
 }
 
-fn binary_used_count(binary_string: &str) -> usize {
-    binary_string.chars().filter(|c| *c == '1').count()
+fn binary_used_count(binary_string: &str) -> Vec<usize> {
+    let mut cols = vec![];
+    for (i, c) in binary_string.chars().enumerate() {
+        if c == '1' {
+            cols.push(i);
+        }
+    }
+    cols
 }
 
 fn hex_to_binary(hex_string: &str) -> Result<String> {
@@ -27,13 +38,53 @@ fn hex_to_binary(hex_string: &str) -> Result<String> {
     Ok(binary_string)
 }
 
+fn find_used(input: &str) -> Result<HashSet<(i32, i32)>> {
+    let mut used = HashSet::new();
+    for r in 0..128 {
+        let i = format!("{input}-{r}");
+        let hash = make_knot_hash(&i);
+        let binary = hex_to_binary(&hash)?;
+        for u in binary_used_count(&binary) {
+            used.insert((u as i32, r));
+        }
+    }
+    Ok(used)
+}
+
+fn find_regions(used: &HashSet<(i32, i32)>) -> u32 {
+    let n = [(-1, 0), (1, 0), (0, -1), (0, 1)];
+    let mut seen = HashSet::new();
+    let mut regions = 0;
+    for next in used {
+        let mut queue = vec![*next];
+        let mut region = HashSet::new();
+        while let Some(q) = queue.pop() {
+            if !seen.insert(q) {
+                continue;
+            }
+            region.insert(q);
+            for n in &n {
+                let neighbor = (q.0 + n.0, q.1 + n.1);
+                if used.contains(&neighbor) {
+                    queue.push(neighbor);
+                }
+            }
+        }
+        if region.is_empty() {
+            continue;
+        }
+        regions += 1;
+    }
+    regions
+}
+
 fn count_used(input: &str) -> Result<usize> {
     let mut used = 0;
     for r in 0..128 {
         let i = format!("{input}-{r}");
         let hash = make_knot_hash(&i);
         let binary = hex_to_binary(&hash)?;
-        used += binary_used_count(&binary);
+        used += binary_used_count(&binary).len();
     }
     Ok(used)
 }
@@ -79,6 +130,20 @@ mod test {
 
         // Assert
         assert_eq!(8_108, used);
+        Ok(())
+    }
+
+    #[test]
+    fn test_part_2() -> Result<()> {
+        // Arrange
+        let input = "flqrgnkx";
+
+        // Act
+        let used = find_used(input)?;
+        let regions = find_regions(&used);
+
+        // Assert
+        assert_eq!(1_242, regions);
         Ok(())
     }
 }
