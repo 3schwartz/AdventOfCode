@@ -33,7 +33,7 @@ fn parse(input: &str) -> (u64, u64) {
 }
 
 fn next(previous: u64, generator: u64) -> u64 {
-    (previous * generator) % 214_748_3647
+    (previous * generator) % 2_147_483_647
 }
 
 fn last_16_bits(number: u64) -> u64 {
