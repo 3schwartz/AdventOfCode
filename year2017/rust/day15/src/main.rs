@@ -5,14 +5,21 @@ use anyhow::Result;
 const A_G: u64 = 16_807;
 const B_G: u64 = 48_271;
 
+const A_M: u64 = 4;
+const B_M: u64 = 8;
+
 fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day15_data.txt")?;
 
     let (a, b) = parse(&input);
 
-    let count = find_pair_count(a, b, 40_000_000, false);
+    let count = find_pair_count(a, b, 40_000_000, 1, 1, false);
 
-    println!("{count}");
+    println!("Part 1: {count}");
+
+    let count = find_pair_count(a, b, 5_000_000, A_M, B_M, false);
+
+    println!("Part 2: {count}");
     Ok(())
 }
 
@@ -33,14 +40,32 @@ fn last_16_bits(number: u64) -> u64 {
     number & 0xFFFF
 }
 
-fn find_pair_count(mut a: u64, mut b: u64, iterations: usize, debug: bool) -> u64 {
+fn find_pair_count(
+    mut a: u64,
+    mut b: u64,
+    iterations: usize,
+    a_mut: u64,
+    b_mut: u64,
+    debug: bool,
+) -> u64 {
     let mut count = 0;
     for i in 0..iterations {
         if i % 100_000 == 0 && debug {
             println!("{i}");
         }
-        a = next(a, A_G);
-        b = next(b, B_G);
+        loop {
+            a = next(a, A_G);
+            if a % a_mut == 0 {
+                break;
+            }
+        }
+        loop {
+            b = next(b, B_G);
+            if b % b_mut == 0 {
+                break;
+            }
+        }
+
         if last_16_bits(a) == last_16_bits(b) {
             count += 1;
         }
@@ -58,9 +83,21 @@ mod test {
         let (a, b) = (65, 8921);
 
         // Act
-        let count = find_pair_count(a, b, 40_000_000, true);
+        let count = find_pair_count(a, b, 40_000_000, 1, 1, true);
 
         // Assert
         assert_eq!(count, 588)
+    }
+
+    #[test]
+    fn test_part_2() {
+        // Arrange
+        let (a, b) = (65, 8921);
+
+        // Act
+        let count = find_pair_count(a, b, 5_000_000, A_M, B_M, true);
+
+        // Assert
+        assert_eq!(count, 309)
     }
 }
