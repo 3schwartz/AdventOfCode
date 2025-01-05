@@ -7,10 +7,16 @@ fn main() -> Result<()> {
 
     let moves = parse_moves(input.trim());
     let mut state = State::new(16);
-    state.apply_moves(moves)?;
+    state.apply_moves(&moves, 1, false)?;
     let standing = state.program_standing();
 
     println!("Part 1: {standing}");
+
+    let mut state = State::new(16);
+    state.apply_moves(&moves, 1_000_000_000, true)?;
+    let standing = state.program_standing();
+
+    println!("Part 2: {standing}");
     Ok(())
 }
 
@@ -37,6 +43,7 @@ fn parse_partner(input: &str) -> Result<(char, char)> {
     Ok((chars[0], chars[1]))
 }
 
+#[derive(Clone, PartialEq, PartialOrd, Eq, Ord)]
 struct State {
     positions: BTreeMap<usize, char>,
     programs: BTreeMap<char, usize>,
@@ -106,10 +113,37 @@ impl State {
         Ok(())
     }
 
-    fn apply_moves(&mut self, moves: Vec<&str>) -> Result<()> {
-        for dance_move in moves {
-            self.make_move(dance_move)?;
+    fn apply_moves(&mut self, moves: &Vec<&str>, times: usize, debug: bool) -> Result<()> {
+        let mut cache: BTreeMap<State, usize> = BTreeMap::new();
+        let mut jumped = false;
+        let mut i = 0;
+        loop {
+            if i == times {
+                break;
+            }
+            if !jumped {
+                if let Some(prior) = cache.get(self) {
+                    let steps = i - prior;
+                    let missing = times - i;
+                    let loops = missing / steps;
+                    i += loops * steps;
+                    jumped = true;
+                    continue;
+                }
+            }
+
+            cache.insert(self.clone(), i);
+
+            if i % 100_000 == 0 && debug {
+                println!("{i}");
+            }
+            for dance_move in moves {
+                self.make_move(dance_move)?;
+            }
+
+            i += 1;
         }
+
         Ok(())
     }
 
@@ -140,11 +174,27 @@ mod test {
         // Act
         let moves = parse_moves(input);
         let mut state = State::new(5);
-        state.apply_moves(moves)?;
+        state.apply_moves(&moves, 1, false)?;
         let standing = state.program_standing();
 
         // Assert
         assert_eq!(standing, "baedc");
+        Ok(())
+    }
+
+    #[test]
+    fn test_part_2() -> Result<()> {
+        // Arrange
+        let input = "s1,x3/4,pe/b";
+
+        // Act
+        let moves = parse_moves(input);
+        let mut state = State::new(5);
+        state.apply_moves(&moves, 2, false)?;
+        let standing = state.program_standing();
+
+        // Assert
+        assert_eq!(standing, "ceadb");
         Ok(())
     }
 }
