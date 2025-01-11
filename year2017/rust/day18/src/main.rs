@@ -3,8 +3,12 @@ use std::{
     collections::{BTreeMap, HashMap},
     fs,
     str::FromStr,
+    sync::Arc,
 };
-use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
+use tokio::sync::{
+    mpsc::{self, UnboundedReceiver, UnboundedSender},
+    RwLock,
+};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -64,10 +68,10 @@ enum Instruct<'a> {
 }
 
 struct StateAsync {
-    last_sound: i64,
-    done: bool,
-    sender: UnboundedSender<i32>,
-    receiver: UnboundedReceiver<i32>,
+    sender: UnboundedSender<i64>,
+    receiver: UnboundedReceiver<i64>,
+    queue_size: Arc<RwLock<i64>>,
+    receiver_awaiting: Arc<RwLock<i16>>,
 }
 
 impl<'a> Instruct<'a> {
@@ -79,28 +83,63 @@ impl<'a> Instruct<'a> {
         Ok(instructions)
     }
 
-    fn run_async(instruction: BTreeMap<i64, Instruct>) {
-        let (first_tx, mut first_rx) = mpsc::unbounded_channel::<i32>();
+    fn start_async(instructions: BTreeMap<i64, Instruct>) {
+        let (first_snd, first_rcv) = mpsc::unbounded_channel::<i64>();
+        let (second_snd, second_rcv) = mpsc::unbounded_channel::<i64>();
+
+        let queue_size = Arc::new(RwLock::new(0));
+        let rcv_awaits = Arc::new(RwLock::new(1));
+
+        let first_state = StateAsync {
+            sender: second_snd,
+            receiver: first_rcv,
+            queue_size: queue_size.clone(),
+            receiver_awaiting: rcv_awaits.clone(),
+        };
+        let second_state = StateAsync {
+            sender: first_snd,
+            receiver: second_rcv,
+            queue_size: queue_size,
+            receiver_awaiting: rcv_awaits,
+        };
+        let registry_first = HashMap::from([("p", 0)]);
+        let registry_second = HashMap::from([("p", 1)]);
+
+        let instrs = Arc::new(instructions);
+        let instrs_clone = instrs.clone();
+
+        let first_result =
+            tokio::spawn(async move { Self::run_async(registry_first, first_state, instrs_clone) });
+        let second_result =
+            tokio::spawn(async move { Self::run_async(registry_second, second_state, instrs) });
     }
 
-    fn run(instructions: BTreeMap<i64, Instruct>) -> Option<i64> {
+    async fn run_async<'c>(
+        mut registry: HashMap<&'c str, i64>,
+        mut state: StateAsync,
+        instructions: Arc<BTreeMap<i64, Instruct<'a>>>,
+    ) -> Result<u64> {
+        let mut send_count = 0;
         let mut cursor = 0;
-        let mut state = State::new();
-        let mut registry = HashMap::new();
         while let Some(instruction) = instructions.get(&cursor) {
-            let j = instruction.react(&mut registry, &mut state);
-            if state.done {
-                return Some(state.last_sound);
+            let j = instruction
+                .react_async(&mut registry, &mut state, &mut send_count)
+                .await?;
+            if let Some(n) = j {
+                cursor += n;
+            } else {
+                break;
             }
-            cursor += j;
         }
-        None
+        Ok(send_count)
     }
+
     async fn react_async<'b>(
         &self,
         registry: &'b mut HashMap<&'a str, i64>,
-        state: &mut State,
-    ) -> i64 {
+        state: &mut StateAsync,
+        send_count: &mut u64,
+    ) -> Result<Option<i64>> {
         match self {
             Instruct::Two(r, s, instruction_two) => {
                 let v = Self::value_of(s, registry);
@@ -123,25 +162,56 @@ impl<'a> Instruct<'a> {
                     InstructionTwo::Jgz => {
                         let sound = Self::value_of(r, registry);
                         if sound != 0 {
-                            return v;
+                            return Ok(Some(v));
                         }
                     }
                 }
             }
-            Instruct::Single(r, instruction_single) => {
-                let next = Self::value_of(r, registry);
-                match instruction_single {
-                    InstructionSingle::Snd => state.last_sound = next,
-                    InstructionSingle::Rcv => {
-                        if next != 0 {
-                            println!("{}", state.last_sound);
-                            state.done = true;
-                        }
+            Instruct::Single(r, instruction_single) => match instruction_single {
+                InstructionSingle::Snd => {
+                    let next = Self::value_of(r, registry);
+                    state.sender.send(next)?;
+                    let mut queue_size = state.queue_size.write().await;
+                    *queue_size += 1;
+                    *send_count += 1;
+                }
+                InstructionSingle::Rcv => {
+                    let queue_size = { *state.queue_size.read().await };
+                    let rcv_awaits = {
+                        let mut rcv_awaits = state.receiver_awaiting.write().await;
+                        *rcv_awaits += 1;
+                        *rcv_awaits
+                    };
+                    if queue_size == 0 && rcv_awaits == 2 {
+                        return Ok(None);
+                    }
+                    if let Some(next) = state.receiver.recv().await {
+                        registry.insert(&r, next);
+                        let mut rcv_awaits = state.receiver_awaiting.write().await;
+                        *rcv_awaits -= 1;
+                        let mut queue_size = state.queue_size.write().await;
+                        *queue_size -= 1;
+                    } else {
+                        return Err(anyhow!("not able to get next"));
                     }
                 }
-            }
+            },
         }
-        1
+        Ok(Some(1))
+    }
+
+    fn run(instructions: BTreeMap<i64, Instruct>) -> Option<i64> {
+        let mut cursor = 0;
+        let mut state = State::new();
+        let mut registry = HashMap::new();
+        while let Some(instruction) = instructions.get(&cursor) {
+            let j = instruction.react(&mut registry, &mut state);
+            if state.done {
+                return Some(state.last_sound);
+            }
+            cursor += j;
+        }
+        None
     }
 
     fn react<'b>(&self, registry: &'b mut HashMap<&'a str, i64>, state: &mut State) -> i64 {
@@ -231,9 +301,18 @@ impl State {
 
 #[cfg(test)]
 mod test {
-    use tokio::sync::RwLock;
-
     use super::*;
+
+    fn some_reference(i: &mut i64) {
+        *i += 1;
+    }
+
+    #[test]
+    fn test_reference() {
+        let mut i = 1;
+        some_reference(&mut i);
+        assert_eq!(2, i);
+    }
 
     #[tokio::test]
     async fn test_mutext() {
