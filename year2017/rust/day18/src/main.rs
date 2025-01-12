@@ -175,7 +175,7 @@ impl Instruct {
                     }
                     InstructionTwo::Jgz => {
                         let sound = Self::value_of(r, registry);
-                        if sound != 0 {
+                        if sound > 0 {
                             return Ok(Some(v));
                         }
                     }
@@ -319,29 +319,6 @@ impl State {
 #[cfg(test)]
 mod test {
     use super::*;
-
-    fn some_reference(i: &mut i64) {
-        *i += 1;
-    }
-
-    #[test]
-    fn test_reference() {
-        let mut i = 1;
-        some_reference(&mut i);
-        assert_eq!(2, i);
-    }
-
-    #[tokio::test]
-    async fn test_mutext() {
-        let mutext = RwLock::new(5);
-        {
-            let mut i = mutext.write().await;
-            *i += 1;
-        }
-
-        let i_ = mutext.read().await;
-        assert_eq!(*i_, 6);
-    }
 
     #[test]
     fn test_part_1() -> Result<()> {
