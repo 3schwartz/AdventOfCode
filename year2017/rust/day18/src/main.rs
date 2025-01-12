@@ -17,6 +17,11 @@ async fn main() -> Result<()> {
     let instructions = Instruct::make_instructions(&input)?;
     Instruct::run(instructions);
 
+    let instructions = Instruct::make_instructions(&input)?;
+    let s = Instruct::start_async(instructions).await?;
+
+    println!("Part 2: {s}");
+
     Ok(())
 }
 
@@ -62,9 +67,9 @@ impl FromStr for InstructionSingle {
     }
 }
 
-enum Instruct<'a> {
-    Two(&'a str, &'a str, InstructionTwo),
-    Single(&'a str, InstructionSingle),
+enum Instruct {
+    Two(String, String, InstructionTwo),
+    Single(String, InstructionSingle),
 }
 
 struct StateAsync {
@@ -74,7 +79,7 @@ struct StateAsync {
     receiver_awaiting: Arc<RwLock<i16>>,
 }
 
-impl<'a> Instruct<'a> {
+impl Instruct {
     fn make_instructions(input: &str) -> Result<BTreeMap<i64, Instruct>> {
         let mut instructions = BTreeMap::new();
         for (i, line) in input.lines().enumerate() {
@@ -83,12 +88,12 @@ impl<'a> Instruct<'a> {
         Ok(instructions)
     }
 
-    fn start_async(instructions: BTreeMap<i64, Instruct>) {
+    async fn start_async(instructions: BTreeMap<i64, Instruct>) -> Result<u128> {
         let (first_snd, first_rcv) = mpsc::unbounded_channel::<i64>();
         let (second_snd, second_rcv) = mpsc::unbounded_channel::<i64>();
 
         let queue_size = Arc::new(RwLock::new(0));
-        let rcv_awaits = Arc::new(RwLock::new(1));
+        let rcv_awaits = Arc::new(RwLock::new(0));
 
         let first_state = StateAsync {
             sender: second_snd,
@@ -99,7 +104,7 @@ impl<'a> Instruct<'a> {
         let second_state = StateAsync {
             sender: first_snd,
             receiver: second_rcv,
-            queue_size: queue_size,
+            queue_size,
             receiver_awaiting: rcv_awaits,
         };
         let registry_first = HashMap::from([("p", 0)]);
@@ -108,22 +113,30 @@ impl<'a> Instruct<'a> {
         let instrs = Arc::new(instructions);
         let instrs_clone = instrs.clone();
 
-        let first_result =
-            tokio::spawn(async move { Self::run_async(registry_first, first_state, instrs_clone) });
+        let first_result = tokio::spawn(async move {
+            Self::run_async(0, registry_first, first_state, instrs_clone).await
+        });
         let second_result =
-            tokio::spawn(async move { Self::run_async(registry_second, second_state, instrs) });
+            tokio::spawn(
+                async move { Self::run_async(1, registry_second, second_state, instrs).await },
+            );
+
+        let _ = first_result.await??;
+        let s = second_result.await??;
+        Ok(s)
     }
 
-    async fn run_async<'c>(
-        mut registry: HashMap<&'c str, i64>,
+    async fn run_async(
+        id: u8,
+        mut registry: HashMap<&str, i64>,
         mut state: StateAsync,
-        instructions: Arc<BTreeMap<i64, Instruct<'a>>>,
-    ) -> Result<u64> {
+        instructions: Arc<BTreeMap<i64, Instruct>>,
+    ) -> Result<u128> {
         let mut send_count = 0;
         let mut cursor = 0;
         while let Some(instruction) = instructions.get(&cursor) {
             let j = instruction
-                .react_async(&mut registry, &mut state, &mut send_count)
+                .react_async(id, &mut registry, &mut state, &mut send_count)
                 .await?;
             if let Some(n) = j {
                 cursor += n;
@@ -134,29 +147,30 @@ impl<'a> Instruct<'a> {
         Ok(send_count)
     }
 
-    async fn react_async<'b>(
-        &self,
-        registry: &'b mut HashMap<&'a str, i64>,
+    async fn react_async<'a>(
+        &'a self,
+        id: u8,
+        registry: &mut HashMap<&'a str, i64>,
         state: &mut StateAsync,
-        send_count: &mut u64,
+        send_count: &mut u128,
     ) -> Result<Option<i64>> {
         match self {
             Instruct::Two(r, s, instruction_two) => {
                 let v = Self::value_of(s, registry);
                 match instruction_two {
                     InstructionTwo::Set => {
-                        registry.insert(*r, v);
+                        registry.insert(r, v);
                     }
                     InstructionTwo::Add => {
-                        let entry = registry.entry(*r).or_default();
+                        let entry = registry.entry(r).or_default();
                         *entry += v;
                     }
                     InstructionTwo::Mul => {
-                        let x = registry.entry(*r).or_default();
+                        let x = registry.entry(r).or_default();
                         *x *= v;
                     }
                     InstructionTwo::Mod => {
-                        let x = registry.entry(*r).or_default();
+                        let x = registry.entry(r).or_default();
                         *x %= v;
                     }
                     InstructionTwo::Jgz => {
@@ -174,6 +188,9 @@ impl<'a> Instruct<'a> {
                     let mut queue_size = state.queue_size.write().await;
                     *queue_size += 1;
                     *send_count += 1;
+                    if *send_count % 1_000_000 == 0 {
+                        println!("{id}: {send_count}");
+                    }
                 }
                 InstructionSingle::Rcv => {
                     let queue_size = { *state.queue_size.read().await };
@@ -186,13 +203,13 @@ impl<'a> Instruct<'a> {
                         return Ok(None);
                     }
                     if let Some(next) = state.receiver.recv().await {
-                        registry.insert(&r, next);
+                        registry.insert(r, next);
                         let mut rcv_awaits = state.receiver_awaiting.write().await;
                         *rcv_awaits -= 1;
                         let mut queue_size = state.queue_size.write().await;
                         *queue_size -= 1;
                     } else {
-                        return Err(anyhow!("not able to get next"));
+                        return Ok(None);
                     }
                 }
             },
@@ -214,24 +231,24 @@ impl<'a> Instruct<'a> {
         None
     }
 
-    fn react<'b>(&self, registry: &'b mut HashMap<&'a str, i64>, state: &mut State) -> i64 {
+    fn react<'a>(&'a self, registry: &mut HashMap<&'a str, i64>, state: &mut State) -> i64 {
         match self {
             Instruct::Two(r, s, instruction_two) => {
                 let v = Self::value_of(s, registry);
                 match instruction_two {
                     InstructionTwo::Set => {
-                        registry.insert(*r, v);
+                        registry.insert(r, v);
                     }
                     InstructionTwo::Add => {
-                        let entry = registry.entry(*r).or_default();
+                        let entry = registry.entry(r).or_default();
                         *entry += v;
                     }
                     InstructionTwo::Mul => {
-                        let x = registry.entry(*r).or_default();
+                        let x = registry.entry(r).or_default();
                         *x *= v;
                     }
                     InstructionTwo::Mod => {
-                        let x = registry.entry(*r).or_default();
+                        let x = registry.entry(r).or_default();
                         *x %= v;
                     }
                     InstructionTwo::Jgz => {
@@ -266,20 +283,20 @@ impl<'a> Instruct<'a> {
     }
 }
 
-impl<'a> TryFrom<&'a str> for Instruct<'a> {
+impl TryFrom<&str> for Instruct {
     type Error = anyhow::Error;
 
-    fn try_from(value: &'a str) -> std::result::Result<Self, Self::Error> {
+    fn try_from(value: &str) -> std::result::Result<Self, Self::Error> {
         let parts = value.split(' ').collect::<Vec<&str>>();
         if parts.len() != 2 && parts.len() != 3 {
             return Err(anyhow!("wrong length: {:?}", parts));
         }
         let i = if parts.len() == 3 {
             let instruct = InstructionTwo::from_str(parts[0])?;
-            Instruct::Two(parts[1], parts[2], instruct)
+            Instruct::Two(parts[1].to_string(), parts[2].to_string(), instruct)
         } else {
             let instruct = InstructionSingle::from_str(parts[0])?;
-            Instruct::Single(parts[1], instruct)
+            Instruct::Single(parts[1].to_string(), instruct)
         };
         Ok(i)
     }
@@ -337,6 +354,20 @@ mod test {
 
         // Assert
         assert!(matches!(last, Some(4)));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_part_2() -> Result<()> {
+        // Arrange
+        let input = fs::read_to_string("../../data/day18_test2_data.txt")?;
+
+        // Act
+        let instructions = Instruct::make_instructions(&input)?;
+        let last = Instruct::start_async(instructions).await?;
+
+        // Assert
+        assert!(matches!(last, 3));
         Ok(())
     }
 }
