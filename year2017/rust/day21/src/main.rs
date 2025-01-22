@@ -9,7 +9,7 @@ fn main() -> Result<()> {
     let rules = fs::read_to_string("../data/day21_data.txt")?;
     let input = fs::read_to_string("../data/day21_input.txt")?;
 
-    let grid = parse_grid_from_lines(&input);
+    let grid = parse_grid(&input, '\n');
     let rules = parse_rules(&rules)?;
 
     let actual = iterate(&grid, &rules, 5, false)?;
@@ -143,48 +143,26 @@ fn parse_rules(input: &str) -> Result<HashMap<String, Vec<Vec<char>>>> {
 fn parse_rule(input: &str) -> (HashSet<String>, Vec<Vec<char>>) {
     let parts = input.split(" => ").collect::<Vec<&str>>();
     assert_eq!(parts.len(), 2);
-    let input_grid = parse_grid_from_string(parts[0]);
-    let output_grid = parse_grid_from_string(parts[1]);
+    let input_grid = parse_grid(parts[0], '/');
+    let output_grid = parse_grid(parts[1], '/');
 
     let keys = parse_key_from_grids(input_grid);
     (keys, output_grid)
 }
 
-fn parse_grid_from_lines(input: &str) -> Vec<Vec<char>> {
-    let mut initial_grid = vec![];
-
-    for line in input.lines() {
-        let mut row = vec![];
-        for c in line.chars() {
-            row.push(c);
-        }
-        initial_grid.push(row);
-    }
-    initial_grid
+fn parse_grid(input: &str, delimiter: char) -> Vec<Vec<char>> {
+    input
+        .trim()
+        .split(delimiter)
+        .map(|line| line.chars().collect())
+        .collect()
 }
 
-fn parse_grid_from_string(input: &str) -> Vec<Vec<char>> {
-    let mut initial_grid = vec![];
-
-    for line in input.trim().split('/') {
-        let mut row = vec![];
-        for c in line.chars() {
-            row.push(c);
-        }
-        initial_grid.push(row);
-    }
-    initial_grid
-}
-
-fn parse_key_from_grid(grid: &Vec<Vec<char>>) -> String {
-    let mut key = Vec::with_capacity(grid.len() * grid[0].len() + grid.len() - 1);
-    for row in grid {
-        for col in row {
-            key.push(*col);
-        }
-        key.push('/');
-    }
-    key.iter().collect()
+fn parse_key_from_grid(grid: &[Vec<char>]) -> String {
+    grid.iter()
+        .map(|row| row.iter().collect::<String>())
+        .collect::<Vec<String>>()
+        .join("/")
 }
 
 fn parse_key_from_grids(grid: Vec<Vec<char>>) -> HashSet<String> {
@@ -238,7 +216,7 @@ mod test {
         // Arrange
         let rules = fs::read_to_string("../../data/day21_test_data.txt")?;
         let input = fs::read_to_string("../../data/day21_input.txt")?;
-        let grid = parse_grid_from_lines(&input);
+        let grid = parse_grid(&input, '\n');
         let rules = parse_rules(&rules)?;
 
         // Act
