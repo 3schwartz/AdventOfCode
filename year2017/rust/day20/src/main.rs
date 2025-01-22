@@ -1,4 +1,4 @@
-use std::{fs, str::FromStr};
+use std::{collections::HashMap, fs, str::FromStr};
 
 use anyhow::{anyhow, Result};
 
@@ -12,6 +12,10 @@ fn main() -> Result<()> {
     let i = find_particle_with_lowest_manhatten_at(&input, 1_000_000_000_000)?;
 
     println!("Part 1: {i}");
+
+    let remaining = find_particles_remaining(&input, 10_000)?;
+
+    println!("Part 2: {remaining}");
 
     Ok(())
 }
@@ -50,6 +54,40 @@ fn find_particle_with_lowest_manhatten_at(input: &str, t: i128) -> Result<usize>
         .ok_or_else(|| anyhow!("not able to find min manhattan"))?;
 
     Ok(index)
+}
+
+fn find_particles_remaining(input: &str, after: i128) -> Result<usize> {
+    let inital = make_particles(input)?;
+
+    let mut particles: Vec<&Particle> = inital.iter().collect();
+    for t in 0..after {
+        let mut positions: HashMap<(i128, i128, i128), Vec<usize>> = HashMap::new();
+
+        for (i, particle) in particles.iter().enumerate() {
+            let p = particle.find_position_at(t);
+            positions
+                .entry(p)
+                .and_modify(|e| {
+                    e.push(i);
+                })
+                .or_insert_with(|| vec![i]);
+        }
+
+        let to_remove: Vec<usize> = positions
+            .values()
+            .filter(|i| i.len() > 1)
+            .flat_map(|i| i.iter().copied())
+            .collect();
+
+        particles = particles
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| !to_remove.contains(i))
+            .map(|(_, p)| *p)
+            .collect();
+    }
+
+    Ok(particles.len())
 }
 
 struct Particle {
@@ -97,53 +135,6 @@ impl Particle {
             as f64)
             .sqrt()
     }
-
-    fn sub(c_1: (i128, i128, i128), c_2: (i128, i128, i128)) -> (i128, i128, i128) {
-        (c_1.0 - c_2.0, c_1.1 - c_2.1, c_1.2 - c_2.2)
-    }
-
-    fn mul(c_1: (i128, i128, i128), c_2: (i128, i128, i128)) -> (i128, i128, i128) {
-        (c_1.0 * c_2.0, c_1.1 * c_2.1, c_1.2 * c_2.2)
-    }
-
-    fn dot(c_1: (i128, i128, i128), c_2: (i128, i128, i128)) -> i128 {
-        c_1.0 * c_2.0 + c_1.1 * c_2.1 + c_1.2 * c_2.2
-    }
-
-    fn solve_quadratic(a: f64, b: f64, c: f64) -> Option<(f64, f64)> {
-        let discriminant = b * b - 4.0 * a * c;
-        if discriminant < 0.0 {
-            None
-        } else if discriminant == 0.0 {
-            let t = -b / (2.0 * a);
-            Some((t, t))
-        } else {
-            let sqrt_discriminant = discriminant.sqrt();
-            let t1 = (-b - sqrt_discriminant) / (2.0 * a);
-            let t2 = (-b + sqrt_discriminant) / (2.0 * a);
-            Some((t1, t2))
-        }
-    }
-
-    fn find_intersect(&self, other: &Particle) -> Option<f64> {
-        let x_diff = Self::sub(self.position, other.position);
-        let v_diff = Self::sub(self.velocity, other.velocity);
-        let a_diff = Self::sub(self.acceleration, other.acceleration);
-
-        let a = Self::dot(a_diff, a_diff);
-        let b = 2 * Self::dot(v_diff, a_diff) + Self::dot(a_diff, x_diff);
-        let c = Self::dot(x_diff, x_diff) - Self::dot(v_diff, v_diff);
-
-        Self::solve_quadratic(a as f64, b as f64, c as f64).and_then(|(t1, t2)| {
-            if t1 >= 0.0 {
-                Some(t1)
-            } else if t2 >= 0.0 {
-                Some(t2)
-            } else {
-                None
-            }
-        })
-    }
 }
 
 impl FromStr for Particle {
@@ -187,16 +178,12 @@ mod test {
     fn test_part_2() -> Result<()> {
         // Arrange
         let input = fs::read_to_string("../../data/day20_test2_data.txt")?;
-        let particles = make_particles(&input)?;
 
         // Act
-        let intersect = particles[0].find_intersect(&particles[1]);
+        let remaining = find_particles_remaining(&input, 1_000_000)?;
 
         // Assert
-        assert!(intersect.is_some());
-        let actual = intersect.unwrap();
-        assert_eq!(actual, 2.0);
-        assert!(matches!(intersect, Some(2.0)));
+        assert_eq!(remaining, 1);
         Ok(())
     }
 }
