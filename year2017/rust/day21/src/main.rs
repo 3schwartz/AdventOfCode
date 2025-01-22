@@ -9,18 +9,32 @@ fn main() -> Result<()> {
     let rules = fs::read_to_string("../data/day21_data.txt")?;
     let input = fs::read_to_string("../data/day21_input.txt")?;
 
-    let initial = parse_grid_from_string(&input);
-    print_grid(&initial);
+    let grid = parse_grid_from_lines(&input);
+    let rules = parse_rules(&rules)?;
+
+    let actual = iterate(&grid, &rules, 5, false)?;
+
+    println!("Part 1: {actual}");
+
+    let actual = iterate(&grid, &rules, 18, false)?;
+
+    println!("Part 2: {actual}");
 
     Ok(())
 }
 
 fn iterate(
-    mut grid: Vec<Vec<char>>,
+    initial_grid: &[Vec<char>],
     rules: &HashMap<String, Vec<Vec<char>>>,
     count: usize,
+    debug: bool,
 ) -> Result<usize> {
+    let mut grid = initial_grid.to_owned();
     for _ in 0..count {
+        if debug {
+            println!("#########################");
+            print_grid(&grid);
+        }
         grid = grid_apply_rules(grid, rules)?;
     }
     Ok(grid
@@ -34,27 +48,23 @@ fn grid_apply_rules(
     grid: Vec<Vec<char>>,
     rules: &HashMap<String, Vec<Vec<char>>>,
 ) -> Result<Vec<Vec<char>>> {
-    println!("#########################");
-    print_grid(&grid);
-
     let grid_splitted = grid_split(&grid);
-    let grid_expanded = grid_expand(grid_splitted, &rules)?;
+    let grid_expanded = grid_expand(grid_splitted, rules)?;
     let grid_concatenated = grid_concat(grid_expanded);
     Ok(grid_concatenated)
 }
 
-fn grid_split(grid: &Vec<Vec<char>>) -> Vec<Vec<Vec<Vec<char>>>> {
+fn grid_split(grid: &[Vec<char>]) -> Vec<Vec<Vec<Vec<char>>>> {
     let rows = grid.len();
     let cols = grid[0].len();
 
-    let mut subgrid_size = 0;
-    if rows % 2 == 0 && cols % 2 == 0 {
-        subgrid_size = 2;
+    let subgrid_size = if rows % 2 == 0 && cols % 2 == 0 {
+        2
     } else if rows % 3 == 0 && cols % 3 == 0 {
-        subgrid_size = 3;
+        3
     } else {
         panic!("Grid dimensions are not divisible by 2 or 3.");
-    }
+    };
 
     let mut result = vec![];
     for i in (0..rows).step_by(subgrid_size) {
@@ -122,7 +132,7 @@ fn parse_rules(input: &str) -> Result<HashMap<String, Vec<Vec<char>>>> {
     for rule in input.lines() {
         let (keys, output_grid) = parse_rule(rule);
         for key in keys {
-            if let Some(_) = rules.insert(key, output_grid.clone()) {
+            if rules.insert(key, output_grid.clone()).is_some() {
                 return Err(anyhow!("Key from rule {} already had an entry", rule));
             }
         }
@@ -178,41 +188,42 @@ fn parse_key_from_grid(grid: &Vec<Vec<char>>) -> String {
 }
 
 fn parse_key_from_grids(grid: Vec<Vec<char>>) -> HashSet<String> {
-    let mut keys = HashSet::from([parse_key_from_grid(&grid)]);
-    let flipped_horizontially = action_flip_horizontially(&grid);
-    let flipeed_vertically = action_flip_vertically(&grid);
-    keys.insert(parse_key_from_grid(&flipped_horizontially));
-    keys.insert(parse_key_from_grid(&flipeed_vertically));
+    let mut keys = HashSet::new();
 
     let mut rotation = grid.clone();
-    for _ in 0..3 {
+    for _ in 0..4 {
         rotation = action_rotate_90(&rotation);
         keys.insert(parse_key_from_grid(&rotation));
+
+        let flipped_horizontially = action_flip_horizontially(&rotation);
+        let flipeed_vertically = action_flip_vertically(&rotation);
+        keys.insert(parse_key_from_grid(&flipped_horizontially));
+        keys.insert(parse_key_from_grid(&flipeed_vertically));
     }
     keys
 }
 
-fn action_flip_horizontially(grid: &Vec<Vec<char>>) -> Vec<Vec<char>> {
-    let mut flipped = grid.clone();
+fn action_flip_horizontially(grid: &[Vec<char>]) -> Vec<Vec<char>> {
+    let mut flipped = grid.to_owned();
     flipped.reverse();
     flipped
 }
 
-fn action_flip_vertically(grid: &Vec<Vec<char>>) -> Vec<Vec<char>> {
-    let mut flipped = grid.clone();
+fn action_flip_vertically(grid: &[Vec<char>]) -> Vec<Vec<char>> {
+    let mut flipped = grid.to_owned();
     for row in &mut flipped {
         row.reverse();
     }
     flipped
 }
 
-fn action_rotate_90(grid: &Vec<Vec<char>>) -> Vec<Vec<char>> {
+fn action_rotate_90(grid: &[Vec<char>]) -> Vec<Vec<char>> {
     let rows = grid.len();
     let cols = grid[0].len();
     let mut rotated = vec![vec![' '; rows]; cols];
     for r in 0..rows {
-        for c in 0..cols {
-            rotated[c][rows - 1 - r] = grid[r][c]
+        for (c, row) in rotated.iter_mut().enumerate() {
+            row[rows - 1 - r] = grid[r][c]
         }
     }
     rotated
@@ -223,17 +234,6 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_make_grid_from_rule() -> Result<()> {
-        // Arrange
-        let input = ".#./..#/###";
-
-        // Act
-        let grids: Vec<Vec<char>> = parse_grid_from_string(input);
-
-        Ok(())
-    }
-
-    #[test]
     fn test_part_1() -> Result<()> {
         // Arrange
         let rules = fs::read_to_string("../../data/day21_test_data.txt")?;
@@ -242,7 +242,7 @@ mod test {
         let rules = parse_rules(&rules)?;
 
         // Act
-        let actual = iterate(grid, &rules, 2)?;
+        let actual = iterate(&grid, &rules, 2, false)?;
 
         // Assert
         assert_eq!(actual, 12);

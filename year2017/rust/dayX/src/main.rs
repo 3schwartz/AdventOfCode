@@ -12,6 +12,7 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod test {
     #[test]
+    #[allow(clippy::assertions_on_constants)]
     fn test_part_1() {
         // Arrange
         // Act

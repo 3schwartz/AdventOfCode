@@ -99,7 +99,7 @@ mod test {
         let hex = "a0c2017";
 
         // Act
-        let binary = hex_to_binary(&hex)?;
+        let binary = hex_to_binary(hex)?;
 
         // Assert
         assert_eq!(binary, "1010000011000010000000010111");
