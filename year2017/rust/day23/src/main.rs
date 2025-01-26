@@ -12,7 +12,60 @@ fn main() -> Result<()> {
     let mul_count = Instruction::run(instructions);
 
     println!("Part 1: {mul_count}");
+
+    let part_2 = part_2();
+
+    println!("Part 2: {part_2}");
+
     Ok(())
+}
+
+/// set b 81
+/// #set c b
+/// jnz a 2
+/// #jnz 1 5
+/// mul b 100           / b = 8_100
+/// sub b -100000       / b = 108_100
+/// set c b             / c = 108_100
+/// sub c -17000        / c = 125_100
+/// set f 1             / f = 1 (reset from last step)
+/// set d 2             / d = 2
+/// set e 2             / e = 2 (back from -13 - here d increased)
+/// set g d             / g = 2                      / g = 2 (back grom jnz -8 - here e increased)
+/// mul g e             / g = 4                      / g = 6                        / g = 8
+/// sub g b             / g = 4 - 108_100 = -108_096 / g = 6 - 108_100 = -108_094   / g = -108_092
+/// jnz g 2             
+/// set f 0             / only when d % b == 0 since then 'e' exists such that e * d = b
+/// sub e -1            / e = 2                       / e = 3
+/// set g e             / g = 2                       / g = 3
+/// sub g b             / g = 2 - 108_100 = 108_098   / g = 0 (when e = 108_100 (e = b))
+/// jnz g -8            (when e = 108_100 = b continue. Hence compare up to <b)
+/// sub d -1
+/// set g d
+/// sub g b             
+/// jnz g -13           (when d = 108_100 = b continue. Hence compare up to <b)
+/// jnz f 2
+/// sub h -1
+/// set g b             / g = 108_100
+/// sub g c             / c = -108900 => 108_100 - 125_100 => -17_000
+/// jnz g 2             / when b = c
+/// jnz 1 3
+/// sub b -17           / Done 1_000 + 1 iterations
+/// jnz 1 -23
+fn part_2() -> i32 {
+    let b_start = 108_100;
+
+    let mut h = 0;
+    for i in 0..1_001 {
+        let b = b_start + i * 17;
+        for d in 2..b {
+            if b % d == 0 {
+                h += 1;
+                break;
+            }
+        }
+    }
+    h
 }
 
 enum Action {
