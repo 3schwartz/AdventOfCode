@@ -14,6 +14,10 @@ run20:
 	cargo run --manifest-path=./day20/Cargo.toml --release
 .PHONY:run20
 
+run24:
+	cargo run --manifest-path=./day24/Cargo.toml --release
+.PHONY:run24
+
 
 clippy:
 	cargo clippy --all-targets --all-features
