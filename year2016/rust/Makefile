@@ -1,0 +1,7 @@
+run9:
+	cargo run --manifest-path=./day9/Cargo.toml --release
+.PHONY:run9
+
+clippy:
+	cargo clippy --all-targets --all-features
+.PHONY:clippy
