@@ -9,20 +9,21 @@ fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day10_data.txt")?;
     let bots = parse(&input)?;
 
-    let actual = run(bots, 17, 61)?;
+    let actual = run(bots, 17, 61, false)?;
 
     println!("Part 1: {}", actual);
     Ok(())
 }
 
-fn run(mut bots: HashMap<u8, Bot>, low_compare: i32, high_compare: i32) -> Result<u8> {
-    let bot_idx: Vec<u8> = bots.keys().map(|k| *k).collect();
+fn run(mut bots: HashMap<u8, Bot>, low_compare: i32, high_compare: i32, stop: bool) -> Result<u8> {
+    let bot_idx: Vec<u8> = bots.keys().copied().collect();
     let mut outputs: HashMap<u8, Vec<i32>> = HashMap::new();
 
     loop {
+        let mut updated = false;
         for idx in &bot_idx {
             let mut bot = bots
-                .get(&idx)
+                .get(idx)
                 .ok_or_else(|| anyhow!("missing boot: {}", idx))?
                 .clone();
             if bot.values.len() > 2 {
@@ -32,11 +33,12 @@ fn run(mut bots: HashMap<u8, Bot>, low_compare: i32, high_compare: i32) -> Resul
             if bot.values.len() != 2 {
                 continue;
             }
-            let low_valid = validate(bot.low, bot.low_out, &bots)?;
-            let high_valid = validate(bot.high, bot.high_out, &bots)?;
-            if !low_valid || !high_valid {
-                continue;
-            }
+            // let low_valid = validate(bot.low, bot.low_out, &bots)?;
+            // let high_valid = validate(bot.high, bot.high_out, &bots)?;
+            // if !low_valid || !high_valid {
+            //     continue;
+            // }
+            updated = true;
 
             let low_value = bot
                 .values
@@ -56,7 +58,10 @@ fn run(mut bots: HashMap<u8, Bot>, low_compare: i32, high_compare: i32) -> Resul
             }
 
             if low_value == low_compare && high_value == high_compare {
-                return Ok(*idx);
+                if stop {
+                    return Ok(*idx);
+                }
+                println!("Part 1: {}", idx);
             }
 
             update(bot.low, bot.low_out, low_value, &mut outputs, &mut bots);
@@ -64,7 +69,11 @@ fn run(mut bots: HashMap<u8, Bot>, low_compare: i32, high_compare: i32) -> Resul
 
             bots.insert(*idx, bot);
         }
+        if !updated {
+            break;
+        }
     }
+    Ok(0)
 }
 
 fn update(
@@ -89,6 +98,7 @@ fn update(
     }
 }
 
+#[allow(dead_code)]
 fn validate(id: u8, output: Output, bots: &HashMap<u8, Bot>) -> Result<bool> {
     match output {
         Output::Bot => bots
@@ -195,7 +205,7 @@ mod test {
         let input = fs::read_to_string("../../data/day10_test_data.txt")?;
         let boots = parse(&input)?;
         // Act
-        let actual = run(boots, 2, 5)?;
+        let actual = run(boots, 2, 5, true)?;
 
         // Assert
         assert_eq!(actual, 2);
