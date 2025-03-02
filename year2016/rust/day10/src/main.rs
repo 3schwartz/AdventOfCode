@@ -9,16 +9,43 @@ fn main() -> Result<()> {
     let input = fs::read_to_string("../data/day10_data.txt")?;
     let bots = parse(&input)?;
 
-    let actual = run(bots, 17, 61, false)?;
+    let actual = run(bots, 17, 61)?;
 
-    println!("Part 1: {}", actual);
+    println!("Part 1: {}", actual.part_1);
+
+    let part_2 = actual.part_2()?;
+    println!("Part 2: {}", part_2);
     Ok(())
 }
 
-fn run(mut bots: HashMap<u8, Bot>, low_compare: i32, high_compare: i32, stop: bool) -> Result<u8> {
+struct Solution {
+    part_1: u8,
+    part_2: HashMap<u8, Vec<i32>>,
+}
+
+impl Solution {
+    fn part_2(self) -> Result<i32> {
+        let idx = [0, 1, 2];
+        let mut mult = 1;
+        for id in idx {
+            let out = self
+                .part_2
+                .get(&id)
+                .ok_or_else(|| anyhow!("missing output: {}", id))?;
+            if out.len() != 1 {
+                return Err(anyhow!("wrong length for id: {}", id));
+            }
+            mult *= out[0]
+        }
+        Ok(mult)
+    }
+}
+
+fn run(mut bots: HashMap<u8, Bot>, low_compare: i32, high_compare: i32) -> Result<Solution> {
     let bot_idx: Vec<u8> = bots.keys().copied().collect();
     let mut outputs: HashMap<u8, Vec<i32>> = HashMap::new();
 
+    let mut part_1 = None;
     loop {
         let mut updated = false;
         for idx in &bot_idx {
@@ -33,11 +60,11 @@ fn run(mut bots: HashMap<u8, Bot>, low_compare: i32, high_compare: i32, stop: bo
             if bot.values.len() != 2 {
                 continue;
             }
-            // let low_valid = validate(bot.low, bot.low_out, &bots)?;
-            // let high_valid = validate(bot.high, bot.high_out, &bots)?;
-            // if !low_valid || !high_valid {
-            //     continue;
-            // }
+            let low_valid = validate(bot.low, bot.low_out, &bots)?;
+            let high_valid = validate(bot.high, bot.high_out, &bots)?;
+            if !low_valid || !high_valid {
+                continue;
+            }
             updated = true;
 
             let low_value = bot
@@ -58,10 +85,7 @@ fn run(mut bots: HashMap<u8, Bot>, low_compare: i32, high_compare: i32, stop: bo
             }
 
             if low_value == low_compare && high_value == high_compare {
-                if stop {
-                    return Ok(*idx);
-                }
-                println!("Part 1: {}", idx);
+                part_1 = Some(*idx);
             }
 
             update(bot.low, bot.low_out, low_value, &mut outputs, &mut bots);
@@ -73,7 +97,10 @@ fn run(mut bots: HashMap<u8, Bot>, low_compare: i32, high_compare: i32, stop: bo
             break;
         }
     }
-    Ok(0)
+    Ok(Solution {
+        part_1: part_1.ok_or_else(|| anyhow!("missing solution for part 1"))?,
+        part_2: outputs,
+    })
 }
 
 fn update(
@@ -205,36 +232,10 @@ mod test {
         let input = fs::read_to_string("../../data/day10_test_data.txt")?;
         let boots = parse(&input)?;
         // Act
-        let actual = run(boots, 2, 5, true)?;
+        let actual = run(boots, 2, 5)?.part_1;
 
         // Assert
         assert_eq!(actual, 2);
         Ok(())
     }
 }
-
-// --- Day 10: Balance Bots ---
-
-// You come upon a factory in which many robots are zooming around handing small microchips to each other.
-
-// Upon closer examination, you notice that each bot only proceeds when it has two microchips, and once it does, it gives each one to a different bot or puts it in a marked "output" bin. Sometimes, bots take microchips from "input" bins, too.
-
-// Inspecting one of the microchips, it seems like they each contain a single number; the bots must use some logic to decide what to do with each chip. You access the local control computer and download the bots' instructions (your puzzle input).
-
-// Some of the instructions specify that a specific-valued microchip should be given to a specific bot; the rest of the instructions indicate what a given bot should do with its lower-value or higher-value chip.
-
-// For example, consider the following instructions:
-
-// value 5 goes to bot 2
-// bot 2 gives low to bot 1 and high to bot 0
-// value 3 goes to bot 1
-// bot 1 gives low to output 1 and high to bot 0
-// bot 0 gives low to output 2 and high to output 0
-// value 2 goes to bot 2
-// Initially, bot 1 starts with a value-3 chip, and bot 2 starts with a value-2 chip and a value-5 chip.
-// Because bot 2 has two microchips, it gives its lower one (2) to bot 1 and its higher one (5) to bot 0.
-// Then, bot 1 has two microchips; it puts the value-2 chip in output 1 and gives the value-3 chip to bot 0.
-// Finally, bot 0 has two microchips; it puts the 3 in output 2 and the 5 in output 0.
-// In the end, output bin 0 contains a value-5 microchip, output bin 1 contains a value-2 microchip, and output bin 2 contains a value-3 microchip. In this configuration, bot number 2 is responsible for comparing value-5 microchips with value-2 microchips.
-
-// Based on your instructions, what is the number of the bot that is responsible for comparing value-61 microchips with value-17 microchips?
