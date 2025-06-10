@@ -2,12 +2,25 @@
 
 #include <utility>
 #include "day11.h"
+
+#include <ranges>
 using std::set;
 using std::map;
 using std::pair;
 using std::string;
 using std::vector;
 using std::make_pair;
+
+struct State {
+    // TODO
+};
+
+struct Move {
+    set<string> _generators;
+    set<string> _microchips;
+
+    auto operator<=>(const Move &other) const = default;
+};
 
 class Floor {
     int _level;
@@ -18,6 +31,12 @@ public:
     explicit Floor(const int level) : _level(level) {
     }
 
+    Floor(const int level, set<string> generators, set<string> microchips): _level(level),
+                                                                            _generators(std::move(generators)),
+                                                                            _microchips(std::move(microchips)) {
+    }
+
+    auto operator<=>(const Floor &other) const = default;
 
     void add_generators(const set<string> &generators) {
         _generators.insert(generators.begin(), generators.end());
@@ -27,72 +46,117 @@ public:
         _microchips.insert(microchips.begin(), microchips.end());
     }
 
-
     // Check if valid: TODO
 
-    vector<pair<set<string>, set<string> > > generate_pairs() const {
-        vector<string> combined;
-        combined.reserve(_generators.size() + _microchips.size());
-        for (const string &generator: _generators) {
-            combined.push_back(generator);
-        }
-        for (const string &microchip: _microchips) {
-            combined.push_back(microchip);
-        }
+    vector<pair<Move, Floor> > generate_move() {
+        const auto pairs = generate_pairs();
+        vector<pair<Move, Floor> > moves;
+        for (const auto &[move_generator, move_microchip]: pairs) {
+            auto generators = move_generator;
+            auto microchips = move_microchip;
 
-        vector<pair<set<string>, set<string> > > pairs;
+            set<string> new_generators;
+            set<string> new_microchips;
+
+            std::ranges::set_difference(_generators, generators,
+                                        std::inserter(new_generators, new_generators.begin()));
+            std::ranges::set_difference(_microchips, microchips,
+                                        std::inserter(new_microchips, new_microchips.begin()));
+            bool valid = true;
+            for (const string &microchip: new_microchips) {
+                if (!new_generators.contains(microchip)) {
+                    valid = false;
+                    break;
+                }
+            }
+            if (!valid) {
+                continue;
+            }
+            moves.emplace_back(Move{generators, microchips}, Floor{_level, new_generators, new_microchips});
+        }
+        return moves;
+    }
+
+    vector<Move> generate_pairs() const {
+        vector<string> combined;
+        auto generator_size = _generators.size();
+        auto microchip_size = _microchips.size();
+        combined.reserve(generator_size + microchip_size);
+        for (const string &generator: _generators) combined.emplace_back(generator);
+        for (const string &microchip: _microchips) combined.emplace_back(microchip);
+
+        vector<Move> pairs;
         for (int i = 0; i < combined.size(); i++) {
             const string &first = combined[i];
             for (int j = i + 1; j < combined.size(); j++) {
                 set<string> _g;
                 set<string> _m;
                 const string &second = combined[j];
-                if (_generators.contains(first)) {
-                    _g.insert(first);
-                } else {
-                    _m.insert(first);
-                }
-                if (_generators.contains(second)) {
-                    _g.insert(second);
-                } else {
-                    _m.insert(second);
-                }
+                (i < generator_size ? _g : _m).insert(first);
+                (j < generator_size ? _g : _m).insert(second);
                 pairs.emplace_back(_g, _m);
             }
-            set<string> _g;
-            set<string> _m;
-            if (_generators.contains(first)) {
-                _g.insert(first);
-            } else {
-                _m.insert(first);
-            }
+            set<string> _g, _m;
+            (i < generator_size ? _g : _m).insert(first);
             pairs.emplace_back(_g, _m);
         }
         return pairs;
     }
 };
 
+TEST(DAY11, GenerateMoves) {
+    // Arrange
+    Floor floor(1);
+    floor.add_generators({"a", "b"});
+    floor.add_microchips({"a", "b"});
+
+    // Act
+    vector<pair<Move, Floor> > moves = floor.generate_move();
+
+    // Assert
+    vector<Move> moves_;
+    moves_.reserve(moves.size());
+    for (const auto &move: moves | std::views::keys) {
+        moves_.push_back(move);
+    }
+
+    const vector<Move> expected{
+        {{"a"}, {"a"}},
+        {{"b"}, {"b"}},
+        {{}, {"a", "b"}},
+        {{}, {"a"}},
+        {{}, {"b"}}
+    };
+
+    EXPECT_EQ(moves.size(), 5);
+    EXPECT_EQ(
+        moves_,
+        expected
+    );
+    EXPECT_EQ(moves[0].second, Floor(1, {"b"}, {"b"}));
+};
+
 TEST(DAY11, GeneratePairs) {
     // Arrange
     Floor floor(1);
     floor.add_generators({"a", "b"});
-    floor.add_microchips({"c", "d"});
+    floor.add_microchips({"a", "b"});
 
     // Act
-    vector<pair<set<string>, set<string> > > pairs = floor.generate_pairs();
+    const vector<Move> pairs = floor.generate_pairs();
 
     // Assert
-    vector<pair<set<string>, set<string> > > expected{
+    const vector<Move> expected{
         {{"a", "b"}, {}},
-        {{"a"}, {"c"}},
-        {{"a"}, {"d"}},
+        {{"a"}, {"a"}},
+        {{"a"}, {"b"}},
         {{"a"}, {}},
-        {{"b"}, {"c"}},
-        {{"b"}, {"d"}},
+        {{"b"}, {"a"}},
+        {{"b"}, {"b"}},
         {{"b"}, {}},
-        {{}, {"c", "d"}},
-        {{}, {"c"}},
-        {{}, {"d"}}
+        {{}, {"a", "b"}},
+        {{}, {"a"}},
+        {{}, {"b"}}
     };
     EXPECT_EQ(pairs.size(), 4+3+2+1);
     EXPECT_EQ(
