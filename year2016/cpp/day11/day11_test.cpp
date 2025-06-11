@@ -10,16 +10,23 @@ using std::pair;
 using std::string;
 using std::vector;
 using std::make_pair;
+using std::tuple;
+using std::move;
 
-struct State {
-    // TODO
-};
-
-struct Move {
+struct Elevator {
     set<string> _generators;
     set<string> _microchips;
 
-    auto operator<=>(const Move &other) const = default;
+    Elevator(set<string> generators, set<string> microchips) : _generators(
+                                                                   std::move(generators)),
+                                                               _microchips(std::move(microchips)) {
+    }
+
+    auto operator<=>(const Elevator &other) const = default;
+
+    pair<set<string>, set<string> > generate_cache() {
+        return make_pair(_generators, _microchips);
+    }
 };
 
 class Floor {
@@ -46,14 +53,12 @@ public:
         _microchips.insert(microchips.begin(), microchips.end());
     }
 
-    // Check if valid: TODO
-
-    vector<pair<Move, Floor> > generate_move() {
+    vector<pair<Elevator, Floor> > generate_elevator() {
         const auto pairs = generate_pairs();
-        vector<pair<Move, Floor> > moves;
-        for (const auto &[move_generator, move_microchip]: pairs) {
-            auto generators = move_generator;
-            auto microchips = move_microchip;
+        vector<pair<Elevator, Floor> > levels;
+        for (const auto &[elevator_generator, elevator_microchip]: pairs) {
+            auto generators = elevator_generator;
+            auto microchips = elevator_microchip;
 
             set<string> new_generators;
             set<string> new_microchips;
@@ -72,12 +77,12 @@ public:
             if (!valid) {
                 continue;
             }
-            moves.emplace_back(Move{generators, microchips}, Floor{_level, new_generators, new_microchips});
+            levels.emplace_back(Elevator{generators, microchips}, Floor{_level, new_generators, new_microchips});
         }
-        return moves;
+        return levels;
     }
 
-    vector<Move> generate_pairs() const {
+    vector<Elevator> generate_pairs() const {
         vector<string> combined;
         auto generator_size = _generators.size();
         auto microchip_size = _microchips.size();
@@ -85,7 +90,7 @@ public:
         for (const string &generator: _generators) combined.emplace_back(generator);
         for (const string &microchip: _microchips) combined.emplace_back(microchip);
 
-        vector<Move> pairs;
+        vector<Elevator> pairs;
         for (int i = 0; i < combined.size(); i++) {
             const string &first = combined[i];
             for (int j = i + 1; j < combined.size(); j++) {
@@ -102,25 +107,83 @@ public:
         }
         return pairs;
     }
+
+    pair<int, pair<set<string>, set<string> > > generate_cache() {
+        return make_pair(_level, pair{_generators, _microchips});
+    }
 };
 
-TEST(DAY11, GenerateMoves) {
+
+using StateCache = tuple<int, pair<set<string>, set<string> >, map<int, pair<set<string>, set<string> > > >;
+
+class State {
+    int _level;
+    Elevator _elevator;
+    map<int, Floor> _floors;
+
+public:
+    State(const int level, Elevator elevator, map<int, Floor> floors): _level(level),
+                                                                       _elevator(std::move(elevator)),
+                                                                       _floors(std::move(floors)) {
+    }
+
+    auto operator<=>(const State &other) const = default;
+
+    StateCache generate_cache() {
+        map<int, pair<set<string>, set<string> > > floors;
+        for (auto &floor: _floors | std::views::values) {
+            auto [fst, snd] = floor.generate_cache();
+            floors.emplace(fst, snd);
+        }
+
+        return std::make_tuple(_level, _elevator.generate_cache(), floors);
+    }
+};
+
+TEST(DAY11, StateCacheEquals) {
+    // Arrange
+    auto first_state = State(1, Elevator({"a"}, {"b"}),
+                             {
+                                 {1, Floor(1, {"a"}, {"b"})},
+                                 {2, Floor(2, {"a"}, {"b"})}
+                             });
+    auto second_state = State(1, Elevator({"a"}, {"b"}),
+                              {
+                                  {1, Floor(1, {"a"}, {"b"})},
+                                  {2, Floor(2, {"a"}, {"b"})}
+                              });
+
+    // Act
+    auto first_cache = first_state.generate_cache();
+    auto second_cache = second_state.generate_cache();
+
+    auto visited = set<StateCache>();
+    auto [_, first_inserted] = visited.insert(first_cache);
+    auto [_i, second_inserted] = visited.insert(second_cache);
+
+    // Assert
+    EXPECT_EQ(first_cache, second_cache);
+    EXPECT_TRUE(first_inserted);
+    EXPECT_FALSE(second_inserted);
+}
+
+TEST(DAY11, GenerateElevators) {
     // Arrange
     Floor floor(1);
     floor.add_generators({"a", "b"});
     floor.add_microchips({"a", "b"});
 
     // Act
-    vector<pair<Move, Floor> > moves = floor.generate_move();
+    vector<pair<Elevator, Floor> > elevators = floor.generate_elevator();
 
     // Assert
-    vector<Move> moves_;
-    moves_.reserve(moves.size());
-    for (const auto &move: moves | std::views::keys) {
-        moves_.push_back(move);
+    vector<Elevator> actual_elevators;
+    actual_elevators.reserve(elevators.size());
+    for (const auto &elevator: elevators | std::views::keys) {
+        actual_elevators.push_back(elevator);
     }
 
-    const vector<Move> expected{
+    const vector<Elevator> expected{
         {{"a"}, {"a"}},
         {{"b"}, {"b"}},
         {{}, {"a", "b"}},
@@ -128,12 +191,12 @@ TEST(DAY11, GenerateMoves) {
         {{}, {"b"}}
     };
 
-    EXPECT_EQ(moves.size(), 5);
+    EXPECT_EQ(elevators.size(), 5);
     EXPECT_EQ(
-        moves_,
+        actual_elevators,
         expected
     );
-    EXPECT_EQ(moves[0].second, Floor(1, {"b"}, {"b"}));
+    EXPECT_EQ(elevators[0].second, Floor(1, {"b"}, {"b"}));
 };
 
 TEST(DAY11, GeneratePairs) {
@@ -143,10 +206,10 @@ TEST(DAY11, GeneratePairs) {
     floor.add_microchips({"a", "b"});
 
     // Act
-    const vector<Move> pairs = floor.generate_pairs();
+    const vector<Elevator> pairs = floor.generate_pairs();
 
     // Assert
-    const vector<Move> expected{
+    const vector<Elevator> expected{
         {{"a", "b"}, {}},
         {{"a"}, {"a"}},
         {{"a"}, {"b"}},
@@ -165,22 +228,6 @@ TEST(DAY11, GeneratePairs) {
     );
 };
 
-
-class Elevator {
-    int _level;
-    set<string> _generators;
-    set<string> _microchips;
-
-public:
-    Elevator(const int level, set<string> generators,
-             set<string> microchips): _level(level),
-                                      _generators(std::move(generators)),
-                                      _microchips(std::move(microchips)) {
-    }
-
-
-    // Check if valid
-};
 
 class MapProperty {
     map<int, string> _my_map;
