@@ -30,17 +30,12 @@ struct Elevator {
 };
 
 class Floor {
-    int _level;
     set<string> _generators;
     set<string> _microchips;
 
 public:
-    explicit Floor(const int level) : _level(level) {
-    }
-
-    Floor(const int level, set<string> generators, set<string> microchips): _level(level),
-                                                                            _generators(std::move(generators)),
-                                                                            _microchips(std::move(microchips)) {
+    Floor(set<string> generators, set<string> microchips): _generators(std::move(generators)),
+                                                           _microchips(std::move(microchips)) {
     }
 
     auto operator<=>(const Floor &other) const = default;
@@ -77,7 +72,7 @@ public:
             if (!valid) {
                 continue;
             }
-            levels.emplace_back(Elevator{generators, microchips}, Floor{_level, new_generators, new_microchips});
+            levels.emplace_back(Elevator{generators, microchips}, Floor{new_generators, new_microchips});
         }
         return levels;
     }
@@ -108,8 +103,8 @@ public:
         return pairs;
     }
 
-    pair<int, pair<set<string>, set<string> > > generate_cache() {
-        return make_pair(_level, pair{_generators, _microchips});
+    pair<set<string>, set<string> > generate_cache() {
+        return make_pair(_generators, _microchips);
     }
 };
 
@@ -131,9 +126,9 @@ public:
 
     StateCache generate_cache() {
         map<int, pair<set<string>, set<string> > > floors;
-        for (auto &floor: _floors | std::views::values) {
-            auto [fst, snd] = floor.generate_cache();
-            floors.emplace(fst, snd);
+        for (auto &[level, floor]: _floors) {
+            auto floor_cache = floor.generate_cache();
+            floors.emplace(level, floor_cache);
         }
 
         return std::make_tuple(_level, _elevator.generate_cache(), floors);
@@ -144,13 +139,13 @@ TEST(DAY11, StateCacheEquals) {
     // Arrange
     auto first_state = State(1, Elevator({"a"}, {"b"}),
                              {
-                                 {1, Floor(1, {"a"}, {"b"})},
-                                 {2, Floor(2, {"a"}, {"b"})}
+                                 {1, Floor({"a"}, {"b"})},
+                                 {2, Floor({"a"}, {"b"})}
                              });
     auto second_state = State(1, Elevator({"a"}, {"b"}),
                               {
-                                  {1, Floor(1, {"a"}, {"b"})},
-                                  {2, Floor(2, {"a"}, {"b"})}
+                                  {1, Floor({"a"}, {"b"})},
+                                  {2, Floor({"a"}, {"b"})}
                               });
 
     // Act
@@ -169,7 +164,7 @@ TEST(DAY11, StateCacheEquals) {
 
 TEST(DAY11, GenerateElevators) {
     // Arrange
-    Floor floor(1);
+    Floor floor({}, {});
     floor.add_generators({"a", "b"});
     floor.add_microchips({"a", "b"});
 
@@ -196,12 +191,12 @@ TEST(DAY11, GenerateElevators) {
         actual_elevators,
         expected
     );
-    EXPECT_EQ(elevators[0].second, Floor(1, {"b"}, {"b"}));
+    EXPECT_EQ(elevators[0].second, Floor({"b"}, {"b"}));
 };
 
 TEST(DAY11, GeneratePairs) {
     // Arrange
-    Floor floor(1);
+    Floor floor({}, {});
     floor.add_generators({"a", "b"});
     floor.add_microchips({"a", "b"});
 
