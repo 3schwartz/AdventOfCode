@@ -62,17 +62,12 @@ public:
                                         std::inserter(new_generators, new_generators.begin()));
             std::ranges::set_difference(_microchips, microchips,
                                         std::inserter(new_microchips, new_microchips.begin()));
-            bool valid = true;
-            for (const string &microchip: new_microchips) {
-                if (!new_generators.contains(microchip)) {
-                    valid = false;
-                    break;
-                }
-            }
-            if (!valid) {
+            auto new_floor = Floor{new_generators, new_microchips};
+            if (!new_floor.is_valid()) {
                 continue;
             }
-            levels.emplace_back(Elevator{generators, microchips}, Floor{new_generators, new_microchips});
+
+            levels.emplace_back(Elevator{generators, microchips}, new_floor);
         }
         return levels;
     }
@@ -106,23 +101,83 @@ public:
     pair<set<string>, set<string> > generate_cache() {
         return make_pair(_generators, _microchips);
     }
+
+    [[nodiscard]] bool is_valid() const {
+        return std::ranges::all_of(_microchips,
+                                   [&](const string &microchip) { return _generators.contains(microchip); });
+    }
+
+    bool is_empty() const {
+        return _generators.empty() && _microchips.empty();
+    }
 };
 
 
 using StateCache = tuple<int, pair<set<string>, set<string> >, map<int, pair<set<string>, set<string> > > >;
 
 class State {
+    int _steps;
     int _level;
     Elevator _elevator;
     map<int, Floor> _floors;
 
 public:
-    State(const int level, Elevator elevator, map<int, Floor> floors): _level(level),
-                                                                       _elevator(std::move(elevator)),
-                                                                       _floors(std::move(floors)) {
+    State(const int steps, const int level, Elevator elevator, map<int, Floor> floors): _steps(steps), _level(level),
+        _elevator(std::move(elevator)),
+        _floors(std::move(floors)) {
     }
 
     auto operator<=>(const State &other) const = default;
+
+    int steps() const {
+        return _steps;
+    }
+
+    void hydrate_from_elevator() {
+        Floor &floor = _floors[_level];
+        floor.add_generators(_elevator._generators);
+        floor.add_microchips(_elevator._microchips);
+        _elevator._generators.clear();
+        _elevator._microchips.clear();
+    }
+
+    bool is_level_valid() {
+        Floor &floor = _floors[_level];
+        return floor.is_valid();
+    }
+
+    bool all_on_level(int level) {
+        for (const auto &[floor_level, floor]: _floors) {
+            if (floor_level == level) {
+                continue;
+            }
+            if (!floor.is_empty()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    vector<State> next_states(int max_level) {
+        Floor &floor = _floors[_level];
+        auto elevators = floor.generate_elevator();
+        vector<State> states;
+        auto new_steps = steps + 1;
+        for (const auto &[elevator, floor]: elevators) {
+            if (_level > 0) {
+                map<int, Floor> floors = _floors;
+                floors[_level] = floor;
+                states.emplace_back(new_steps, _level - 1, elevator, floors);
+            }
+            if (_level < max_level) {
+                map<int, Floor> floors = _floors;
+                floors[_level] = floor;
+                states.emplace_back(new_steps, _level + 1, elevator, floors);
+            }
+        }
+        return states;
+    }
 
     StateCache generate_cache() {
         map<int, pair<set<string>, set<string> > > floors;
@@ -135,14 +190,45 @@ public:
     }
 };
 
+class Facility {
+public:
+    int order(State initial_state, int final_level) {
+        set<StateCache> visited;
+        vector<State> states = {std::move(initial_state)};
+
+        while (!states.empty()) {
+            auto state = states.back();
+            states.pop_back();
+            auto cache = state.generate_cache();
+            if (!visited.insert(cache).second) {
+                continue;
+            }
+
+            state.hydrate_from_elevator();
+            if (state.is_level_valid()) {
+                continue;
+            }
+
+            if (state.all_on_level(final_level)) {
+                return state.steps();
+            }
+
+            for (auto new_state: state.next_states(final_level)) {
+                states.push_back(std::move(new_state));
+            }
+        }
+        return -1;
+    }
+};
+
 TEST(DAY11, StateCacheEquals) {
     // Arrange
-    auto first_state = State(1, Elevator({"a"}, {"b"}),
+    auto first_state = State(1, 1, Elevator({"a"}, {"b"}),
                              {
                                  {1, Floor({"a"}, {"b"})},
                                  {2, Floor({"a"}, {"b"})}
                              });
-    auto second_state = State(1, Elevator({"a"}, {"b"}),
+    auto second_state = State(1, 1, Elevator({"a"}, {"b"}),
                               {
                                   {1, Floor({"a"}, {"b"})},
                                   {2, Floor({"a"}, {"b"})}
