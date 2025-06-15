@@ -103,8 +103,10 @@ public:
     }
 
     [[nodiscard]] bool is_valid() const {
-        return _generators.empty() | std::ranges::all_of(_microchips,
-                                   [&](const string &microchip) { return _generators.contains(microchip); });
+        return _generators.empty() || std::ranges::all_of(_microchips,
+                                                         [&](const string &microchip) {
+                                                             return _generators.contains(microchip);
+                                                         });
     }
 
     bool is_empty() const {
