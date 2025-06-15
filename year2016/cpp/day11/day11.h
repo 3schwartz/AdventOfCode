@@ -51,7 +51,7 @@ public:
     [[nodiscard]] bool is_empty() const;
 };
 
-using StateCache = tuple<int, pair<set<string>, set<string> >, std::map<int, pair<set<string>, set<string> > > >;
+using StateCache = pair<int, std::map<int, pair<set<string>, set<string> > > >;
 
 class State {
     int _steps;
@@ -68,7 +68,7 @@ public:
 
     void hydrate_from_elevator();
 
-    bool is_level_valid();
+    [[nodiscard]] bool is_level_valid() const;
 
     bool all_on_level(int level);
 
@@ -87,13 +87,13 @@ public:
         while (!states.empty()) {
             auto state = states.front();
             states.pop();
-            auto cache = state.generate_cache();
-            if (!visited.insert(cache).second) {
-                continue;
-            }
 
             state.hydrate_from_elevator();
             if (!state.is_level_valid()) {
+                continue;
+            }
+            auto cache = state.generate_cache();
+            if (!visited.insert(cache).second) {
                 continue;
             }
 
@@ -102,9 +102,6 @@ public:
             }
 
             for (auto new_state: state.next_states(final_level)) {
-                if (visited.contains(new_state.generate_cache())) {
-                    continue;
-                }
                 states.push(std::move(new_state));
             }
         }

@@ -47,8 +47,8 @@ vector<pair<Elevator, Floor> > Floor::generate_elevator() {
 
 vector<Elevator> Floor::generate_pairs() const {
     vector<string> combined;
-    auto generator_size = _generators.size();
-    auto microchip_size = _microchips.size();
+    const auto generator_size = _generators.size();
+    const auto microchip_size = _microchips.size();
     combined.reserve(generator_size + microchip_size);
     for (const string &generator: _generators) combined.emplace_back(generator);
     for (const string &microchip: _microchips) combined.emplace_back(microchip);
@@ -87,14 +87,10 @@ pair<set<string>, set<string> > Floor::generate_cache() {
     return _generators.empty() && _microchips.empty();
 }
 
-
-using StateCache = tuple<int, pair<set<string>, set<string> >, map<int, pair<set<string>, set<string> > > >;
-
 State::State(const int steps, const int level, Elevator elevator, map<int, Floor> floors): _steps(steps), _level(level),
     _elevator(std::move(elevator)),
     _floors(std::move(floors)) {
 }
-
 
 int State::steps() const {
     return _steps;
@@ -108,8 +104,8 @@ void State::hydrate_from_elevator() {
     _elevator._microchips.clear();
 }
 
-bool State::is_level_valid() {
-    Floor &floor = _floors.at(_level);
+bool State::is_level_valid() const {
+    const Floor &floor = _floors.at(_level);
     return floor.is_valid();
 }
 
@@ -153,5 +149,5 @@ StateCache State::generate_cache() {
         floors.emplace(level, floor_cache);
     }
 
-    return std::make_tuple(_level, _elevator.generate_cache(), floors);
+    return std::make_pair(_level, floors);
 }

@@ -155,7 +155,7 @@ TEST(DAY11, SetEqual) {
     EXPECT_EQ(first, second);
 }
 
-TEST(DA11, map) {
+TEST(DAY11, map) {
     map<int, pair<set<string>, map<int, set<string> > > > first{
         {1, {{"set"}, {{1, {"a"}}, {2, {"b"}}}}}
     };
