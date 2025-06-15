@@ -103,7 +103,7 @@ public:
     }
 
     [[nodiscard]] bool is_valid() const {
-        return std::ranges::all_of(_microchips,
+        return _generators.empty() | std::ranges::all_of(_microchips,
                                    [&](const string &microchip) { return _generators.contains(microchip); });
     }
 
@@ -134,7 +134,7 @@ public:
     }
 
     void hydrate_from_elevator() {
-        Floor &floor = _floors[_level];
+        Floor &floor = _floors.at(_level);
         floor.add_generators(_elevator._generators);
         floor.add_microchips(_elevator._microchips);
         _elevator._generators.clear();
@@ -142,7 +142,7 @@ public:
     }
 
     bool is_level_valid() {
-        Floor &floor = _floors[_level];
+        Floor &floor = _floors.at(_level);
         return floor.is_valid();
     }
 
@@ -159,20 +159,20 @@ public:
         return true;
     }
 
-    vector<State> next_states(int max_level) {
-        Floor &floor = _floors[_level];
+    vector<State> next_states(const int max_level) {
+        Floor &floor = _floors.at(_level);
         auto elevators = floor.generate_elevator();
         vector<State> states;
-        auto new_steps = steps + 1;
+        auto new_steps = _steps + 1;
         for (const auto &[elevator, floor]: elevators) {
-            if (_level > 0) {
+            if (_level > 1) {
                 map<int, Floor> floors = _floors;
-                floors[_level] = floor;
+                floors.at(_level) = floor;
                 states.emplace_back(new_steps, _level - 1, elevator, floors);
             }
             if (_level < max_level) {
                 map<int, Floor> floors = _floors;
-                floors[_level] = floor;
+                floors.at(_level) = floor;
                 states.emplace_back(new_steps, _level + 1, elevator, floors);
             }
         }
@@ -192,7 +192,7 @@ public:
 
 class Facility {
 public:
-    int order(State initial_state, int final_level) {
+    static int order(State initial_state, int final_level) {
         set<StateCache> visited;
         vector<State> states = {std::move(initial_state)};
 
@@ -220,6 +220,31 @@ public:
         return -1;
     }
 };
+
+// F4 .  .  .  .  .
+// F3 .  .  .  LG .
+// F2 .  HG .  .  .
+// F1 E  .  HM .  LM
+
+TEST(DAY11, FacilityOrder) {
+    // Arrange
+    const map<int, Floor> floors{
+        {1, Floor({}, {"H", "L"})},
+        {2, Floor({"H"}, {})},
+        {3, Floor({"L"}, {})},
+        {4, Floor({}, {})}
+    };
+
+    State initial_state = State(0, 1, Elevator({}, {}), floors);
+
+    // Act
+    int actual = Facility::order(initial_state, 3);
+
+
+    // Assert
+    int expected_steps = 11;
+    EXPECT_EQ(actual, expected_steps);
+}
 
 TEST(DAY11, StateCacheEquals) {
     // Arrange
