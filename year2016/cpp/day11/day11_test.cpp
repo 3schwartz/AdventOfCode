@@ -25,25 +25,25 @@ TEST(DAY11, FacilityOrder) {
         {4, Floor({}, {})}
     };
 
-    State initial_state = State(0, 1, Elevator({}, {}), floors);
+    const auto initial_state = State(0, 1, floors);
 
     // Act
-    int actual = Facility::order(initial_state, 4);
+    const int actual = Facility::order(initial_state, 4);
 
 
     // Assert
-    int expected_steps = 11;
+    constexpr int expected_steps = 11;
     EXPECT_EQ(actual, expected_steps);
 }
 
 TEST(DAY11, StateCacheEquals) {
     // Arrange
-    auto first_state = State(1, 1, Elevator({"a"}, {"b"}),
+    auto first_state = State(Elevator({"a"}, {"b"}), 1, 1,
                              {
                                  {1, Floor({"a"}, {"b"})},
                                  {2, Floor({"a"}, {"b"})}
                              });
-    auto second_state = State(1, 1, Elevator({"a"}, {"b"}),
+    auto second_state = State(Elevator({"a"}, {"b"}), 1, 1,
                               {
                                   {1, Floor({"a"}, {"b"})},
                                   {2, Floor({"a"}, {"b"})}

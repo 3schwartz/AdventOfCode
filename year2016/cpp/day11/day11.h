@@ -56,17 +56,18 @@ using StateCache = pair<int, std::map<int, pair<set<string>, set<string> > > >;
 class State {
     int _steps;
     int _level;
-    Elevator _elevator;
     map<int, Floor> _floors;
 
 public:
-    State(int steps, int level, Elevator elevator, std::map<int, Floor> floors);
+    State(int steps, int level, std::map<int, Floor> floors);
+
+    State(const Elevator &elevator, int steps, int level, std::map<int, Floor> floors);
 
     auto operator<=>(const State &other) const = default;
 
     [[nodiscard]] int steps() const;
 
-    void hydrate_from_elevator();
+    void hydrate_from_elevator(const Elevator &elevator);
 
     [[nodiscard]] bool is_level_valid() const;
 
@@ -88,10 +89,6 @@ public:
             auto state = states.front();
             states.pop();
 
-            state.hydrate_from_elevator();
-            if (!state.is_level_valid()) {
-                continue;
-            }
             auto cache = state.generate_cache();
             if (!visited.insert(cache).second) {
                 continue;

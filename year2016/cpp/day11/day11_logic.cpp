@@ -87,21 +87,25 @@ pair<set<string>, set<string> > Floor::generate_cache() {
     return _generators.empty() && _microchips.empty();
 }
 
-State::State(const int steps, const int level, Elevator elevator, map<int, Floor> floors): _steps(steps), _level(level),
-    _elevator(std::move(elevator)),
-    _floors(std::move(floors)) {
+State::State(const int steps, const int level, map<int, Floor> floors): _steps(steps), _level(level),
+                                                                        _floors(std::move(floors)) {
+}
+
+State::State(const Elevator &elevator, const int steps, const int level, std::map<int, Floor> floors) {
+    _steps = steps;
+    _level = level;
+    _floors = std::move(floors);
+    hydrate_from_elevator(elevator);
 }
 
 int State::steps() const {
     return _steps;
 }
 
-void State::hydrate_from_elevator() {
+void State::hydrate_from_elevator(const Elevator &elevator) {
     Floor &floor = _floors.at(_level);
-    floor.add_generators(_elevator._generators);
-    floor.add_microchips(_elevator._microchips);
-    _elevator._generators.clear();
-    _elevator._microchips.clear();
+    floor.add_generators(elevator._generators);
+    floor.add_microchips(elevator._microchips);
 }
 
 bool State::is_level_valid() const {
@@ -126,17 +130,23 @@ vector<State> State::next_states(const int max_level) {
     Floor &floor = _floors.at(_level);
     auto elevators = floor.generate_elevator();
     vector<State> states;
-    auto new_steps = _steps + 1;
+    const auto new_steps = _steps + 1;
     for (const auto &[elevator, floor]: elevators) {
         if (_level > 1) {
             map<int, Floor> floors = _floors;
             floors.at(_level) = floor;
-            states.emplace_back(new_steps, _level - 1, elevator, floors);
+            auto new_state = State(elevator, new_steps, _level - 1, floors);
+            if (new_state.is_level_valid()) {
+                states.push_back(std::move(new_state));
+            }
         }
         if (_level < max_level) {
             map<int, Floor> floors = _floors;
             floors.at(_level) = floor;
-            states.emplace_back(new_steps, _level + 1, elevator, floors);
+            auto new_state = State(elevator, new_steps, _level + 1, floors);
+            if (new_state.is_level_valid()) {
+                states.push_back(std::move(new_state));
+            }
         }
     }
     return states;

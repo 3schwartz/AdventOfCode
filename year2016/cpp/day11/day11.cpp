@@ -1,22 +1,47 @@
 #include <iostream>
 #include "day11.h"
 #include <map>
+#include <utility>
 using std::map;
 
+
+void run(map<int, Floor> floors, const int part) {
+    const auto initial_state = State(0, 1, std::move(floors));
+
+    auto start = std::chrono::high_resolution_clock::now();
+    auto steps = Facility::order(initial_state, 4);
+    auto end = std::chrono::high_resolution_clock::now();
+
+    std::cout << "Part " << part << ": " << steps << std::endl;
+
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+    std::cout << "Time taken: " << duration.count() << " seconds" << std::endl;
+}
+
 int main() {
-    const map<int, Floor> floors{
+    const map<int, Floor> floors_1{
         {1, Floor({"thulium", "plutonium", "strontium"}, {"thulium"})},
         {2, Floor({}, {"plutonium", "strontium"})},
         {3, Floor({"promethium", "ruthenium"}, {"promethium", "ruthenium"})},
         {4, Floor({}, {})}
     };
 
-    auto start = std::chrono::high_resolution_clock::now();
-    const auto initial_state = State(0, 1, Elevator({}, {}), floors);
-    auto end = std::chrono::high_resolution_clock::now();
+    run(floors_1, 1);
 
-    std::cout << "Part 1: " << Facility::order(initial_state, 4);
+    // Upon entering the isolated containment area, however, you notice some extra parts on the first floor that weren't listed on the record outside:
+    //
+    // An elerium generator.
+    // An elerium-compatible microchip.
+    // A dilithium generator.
+    // A dilithium-compatible microchip.
+    const map<int, Floor> floors_2 = {
+        {1, Floor({"thulium", "plutonium", "strontium", "elerium", "dilithium"}, {"thulium", "elerium", "dilithium"})},
+        {2, Floor({}, {"plutonium", "strontium"})},
+        {3, Floor({"promethium", "ruthenium"}, {"promethium", "ruthenium"})},
+        {4, Floor({}, {})}
+    };
 
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    std::cout << "Time taken: " << duration.count() << " milliseconds" << std::endl;
+    run(floors_2, 2);
 }
+
+
