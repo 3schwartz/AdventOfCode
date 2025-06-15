@@ -103,13 +103,14 @@ public:
     }
 
     [[nodiscard]] bool is_valid() const {
-        return _generators.empty() || std::ranges::all_of(_microchips,
-                                                         [&](const string &microchip) {
-                                                             return _generators.contains(microchip);
-                                                         });
+        return _generators.empty() ||
+               std::ranges::all_of(_microchips,
+                                   [&](const string &microchip) {
+                                       return _generators.contains(microchip);
+                                   });
     }
 
-    bool is_empty() const {
+    [[nodiscard]] bool is_empty() const {
         return _generators.empty() && _microchips.empty();
     }
 };
@@ -196,18 +197,19 @@ class Facility {
 public:
     static int order(State initial_state, int final_level) {
         set<StateCache> visited;
-        vector<State> states = {std::move(initial_state)};
+        std::queue<State> states;
+        states.push(std::move(initial_state));
 
         while (!states.empty()) {
-            auto state = states.back();
-            states.pop_back();
+            auto state = states.front();
+            states.pop();
             auto cache = state.generate_cache();
             if (!visited.insert(cache).second) {
                 continue;
             }
 
             state.hydrate_from_elevator();
-            if (state.is_level_valid()) {
+            if (!state.is_level_valid()) {
                 continue;
             }
 
@@ -216,7 +218,7 @@ public:
             }
 
             for (auto new_state: state.next_states(final_level)) {
-                states.push_back(std::move(new_state));
+                states.push(std::move(new_state));
             }
         }
         return -1;
@@ -240,7 +242,7 @@ TEST(DAY11, FacilityOrder) {
     State initial_state = State(0, 1, Elevator({}, {}), floors);
 
     // Act
-    int actual = Facility::order(initial_state, 3);
+    int actual = Facility::order(initial_state, 4);
 
 
     // Assert
@@ -277,9 +279,7 @@ TEST(DAY11, StateCacheEquals) {
 
 TEST(DAY11, GenerateElevators) {
     // Arrange
-    Floor floor({}, {});
-    floor.add_generators({"a", "b"});
-    floor.add_microchips({"a", "b"});
+    Floor floor({"a", "b"}, {"a", "b"});
 
     // Act
     vector<pair<Elevator, Floor> > elevators = floor.generate_elevator();
@@ -292,6 +292,7 @@ TEST(DAY11, GenerateElevators) {
     }
 
     const vector<Elevator> expected{
+        {{"a", "b"}, {}},
         {{"a"}, {"a"}},
         {{"b"}, {"b"}},
         {{}, {"a", "b"}},
@@ -299,12 +300,12 @@ TEST(DAY11, GenerateElevators) {
         {{}, {"b"}}
     };
 
-    EXPECT_EQ(elevators.size(), 5);
+    EXPECT_EQ(elevators.size(), 6);
     EXPECT_EQ(
         actual_elevators,
         expected
     );
-    EXPECT_EQ(elevators[0].second, Floor({"b"}, {"b"}));
+    EXPECT_EQ(elevators[1].second, Floor({"b"}, {"b"}));
 };
 
 TEST(DAY11, GeneratePairs) {
