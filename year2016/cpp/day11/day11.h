@@ -80,30 +80,12 @@ public:
 
 class Facility {
 public:
-    static int order(State initial_state, int final_level) {
-        set<StateCache> visited;
-        std::queue<State> states;
-        states.push(std::move(initial_state));
+    static int dfs_start(State state, int final_level);
 
-        while (!states.empty()) {
-            auto state = states.front();
-            states.pop();
+    static int order(State initial_state, int final_level);
 
-            auto cache = state.generate_cache();
-            if (!visited.insert(cache).second) {
-                continue;
-            }
-
-            if (state.all_on_level(final_level)) {
-                return state.steps();
-            }
-
-            for (auto new_state: state.next_states(final_level)) {
-                states.push(std::move(new_state));
-            }
-        }
-        return -1;
-    }
+private:
+    static int dfs_iterate(State state, map<StateCache, int> &visited, int min_steps, int final_level);
 };
 
 

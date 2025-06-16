@@ -36,6 +36,26 @@ TEST(DAY11, FacilityOrder) {
     EXPECT_EQ(actual, expected_steps);
 }
 
+TEST(DAY11, FacilityOrderDFS) {
+    // Arrange
+    const map<int, Floor> floors{
+        {1, Floor({}, {"H", "L"})},
+        {2, Floor({"H"}, {})},
+        {3, Floor({"L"}, {})},
+        {4, Floor({}, {})}
+    };
+
+    const auto initial_state = State(0, 1, floors);
+
+    // Act
+    const int actual = Facility::dfs_start(initial_state, 4);
+
+
+    // Assert
+    constexpr int expected_steps = 11;
+    EXPECT_EQ(actual, expected_steps);
+}
+
 TEST(DAY11, StateCacheEquals) {
     // Arrange
     auto first_state = State(Elevator({"a"}, {"b"}), 1, 1,
