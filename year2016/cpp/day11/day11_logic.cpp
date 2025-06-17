@@ -5,9 +5,6 @@ Elevator::Elevator(set<string> generators, set<string> microchips)
     : _generators(std::move(generators)), _microchips(std::move(microchips)) {
 }
 
-pair<set<string>, set<string> > Elevator::generate_cache() {
-    return make_pair(_generators, _microchips);
-}
 
 Floor::Floor(set<string> generators, set<string> microchips): _generators(std::move(generators)),
                                                               _microchips(std::move(microchips)) {
@@ -71,8 +68,25 @@ vector<Elevator> Floor::generate_pairs() const {
     return pairs;
 }
 
-pair<set<string>, set<string> > Floor::generate_cache() {
-    return make_pair(_generators, _microchips);
+string Floor::generate_cache() const {
+    std::string cache;
+
+    for (const auto &generator: _generators) {
+        cache += generator;
+    }
+    while (cache.length() < 2) {
+        cache += '.';
+    }
+
+    for (const auto &microchip: _microchips) {
+        cache += microchip;
+    }
+
+    while (cache.length() < 4) {
+        cache += '.';
+    }
+
+    return cache;
 }
 
 [[nodiscard]] bool Floor::is_valid() const {
@@ -153,13 +167,15 @@ vector<State> State::next_states(const int max_level) {
 }
 
 StateCache State::generate_cache() {
-    map<int, pair<set<string>, set<string> > > floors;
+    string cache = _level + ".";
+
+
     for (auto &[level, floor]: _floors) {
         auto floor_cache = floor.generate_cache();
-        floors.emplace(level, floor_cache);
+        cache += floor_cache;
     }
 
-    return std::make_pair(_level, floors);
+    return cache;
 }
 
 int Facility::dfs_start(State state, const int final_level) {

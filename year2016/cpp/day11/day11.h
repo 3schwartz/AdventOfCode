@@ -23,8 +23,6 @@ struct Elevator {
     Elevator(std::set<std::string> generators, std::set<std::string> microchips);
 
     auto operator<=>(const Elevator &other) const = default;
-
-    std::pair<std::set<std::string>, std::set<std::string> > generate_cache();
 };
 
 class Floor {
@@ -44,14 +42,14 @@ public:
 
     vector<Elevator> generate_pairs() const;
 
-    std::pair<std::set<std::string>, std::set<std::string> > generate_cache();
+    string generate_cache() const;
 
     [[nodiscard]] bool is_valid() const;
 
     [[nodiscard]] bool is_empty() const;
 };
 
-using StateCache = pair<int, std::map<int, pair<set<string>, set<string> > > >;
+using StateCache = string;
 
 class State {
     int _steps;
