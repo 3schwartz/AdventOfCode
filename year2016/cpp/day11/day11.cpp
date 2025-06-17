@@ -40,7 +40,6 @@ int main() {
     };
 
     run(floors_1, 1);
-    run_dfs(floors_1, 1);
 
     // Upon entering the isolated containment area, however, you notice some extra parts on the first floor that weren't listed on the record outside:
     //
@@ -48,14 +47,16 @@ int main() {
     // An elerium-compatible microchip.
     // A dilithium generator.
     // A dilithium-compatible microchip.
-    // const map<int, Floor> floors_2 = {
-    //     {1, Floor({"thulium", "plutonium", "strontium", "elerium", "dilithium"}, {"thulium", "elerium", "dilithium"})},
-    //     {2, Floor({}, {"plutonium", "strontium"})},
-    //     {3, Floor({"promethium", "ruthenium"}, {"promethium", "ruthenium"})},
-    //     {4, Floor({}, {})}
-    // };
-    //
-    // run(floors_2, 2);
+    const map<int, Floor> floors_2 = {
+        {1, Floor({"thulium", "plutonium", "strontium", "elerium", "dilithium"}, {"thulium", "elerium", "dilithium"})},
+        {2, Floor({}, {"plutonium", "strontium"})},
+        {3, Floor({"promethium", "ruthenium"}, {"promethium", "ruthenium"})},
+        {4, Floor({}, {})}
+    };
+
+    run(floors_2, 2);
+
+    run_dfs(floors_1, 1);
 }
 
 

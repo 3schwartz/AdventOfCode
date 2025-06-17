@@ -163,32 +163,56 @@ StateCache State::generate_cache() {
 }
 
 int Facility::dfs_start(State state, const int final_level) {
-    map<StateCache, int> visited;
-
-    return dfs_iterate(std::move(state), visited, 999999999, final_level);
+    map<StateCache, int> optimal;
+    map<StateCache, int> best_seen;
+    int global_min_steps = INT_MAX;
+    return dfs_iterate(std::move(state), optimal, best_seen, final_level, global_min_steps);
 }
 
-int Facility::dfs_iterate(State state, map<StateCache, int> &visited, const int min_steps, const int final_level) {
+int Facility::dfs_iterate(
+    State state,
+    map<StateCache, int> &optimal,
+    map<StateCache, int> &best_seen,
+    int final_level,
+    int &global_min_steps) {
     const auto cache = state.generate_cache();
-    if (visited.contains(cache) and visited.at(cache) <= state.steps()) {
-        return min_steps;
-    }
-    visited[cache] = state.steps();
+    const int current_steps = state.steps();
 
-    if (state.steps() >= min_steps) {
-        return min_steps;
+
+    if (current_steps >= global_min_steps) {
+        return INT_MAX;
     }
+
+    if (best_seen.contains(cache) && best_seen[cache] <= current_steps) {
+        return INT_MAX;
+    }
+
+    best_seen[cache] = current_steps;
+
     if (state.all_on_level(final_level)) {
-        return state.steps();
+        global_min_steps = current_steps;
+        optimal[cache] = 0;
+        return current_steps;
     }
 
-    int optimal_steps = min_steps;
-    for (const auto &new_state: state.next_states(final_level)) {
-        int new_state_steps = dfs_iterate(new_state, visited, optimal_steps, final_level);
-        optimal_steps = std::min(optimal_steps, new_state_steps);
+    if (optimal.contains(cache)) {
+        return current_steps + optimal[cache];
     }
 
-    return optimal_steps;
+    int min_total_steps = INT_MAX;
+
+    for (const auto &next_state: state.next_states(final_level)) {
+        int result = dfs_iterate(next_state, optimal, best_seen, final_level, global_min_steps);
+        if (result < min_total_steps) {
+            min_total_steps = result;
+        }
+    }
+
+    if (min_total_steps != INT_MAX) {
+        optimal[cache] = min_total_steps - current_steps;
+    }
+
+    return min_total_steps;
 }
 
 int Facility::order(State initial_state, int final_level) {

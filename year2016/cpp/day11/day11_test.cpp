@@ -12,6 +12,126 @@ using std::tuple;
 using std::move;
 
 // F4 .  .  .  .  .
+// F3 E  HG HM LG LM
+// F2 .  .  .  .  .
+// F1 .  .  .  .  .
+TEST(DAY11, FacilityOrderDFS5) {
+    // Arrange
+    const map<int, Floor> floors{
+        {1, Floor({}, {})},
+        {2, Floor({}, {})},
+        {3, Floor({"H", "L"}, {"H", "L"})},
+        {4, Floor({}, {})}
+    };
+
+    const auto initial_state = State(0, 3, floors);
+
+    // Act
+    const int actual = Facility::dfs_start(initial_state, 4);
+
+
+    // Assert
+    constexpr int expected_steps = 5;
+    EXPECT_EQ(actual, expected_steps);
+}
+
+// F4 E  .  HM .  LM
+// F3 .  HG .  LG .
+// F2 .  .  .  .  .
+// F1 .  .  .  .  .
+TEST(DAY11, FacilityOrderDFS4) {
+    // Arrange
+    const map<int, Floor> floors{
+        {1, Floor({}, {})},
+        {2, Floor({}, {})},
+        {3, Floor({"H", "L"}, {})},
+        {4, Floor({}, {"H", "L"})}
+    };
+
+    const auto initial_state = State(0, 4, floors);
+
+    // Act
+    const int actual = Facility::dfs_start(initial_state, 4);
+
+
+    // Assert
+    constexpr int expected_steps = 4;
+    EXPECT_EQ(actual, expected_steps);
+}
+
+// F4 .  .  .  .  LM
+// F3 E  HG HM LG .
+// F2 .  .  .  .  .
+// F1 .  .  .  .  .
+TEST(DAY11, FacilityOrderDFS3) {
+    // Arrange
+    const map<int, Floor> floors{
+        {1, Floor({}, {})},
+        {2, Floor({}, {})},
+        {3, Floor({"H", "L"}, {"H"})},
+        {4, Floor({}, {"L"})}
+    };
+
+    const auto initial_state = State(0, 3, floors);
+
+    // Act
+    const int actual = Facility::dfs_start(initial_state, 4);
+
+
+    // Assert
+    constexpr int expected_steps = 3;
+    EXPECT_EQ(actual, expected_steps);
+}
+
+// F4 E  HG .  LG LM
+// F3 .  .  HM .  .
+// F2 .  .  .  .  .
+// F1 .  .  .  .  .
+TEST(DAY11, FacilityOrderDFS2) {
+    // Arrange
+    const map<int, Floor> floors{
+        {1, Floor({}, {})},
+        {2, Floor({}, {})},
+        {3, Floor({}, {"H"})},
+        {4, Floor({"H", "L"}, {"L"})}
+    };
+
+    const auto initial_state = State(0, 4, floors);
+
+    // Act
+    const int actual = Facility::dfs_start(initial_state, 4);
+
+
+    // Assert
+    constexpr int expected_steps = 2;
+    EXPECT_EQ(actual, expected_steps);
+}
+
+// F4 .  HG .  LG .
+// F3 E  .  HM .  LM
+// F2 .  .  .  .  .
+// F1 .  .  .  .  .
+TEST(DAY11, FacilityOrderDFS1) {
+    // Arrange
+    const map<int, Floor> floors{
+        {1, Floor({}, {})},
+        {2, Floor({}, {})},
+        {3, Floor({}, {"H", "L"})},
+        {4, Floor({"H", "L"}, {})}
+    };
+
+    const auto initial_state = State(0, 3, floors);
+
+    // Act
+    const int actual = Facility::dfs_start(initial_state, 4);
+
+
+    // Assert
+    constexpr int expected_steps = 1;
+    EXPECT_EQ(actual, expected_steps);
+}
+
+// F4 .  .  .  .  .
 // F3 .  .  .  LG .
 // F2 .  HG .  .  .
 // F1 E  .  HM .  LM

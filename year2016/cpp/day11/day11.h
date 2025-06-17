@@ -85,7 +85,12 @@ public:
     static int order(State initial_state, int final_level);
 
 private:
-    static int dfs_iterate(State state, map<StateCache, int> &visited, int min_steps, int final_level);
+    static int dfs_iterate(
+        State state,
+        map<StateCache, int> &optimal,
+        map<StateCache, int> &best_seen,
+        int final_level,
+        int &global_min_steps);
 };
 
 
