@@ -112,7 +112,7 @@ State::State(const Elevator &elevator, const int steps, const int level, std::ma
     hydrate_from_elevator(elevator);
 }
 
-int State::steps() const {
+int State::steps() {
     return _steps;
 }
 
@@ -140,10 +140,10 @@ bool State::all_on_level(int level) {
     return true;
 }
 
-vector<State> State::next_states(const int max_level) {
+vector<std::unique_ptr<IState> > State::next_states(const int max_level) {
     Floor &floor = _floors.at(_level);
     auto elevators = floor.generate_elevator();
-    vector<State> states;
+    vector<std::unique_ptr<IState> > states;
     const auto new_steps = _steps + 1;
     for (const auto &[elevator, floor]: elevators) {
         if (_level > 1) {
@@ -151,7 +151,7 @@ vector<State> State::next_states(const int max_level) {
             floors.at(_level) = floor;
             auto new_state = State(elevator, new_steps, _level - 1, floors);
             if (new_state.is_level_valid()) {
-                states.push_back(std::move(new_state));
+                states.push_back(std::make_unique<State>(std::move(new_state)));
             }
         }
         if (_level < max_level) {
@@ -159,7 +159,7 @@ vector<State> State::next_states(const int max_level) {
             floors.at(_level) = floor;
             auto new_state = State(elevator, new_steps, _level + 1, floors);
             if (new_state.is_level_valid()) {
-                states.push_back(std::move(new_state));
+                states.push_back(std::make_unique<State>(std::move(new_state)));
             }
         }
     }
@@ -167,7 +167,7 @@ vector<State> State::next_states(const int max_level) {
 }
 
 StateCache State::generate_cache() {
-    string cache = _level + ".";
+    string cache = std::to_string(_level) + ".";
 
 
     for (auto &[level, floor]: _floors) {
@@ -178,78 +178,78 @@ StateCache State::generate_cache() {
     return cache;
 }
 
-int Facility::dfs_start(State state, const int final_level) {
-    map<StateCache, int> optimal;
-    map<StateCache, int> best_seen;
-    int global_min_steps = INT_MAX;
-    return dfs_iterate(std::move(state), optimal, best_seen, final_level, global_min_steps);
-}
+// int Facility::dfs_start(State state, const int final_level) {
+//     map<StateCache, int> optimal;
+//     map<StateCache, int> best_seen;
+//     int global_min_steps = INT_MAX;
+//     return dfs_iterate(std::move(state), optimal, best_seen, final_level, global_min_steps);
+// }
+//
+// int Facility::dfs_iterate(
+//     State state,
+//     map<StateCache, int> &optimal,
+//     map<StateCache, int> &best_seen,
+//     int final_level,
+//     int &global_min_steps) {
+//     const auto cache = state.generate_cache();
+//     const int current_steps = state.steps();
+//
+//
+//     if (current_steps >= global_min_steps) {
+//         return INT_MAX;
+//     }
+//
+//     if (best_seen.contains(cache) && best_seen[cache] <= current_steps) {
+//         return INT_MAX;
+//     }
+//
+//     best_seen[cache] = current_steps;
+//
+//     if (state.all_on_level(final_level)) {
+//         global_min_steps = current_steps;
+//         optimal[cache] = 0;
+//         return current_steps;
+//     }
+//
+//     if (optimal.contains(cache)) {
+//         return current_steps + optimal[cache];
+//     }
+//
+//     int min_total_steps = INT_MAX;
+//
+//     for (const auto &next_state: state.next_states(final_level)) {
+//         int result = dfs_iterate(next_state, optimal, best_seen, final_level, global_min_steps);
+//         if (result < min_total_steps) {
+//             min_total_steps = result;
+//         }
+//     }
+//
+//     if (min_total_steps != INT_MAX) {
+//         optimal[cache] = min_total_steps - current_steps;
+//     }
+//
+//     return min_total_steps;
+// }
 
-int Facility::dfs_iterate(
-    State state,
-    map<StateCache, int> &optimal,
-    map<StateCache, int> &best_seen,
-    int final_level,
-    int &global_min_steps) {
-    const auto cache = state.generate_cache();
-    const int current_steps = state.steps();
-
-
-    if (current_steps >= global_min_steps) {
-        return INT_MAX;
-    }
-
-    if (best_seen.contains(cache) && best_seen[cache] <= current_steps) {
-        return INT_MAX;
-    }
-
-    best_seen[cache] = current_steps;
-
-    if (state.all_on_level(final_level)) {
-        global_min_steps = current_steps;
-        optimal[cache] = 0;
-        return current_steps;
-    }
-
-    if (optimal.contains(cache)) {
-        return current_steps + optimal[cache];
-    }
-
-    int min_total_steps = INT_MAX;
-
-    for (const auto &next_state: state.next_states(final_level)) {
-        int result = dfs_iterate(next_state, optimal, best_seen, final_level, global_min_steps);
-        if (result < min_total_steps) {
-            min_total_steps = result;
-        }
-    }
-
-    if (min_total_steps != INT_MAX) {
-        optimal[cache] = min_total_steps - current_steps;
-    }
-
-    return min_total_steps;
-}
-
-int Facility::order(State initial_state, int final_level) {
+int Facility::order(std::unique_ptr<IState> initial_state, int final_level) {
     set<StateCache> visited;
-    std::queue<State> states;
+    std::queue<std::unique_ptr<IState> > states;
     states.push(std::move(initial_state));
 
     while (!states.empty()) {
-        auto state = states.front();
+        const auto state = std::move(states.front());
         states.pop();
 
-        auto cache = state.generate_cache();
+        auto cache = state->generate_cache();
         if (!visited.insert(cache).second) {
             continue;
         }
 
-        if (state.all_on_level(final_level)) {
-            return state.steps();
+        if (state->all_on_level(final_level)) {
+            return state->steps();
         }
 
-        for (auto new_state: state.next_states(final_level)) {
+        for (auto &&new_state: state->next_states(final_level)) {
             states.push(std::move(new_state));
         }
     }

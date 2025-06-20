@@ -16,6 +16,77 @@ using std::tuple;
 using std::move;
 using std::queue;
 
+
+class IState {
+public :
+    virtual ~IState() = default;
+
+    auto operator<=>(const IState &) const = default;
+
+    virtual string generate_cache() = 0;
+
+    virtual bool all_on_level(int final_level) = 0;
+
+    virtual int steps() = 0;
+
+    virtual vector<std::unique_ptr<IState> > next_states(int final_level) = 0;
+};
+
+enum HardwareType {
+    GENERATOR,
+    MICROCHIP,
+};
+
+using ElevatorOption = set<pair<string, HardwareType> >;
+
+class FloorSimple {
+    set<pair<string, HardwareType> > _hardware;
+
+public:
+    FloorSimple(set<pair<string, HardwareType> > hardware);
+
+    vector<pair<ElevatorOption, FloorSimple> > generate_elevator();
+
+    [[nodiscard]] vector<ElevatorOption> generate_pairs() const;
+
+    [[nodiscard]] bool is_empty() const;
+
+    [[nodiscard]] bool is_valid() const;
+
+    auto operator<=>(const FloorSimple &other) const = default;
+
+    void add_hardware(const ElevatorOption &set);
+
+    [[nodiscard]] string generate_cache() const;
+};
+
+using StateCache = string;
+
+class StateSimple final : public IState {
+    int _steps;
+    int _level;
+    map<int, FloorSimple> _floors;
+
+public:
+    StateSimple(int steps, int level, std::map<int, FloorSimple> floors);
+
+    StateSimple(const ElevatorOption &elevator, int steps, int level, std::map<int, FloorSimple> floors);
+
+    auto operator<=>(const StateSimple &other) const = default;
+
+    int steps() override;
+
+    void hydrate_from_elevator(const ElevatorOption &elevator);
+
+    [[nodiscard]] bool is_level_valid() const;
+
+    bool all_on_level(int level) override;
+
+    std::vector<std::unique_ptr<IState> > next_states(int max_level) override;
+
+    StateCache generate_cache() override;
+};
+
 struct Elevator {
     std::set<std::string> _generators;
     std::set<std::string> _microchips;
@@ -49,9 +120,8 @@ public:
     [[nodiscard]] bool is_empty() const;
 };
 
-using StateCache = string;
 
-class State {
+class State final : public IState {
     int _steps;
     int _level;
     map<int, Floor> _floors;
@@ -63,32 +133,32 @@ public:
 
     auto operator<=>(const State &other) const = default;
 
-    [[nodiscard]] int steps() const;
+    int steps() override;
 
     void hydrate_from_elevator(const Elevator &elevator);
 
     [[nodiscard]] bool is_level_valid() const;
 
-    bool all_on_level(int level);
+    bool all_on_level(int level) override;
 
-    std::vector<State> next_states(int max_level);
+    std::vector<std::unique_ptr<IState> > next_states(int max_level) override;
 
-    StateCache generate_cache();
+    StateCache generate_cache() override;
 };
 
 class Facility {
 public:
-    static int dfs_start(State state, int final_level);
+    // static int dfs_start(State state, int final_level);
 
-    static int order(State initial_state, int final_level);
+    static int order(std::unique_ptr<IState> initial_state, int final_level);
 
 private:
-    static int dfs_iterate(
-        State state,
-        map<StateCache, int> &optimal,
-        map<StateCache, int> &best_seen,
-        int final_level,
-        int &global_min_steps);
+    // static int dfs_iterate(
+    //     State state,
+    //     map<StateCache, int> &optimal,
+    //     map<StateCache, int> &best_seen,
+    //     int final_level,
+    //     int &global_min_steps);
 };
 
 
