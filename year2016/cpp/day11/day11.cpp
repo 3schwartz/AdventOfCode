@@ -9,41 +9,41 @@ using std::map;
 void run_simple(map<int, FloorSimple> floors, const int part) {
     const auto initial_state = StateSimple(0, 1, std::move(floors));
 
-    auto start = std::chrono::high_resolution_clock::now();
-    auto steps = Facility::order(std::make_unique<StateSimple>(initial_state), 4);
-    auto end = std::chrono::high_resolution_clock::now();
+    const auto start = std::chrono::high_resolution_clock::now();
+    const auto steps = Facility::order(std::make_unique<StateSimple>(initial_state), 4);
+    const auto end = std::chrono::high_resolution_clock::now();
 
     std::cout << "Part " << part << ": " << steps << std::endl;
 
-    auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+    const auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
     std::cout << "Time taken: " << duration.count() << " seconds" << std::endl;
 }
 
 void run(map<int, Floor> floors, const int part) {
     const auto initial_state = State(0, 1, std::move(floors));
 
-    auto start = std::chrono::high_resolution_clock::now();
-    auto steps = Facility::order(std::make_unique<State>(initial_state), 4);
-    auto end = std::chrono::high_resolution_clock::now();
+    const auto start = std::chrono::high_resolution_clock::now();
+    const auto steps = Facility::order(std::make_unique<State>(initial_state), 4);
+    const auto end = std::chrono::high_resolution_clock::now();
 
     std::cout << "Part " << part << ": " << steps << std::endl;
 
-    auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+    const auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
     std::cout << "Time taken: " << duration.count() << " seconds" << std::endl;
 }
 
-// void run_dfs(map<int, Floor> floors, const int part) {
-//     const auto initial_state = State(0, 1, std::move(floors));
-//
-//     auto start = std::chrono::high_resolution_clock::now();
-//     auto steps = Facility::dfs_start(initial_state, 4);
-//     auto end = std::chrono::high_resolution_clock::now();
-//
-//     std::cout << "DFS - Part " << part << ": " << steps << std::endl;
-//
-//     auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
-//     std::cout << "Time taken: " << duration.count() << " seconds" << std::endl;
-// }
+void run_dfs(map<int, Floor> floors, const int part) {
+    const auto initial_state = State(0, 1, std::move(floors));
+
+    const auto start = std::chrono::high_resolution_clock::now();
+    const auto steps = Facility::dfs_start(std::make_unique<State>(initial_state), 4);
+    const auto end = std::chrono::high_resolution_clock::now();
+
+    std::cout << "DFS - Part " << part << ": " << steps << std::endl;
+
+    const auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+    std::cout << "Time taken: " << duration.count() << " seconds" << std::endl;
+}
 
 int main() {
     const map<int, FloorSimple> floors_simple_1{
