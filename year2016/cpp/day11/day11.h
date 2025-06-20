@@ -148,17 +148,17 @@ public:
 
 class Facility {
 public:
-    // static int dfs_start(State state, int final_level);
+    static int dfs_start(std::unique_ptr<IState> state, int final_level);
 
     static int order(std::unique_ptr<IState> initial_state, int final_level);
 
 private:
-    // static int dfs_iterate(
-    //     State state,
-    //     map<StateCache, int> &optimal,
-    //     map<StateCache, int> &best_seen,
-    //     int final_level,
-    //     int &global_min_steps);
+    static int dfs_iterate(
+        const std::unique_ptr<IState> &state,
+        map<StateCache, int> &optimal,
+        map<StateCache, int> &best_seen,
+        int final_level,
+        int &global_min_steps);
 };
 
 
