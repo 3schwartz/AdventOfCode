@@ -39,38 +39,30 @@ enum HardwareType {
 
 using ElevatorOption = set<pair<string, HardwareType> >;
 
-class FloorSimple {
-    set<pair<string, HardwareType> > _hardware;
+using FloorSimple = set<pair<string, HardwareType> >;
 
-public:
-    FloorSimple(set<pair<string, HardwareType> > hardware);
+vector<pair<ElevatorOption, FloorSimple> > generate_elevator(FloorSimple &old_hardware);
 
-    vector<pair<ElevatorOption, FloorSimple> > generate_elevator();
+[[nodiscard]] vector<ElevatorOption> generate_pairs(FloorSimple &old_hardware);
 
-    [[nodiscard]] vector<ElevatorOption> generate_pairs() const;
+[[nodiscard]] bool is_valid(FloorSimple &old_hardware);
 
-    [[nodiscard]] bool is_empty() const;
 
-    [[nodiscard]] bool is_valid() const;
+void add_hardware(const ElevatorOption &set);
 
-    auto operator<=>(const FloorSimple &other) const = default;
-
-    void add_hardware(const ElevatorOption &set);
-
-    [[nodiscard]] string generate_cache() const;
-};
+[[nodiscard]] string generate_cache();
 
 using StateCache = string;
 
 class StateSimple final : public IState {
     int _steps;
     int _level;
-    map<int, FloorSimple> _floors;
+    vector<FloorSimple> _floors;
 
 public:
-    StateSimple(int steps, int level, std::map<int, FloorSimple> floors);
+    StateSimple(int steps, int level, vector<FloorSimple> floors);
 
-    StateSimple(const ElevatorOption &elevator, int steps, int level, std::map<int, FloorSimple> floors);
+    StateSimple(const ElevatorOption &elevator, int steps, int level, vector<FloorSimple> floors);
 
     auto operator<=>(const StateSimple &other) const = default;
 
@@ -78,7 +70,7 @@ public:
 
     void hydrate_from_elevator(const ElevatorOption &elevator);
 
-    [[nodiscard]] bool is_level_valid() const;
+    [[nodiscard]] bool is_level_valid();
 
     bool all_on_level(int level) override;
 

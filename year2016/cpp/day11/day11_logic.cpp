@@ -71,22 +71,7 @@ vector<Elevator> Floor::generate_pairs() const {
 string Floor::generate_cache() const {
     std::string cache;
 
-    for (const auto &generator: _generators) {
-        cache += generator;
-    }
-    while (cache.length() < 2) {
-        cache += '.';
-    }
-
-    for (const auto &microchip: _microchips) {
-        cache += microchip;
-    }
-
-    while (cache.length() < 4) {
-        cache += '.';
-    }
-
-    return cache;
+    return std::to_string(_generators.size()) + "g" + std::to_string(_microchips.size()) + "m";
 }
 
 [[nodiscard]] bool Floor::is_valid() const {
