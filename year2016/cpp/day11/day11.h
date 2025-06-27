@@ -41,6 +41,10 @@ using ElevatorOption = set<pair<string, HardwareType> >;
 
 using FloorSimple = set<pair<string, HardwareType> >;
 
+vector<FloorSimple> floors_simple_load_from_file(const std::string &filename);
+
+FloorSimple floor_simple_from_string(const string &input);
+
 vector<pair<ElevatorOption, FloorSimple> > generate_elevator(FloorSimple &old_hardware);
 
 [[nodiscard]] vector<ElevatorOption> generate_pairs(FloorSimple &old_hardware);
@@ -93,6 +97,10 @@ class Floor {
     set<string> _microchips;
 
 public:
+    static map<int, Floor> load_from_file(const std::string &filename);
+
+    explicit Floor(const string &input);
+
     Floor(std::set<std::string> generators, std::set<std::string> microchips);
 
     auto operator<=>(const Floor &other) const = default;

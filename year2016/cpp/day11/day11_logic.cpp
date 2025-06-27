@@ -1,10 +1,74 @@
+#include <csignal>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
 #include "day11.h"
 
+
+using std::ifstream;
 
 Elevator::Elevator(set<string> generators, set<string> microchips)
     : _generators(std::move(generators)), _microchips(std::move(microchips)) {
 }
 
+vector<string> read_lines(const string &filename) {
+    vector<string> lines;
+    ifstream file(filename);
+
+    if (!file.is_open()) {
+        std::cerr << "Error: Unable to open file" << filename << std::endl;
+        return lines;
+    }
+
+    string line;
+    while (std::getline(file, line)) {
+        lines.push_back(line);
+    }
+    return lines;
+}
+
+map<int, Floor> Floor::load_from_file(const std::string &filename) {
+    const auto lines = read_lines(filename);
+
+    map<int, Floor> floors;
+
+    for (size_t i = 0; i < lines.size(); i++) {
+        auto floor = Floor(lines[i]);
+        floors.insert({i + 1, floor});
+    }
+    return floors;
+}
+
+Floor::Floor(const string &input) {
+    size_t pos = 0;
+    size_t start = 0;
+    vector<string> parts;
+
+    while ((pos = input.find(" a ", start)) != string::npos) {
+        parts.push_back(input.substr(start, pos - start));
+        start = pos + 3;
+    }
+    parts.push_back(input.substr(start));
+
+    for (size_t i = 1; i < parts.size(); ++i) {
+        std::istringstream iss(parts[i]);
+        string hardware, type;
+        iss >> hardware >> type;
+
+        switch (type[0]) {
+            case 'm':
+                pos = hardware.find("-compatible");
+                _microchips.insert(hardware.substr(0, pos));
+                break;
+            case 'g':
+                _generators.insert(hardware);
+                break;
+            default:
+                throw std::invalid_argument("Invalid type: " + type);
+        }
+    }
+}
 
 Floor::Floor(set<string> generators, set<string> microchips): _generators(std::move(generators)),
                                                               _microchips(std::move(microchips)) {
@@ -16,6 +80,54 @@ void Floor::add_generators(const set<string> &generators) {
 
 void Floor::add_microchips(const set<string> &microchips) {
     _microchips.insert(microchips.begin(), microchips.end());
+}
+
+static HardwareType hardware_type_from_char(char c) {
+    switch (c) {
+        case 'm':
+            return MICROCHIP;
+        case 'g':
+            return GENERATOR;
+        default:
+            throw std::invalid_argument("Invalid type: " + std::to_string(c));
+    }
+}
+
+vector<FloorSimple> floors_simple_load_from_file(const std::string &filename) {
+    const auto lines = read_lines(filename);
+
+    vector<FloorSimple> floors;
+    for (const auto &line: lines) {
+        auto floor = floor_simple_from_string(line);
+        floors.push_back(floor);
+    }
+    return floors;
+}
+
+FloorSimple floor_simple_from_string(const string &input) {
+    size_t pos = 0;
+    size_t start = 0;
+    vector<string> parts;
+
+    while ((pos = input.find(" a ", start)) != string::npos) {
+        parts.push_back(input.substr(start, pos - start));
+        start = pos + 3;
+    }
+    parts.push_back(input.substr(start));
+
+    FloorSimple floor;
+    for (size_t i = 1; i < parts.size(); ++i) {
+        std::istringstream iss(parts[i]);
+        string hardware, type;
+        iss >> hardware >> type;
+
+        auto hardware_type = hardware_type_from_char(type[0]);
+        pos = hardware.find("-compatible");
+        auto name_truncated = (pos != string::npos) ? hardware.substr(0, pos) : hardware;
+        floor.insert({name_truncated, hardware_type});
+    }
+
+    return floor;
 }
 
 vector<pair<Elevator, Floor> > Floor::generate_elevator() {

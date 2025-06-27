@@ -18,18 +18,18 @@ using std::move;
 
 TEST(DAY11, FacilityOrderSimple) {
     // Arrange
-    const map<int, FloorSimple> floors{
-        {1, FloorSimple({{"H", MICROCHIP}, {"L", MICROCHIP}})},
-        {2, FloorSimple({{"H", GENERATOR}})},
-        {3, FloorSimple({{"L", GENERATOR}})},
-        {4, FloorSimple({})}
+    const vector floors{
+        FloorSimple({{"H", MICROCHIP}, {"L", MICROCHIP}}),
+        FloorSimple({{"H", GENERATOR}}),
+        FloorSimple({{"L", GENERATOR}}),
+        FloorSimple({})
     };
 
 
-    const auto initial_state = StateSimple(0, 1, floors);
+    const auto initial_state = StateSimple(0, 0, floors);
 
     // Act
-    const int actual = Facility::order(std::make_unique<StateSimple>(initial_state), 4);
+    const int actual = Facility::order(std::make_unique<StateSimple>(initial_state), 3);
 
 
     // Assert
@@ -48,7 +48,7 @@ TEST(DAY11, GenerateElevatorsSimple) {
     );
 
     // Act
-    auto elevators = floor.generate_elevator();
+    auto elevators = generate_elevator(floor);
 
     // Assert
     vector<ElevatorOption> actual_elevators;
@@ -58,13 +58,12 @@ TEST(DAY11, GenerateElevatorsSimple) {
     }
 
     const vector<ElevatorOption> expected{
-        {{"a", MICROCHIP}},
-        {{"b", MICROCHIP}},
         {{"a", GENERATOR}, {"a", MICROCHIP}},
         {{"a", GENERATOR}, {"b", GENERATOR}},
+        {{"a", MICROCHIP}},
         {{"a", MICROCHIP}, {"b", MICROCHIP}},
-        {{"b", GENERATOR}, {"b", MICROCHIP}}
-
+        {{"b", GENERATOR}, {"b", MICROCHIP}},
+        {{"b", MICROCHIP}}
     };
 
     EXPECT_EQ(elevators.size(), 6);
@@ -73,9 +72,8 @@ TEST(DAY11, GenerateElevatorsSimple) {
         expected
     );
     EXPECT_EQ(elevators[1].second, FloorSimple({
-                  {"a", GENERATOR},
                   {"a", MICROCHIP},
-                  {"b", GENERATOR}
+                  {"b", MICROCHIP}
                   }));
 };
 
@@ -89,20 +87,20 @@ TEST(DAY11, GeneratePairsSimple) {
     });
 
     // Act
-    const auto pairs = floor.generate_pairs();
+    const auto pairs = generate_pairs(floor);
 
     // Assert
     const vector<set<pair<string, HardwareType> > > expected{
         {{"a", GENERATOR}},
-        {{"a", MICROCHIP}},
-        {{"b", GENERATOR}},
-        {{"b", MICROCHIP}},
         {{"a", GENERATOR}, {"a", MICROCHIP}},
         {{"a", GENERATOR}, {"b", GENERATOR}},
         {{"a", GENERATOR}, {"b", MICROCHIP}},
+        {{"a", MICROCHIP}},
         {{"a", MICROCHIP}, {"b", GENERATOR}},
         {{"a", MICROCHIP}, {"b", MICROCHIP}},
+        {{"b", GENERATOR}},
         {{"b", GENERATOR}, {"b", MICROCHIP}},
+        {{"b", MICROCHIP}}
     };
     EXPECT_EQ(pairs.size(), 4+3+2+1);
     EXPECT_EQ(
@@ -257,25 +255,25 @@ TEST(DAY11, FacilityOrder) {
     EXPECT_EQ(actual, expected_steps);
 }
 
-// TEST(DAY11, FacilityOrderDFS) {
-//     // Arrange
-//     const map<int, Floor> floors{
-//         {1, Floor({}, {"H", "L"})},
-//         {2, Floor({"H"}, {})},
-//         {3, Floor({"L"}, {})},
-//         {4, Floor({}, {})}
-//     };
-//
-//     const auto initial_state = State(0, 1, floors);
-//
-//     // Act
-//     const int actual = Facility::dfs_start(initial_state, 4);
-//
-//
-//     // Assert
-//     constexpr int expected_steps = 11;
-//     EXPECT_EQ(actual, expected_steps);
-// }
+TEST(DAY11, FacilityOrderDFS) {
+    // Arrange
+    const map<int, Floor> floors{
+        {1, Floor({}, {"H", "L"})},
+        {2, Floor({"H"}, {})},
+        {3, Floor({"L"}, {})},
+        {4, Floor({}, {})}
+    };
+
+    const auto initial_state = State(0, 1, floors);
+
+    // Act
+    const int actual = Facility::dfs_start(std::make_unique<State>(initial_state), 4);
+
+
+    // Assert
+    constexpr int expected_steps = 11;
+    EXPECT_EQ(actual, expected_steps);
+}
 
 TEST(DAY11, StateCacheEquals) {
     // Arrange

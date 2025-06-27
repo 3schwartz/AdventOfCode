@@ -12,6 +12,7 @@ add_executable(day11
         day11/day11.cpp
         day11/day11_logic.cpp
         day11/day11_bfs.cpp
+        day11/day11_v2.cpp
 )
 
 # Unit tests
