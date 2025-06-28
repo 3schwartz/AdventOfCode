@@ -46,8 +46,8 @@ int main() {
         if (!visited.insert({x, y}).second) {
             continue;
         }
-        if (steps == 50 && print_part_2) {
-            cout << "Part 2: " << visited.size() << endl;
+        if (steps == 51 && print_part_2) {
+            cout << "Part 2: " << visited.size() - 1 << endl;
             print_part_2 = false;
         }
         if (x == 31 && y == 39) {
