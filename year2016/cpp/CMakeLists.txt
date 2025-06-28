@@ -13,7 +13,15 @@ add_executable(day11
         day11/day11_logic.cpp
         day11/day11_bfs.cpp
         day11/day11_v2.cpp
+        common/common.cpp
 )
+
+add_executable(day12
+        day12/day12.cpp
+        common/common.cpp
+)
+
+add_executable(day13 day13/day13.cpp)
 
 # Unit tests
 include(FetchContent)

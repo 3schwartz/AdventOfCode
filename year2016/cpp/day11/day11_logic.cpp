@@ -1,10 +1,8 @@
-#include <csignal>
 #include <fstream>
-#include <iostream>
 #include <sstream>
 
 #include "day11.h"
-
+#include "../common/common.h"
 
 using std::ifstream;
 
@@ -12,21 +10,6 @@ Elevator::Elevator(set<string> generators, set<string> microchips)
     : _generators(std::move(generators)), _microchips(std::move(microchips)) {
 }
 
-vector<string> read_lines(const string &filename) {
-    vector<string> lines;
-    ifstream file(filename);
-
-    if (!file.is_open()) {
-        std::cerr << "Error: Unable to open file" << filename << std::endl;
-        return lines;
-    }
-
-    string line;
-    while (std::getline(file, line)) {
-        lines.push_back(line);
-    }
-    return lines;
-}
 
 map<int, Floor> Floor::load_from_file(const std::string &filename) {
     const auto lines = read_lines(filename);
