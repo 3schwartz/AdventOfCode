@@ -1,12 +1,21 @@
 cmake_minimum_required(VERSION 3.31)
 project(cpp)
 
+set(OPENSSL_ROOT_DIR "/opt/homebrew/opt/openssl@3")
+
+find_package(OpenSSL REQUIRED)
+
+# Set C++ standard globally
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(day1 day1/day1.cpp)
+# ----------------------------------------------------------------------------
+# Executables
+# ----------------------------------------------------------------------------
 
+add_executable(day1 day1/day1.cpp)
 add_executable(day2 day2/day2.cpp)
+add_executable(day13 day13/day13.cpp)
 
 add_executable(day11
         day11/day11.cpp
@@ -21,9 +30,17 @@ add_executable(day12
         common/common.cpp
 )
 
-add_executable(day13 day13/day13.cpp)
+add_executable(day14
+        day14/day14_exec.cpp
+        day14/day14.cpp
+)
+target_include_directories(day14 PRIVATE ${OPENSSL_INCLUDE_DIR})
+target_link_libraries(day14 PRIVATE OpenSSL::Crypto)
 
-# Unit tests
+# ----------------------------------------------------------------------------
+# GoogleTest Setup
+# ----------------------------------------------------------------------------
+
 include(FetchContent)
 FetchContent_Declare(
         googletest
@@ -33,16 +50,26 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
+# ----------------------------------------------------------------------------
+# Test Executables
+# ----------------------------------------------------------------------------
+
 add_executable(day11_test
         day11/day11_logic.cpp
         day11/day11_test.cpp
         day11/day11_bfs.cpp
 )
 
-target_link_libraries(
-        day11_test
-        GTest::gtest_main
+add_executable(day14_test
+        day14/day14_test.cpp
+        day14/day14.cpp
 )
+target_include_directories(day14_test PRIVATE ${OPENSSL_INCLUDE_DIR})
+
+# Link GoogleTest to test targets
+target_link_libraries(day11_test GTest::gtest_main)
+target_link_libraries(day14_test PRIVATE GTest::gtest_main OpenSSL::Crypto)
 
 include(GoogleTest)
 gtest_discover_tests(day11_test)
+gtest_discover_tests(day14_test)
