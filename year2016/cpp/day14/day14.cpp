@@ -24,11 +24,21 @@ string hexadecimal(const unsigned char *digest, long size = MD5_DIGEST_LENGTH) {
     return oss.str();
 }
 
-string md5_hash(const int index, const string &salt) {
-    const string to_hash = salt + std::to_string(index);
+string md5_hash(const string &to_hash) {
     unsigned char digest[MD5_DIGEST_LENGTH];
     MD5(reinterpret_cast<const unsigned char *>(to_hash.c_str()), to_hash.length(), digest);
     return hexadecimal(digest, MD5_DIGEST_LENGTH);
+}
+
+string md5_hash_of_index(const int index,
+                         const string &salt,
+                         const int key_stretches) {
+    const string to_hash = salt + std::to_string(index);
+    string index_hash = md5_hash(to_hash);
+    for (int i = 0; i < key_stretches; ++i) {
+        index_hash = md5_hash(index_hash);
+    }
+    return index_hash;
 }
 
 pair<set<char>, set<char> > find_duplicates(const string &hexadecimal_hash) {
@@ -89,9 +99,10 @@ set<int> keys(
     map<char, set<int> > &cache,
     const int index,
     const string &salt,
-    const int limit
+    const int limit,
+    const int key_stretches
 ) {
-    const string hash = md5_hash(index, salt);
+    const string hash = md5_hash_of_index(index, salt, key_stretches);
 
     auto [fives, threes] = find_duplicates(hash);
 
@@ -109,13 +120,14 @@ set<int> keys(
 int find_key(
     const int key_number,
     const string &salt,
-    const int limit
+    const int limit,
+    const int key_stretches
 ) {
     map<char, set<int> > cache;
     int index = 0;
     set<int> indexes;
     while (indexes.size() < key_number) {
-        set<int> keys_below = keys(cache, index, salt, limit);
+        set<int> keys_below = keys(cache, index, salt, limit, key_stretches);
         indexes.insert(keys_below.begin(), keys_below.end());
         index++;
     }
