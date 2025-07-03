@@ -10,10 +10,12 @@ wait = [-earliest % bus for bus in busses]
 print(f"Part 1: {busses[wait.index(min(wait))] * min(wait)}")
 
 mods = {int(bus): -i % int(bus) for i, bus in enumerate(lines[1].split(',')) if bus != 'x'}
-
+print(mods)
 busses = list(reversed(sorted(mods)))
+print(busses)
 inc = busses[0]
 earliest = mods[inc]
+print(earliest)
 
 for bus in busses[1:]:
     while earliest % bus != mods[bus]:

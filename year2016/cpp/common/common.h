@@ -7,4 +7,5 @@ using std::string;
 
 vector<string> read_lines(const string &filename);
 
+int mod(int a, int b);
 #endif // COMMON_H

@@ -34,6 +34,11 @@ add_executable(day14
         day14/day14_exec.cpp
         day14/day14.cpp
 )
+
+add_executable(day15
+        day15/day15.cpp
+        common/common.cpp
+)
 target_include_directories(day14 PRIVATE ${OPENSSL_INCLUDE_DIR})
 target_link_libraries(day14 PRIVATE OpenSSL::Crypto)
 

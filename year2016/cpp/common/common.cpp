@@ -20,3 +20,7 @@ vector<string> read_lines(const string &filename) {
     }
     return lines;
 }
+
+int mod(const int a, const int b) {
+    return (a % b + b) % b;
+}
