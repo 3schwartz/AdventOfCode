@@ -34,6 +34,8 @@ add_executable(day14
         day14/day14_exec.cpp
         day14/day14.cpp
 )
+target_include_directories(day14 PRIVATE ${OPENSSL_INCLUDE_DIR})
+target_link_libraries(day14 PRIVATE OpenSSL::Crypto)
 
 add_executable(day15
         day15/day15.cpp
@@ -45,8 +47,13 @@ add_executable(day16
         common/common.cpp
 )
 
-target_include_directories(day14 PRIVATE ${OPENSSL_INCLUDE_DIR})
-target_link_libraries(day14 PRIVATE OpenSSL::Crypto)
+add_executable(day17
+        day17/day17_exec.cpp
+        day17/day17.cpp
+        common/common.cpp
+)
+target_include_directories(day17 PRIVATE ${OPENSSL_INCLUDE_DIR})
+target_link_libraries(day17 PRIVATE OpenSSL::Crypto)
 
 # ----------------------------------------------------------------------------
 # GoogleTest Setup
@@ -77,10 +84,18 @@ add_executable(day14_test
 )
 target_include_directories(day14_test PRIVATE ${OPENSSL_INCLUDE_DIR})
 
+add_executable(day17_test
+        day17/day17_test.cpp
+        day17/day17.cpp
+)
+target_include_directories(day17_test PRIVATE ${OPENSSL_INCLUDE_DIR})
+
 # Link GoogleTest to test targets
 target_link_libraries(day11_test GTest::gtest_main)
 target_link_libraries(day14_test PRIVATE GTest::gtest_main OpenSSL::Crypto)
+target_link_libraries(day17_test PRIVATE GTest::gtest_main OpenSSL::Crypto)
 
 include(GoogleTest)
 gtest_discover_tests(day11_test)
 gtest_discover_tests(day14_test)
+gtest_discover_tests(day17_test)
