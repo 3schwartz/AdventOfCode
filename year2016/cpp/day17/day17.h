@@ -33,7 +33,6 @@ struct State {
     [[nodiscard]] vector<State> gets_next_states(const string &hash) const;
 };
 
-
-string shortest_path(const string &salt);
+pair<string, int> shortest_path(const string &salt, bool stop_early);
 
 #endif //DAY17_H

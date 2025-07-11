@@ -3,12 +3,24 @@
 #include <string>
 #include <gtest/gtest.h>
 
+TEST(DAY17, CorrectPathPart2) {
+    // Arrange
+    const std::string salt = "ihgpwlah";
+
+    // Act
+    const auto [_,steps] = shortest_path(salt, false);
+
+
+    // Assert
+    EXPECT_EQ(steps, 370);
+}
+
 TEST(DAY17, CorrectPath) {
     // Arrange
     const std::string salt = "ihgpwlah";
 
     // Act
-    const string path = shortest_path(salt);
+    const auto [path,_] = shortest_path(salt, true);
 
 
     // Assert

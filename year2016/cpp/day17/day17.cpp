@@ -44,10 +44,12 @@ State::State(string path, const pair<int, int> &position, int steps) : path(std:
 }
 
 
-string shortest_path(const string &salt) {
+pair<string, int> shortest_path(const string &salt, const bool stop_early) {
     set<pair<string, pair<int, int> > > visited;
     queue<State> q;
     q.push(State("", {0, 0}, 0));
+    string o_path;
+    int o_steps = 0;
     while (!q.empty()) {
         const auto state = q.front();
         q.pop();
@@ -56,7 +58,12 @@ string shortest_path(const string &salt) {
             continue;
         }
         if (state.position == std::pair{3, 3}) {
-            return state.path;
+            o_path = state.path;
+            o_steps = state.steps;
+            if (stop_early) {
+                break;
+            }
+            continue;
         }
         string hash = md5_hash(salt + state.path);
         const auto new_states = state.gets_next_states(hash);
@@ -64,7 +71,7 @@ string shortest_path(const string &salt) {
             q.push(new_state);
         }
     }
-    throw std::runtime_error("No path found");
+    return std::make_pair(o_path, o_steps);
 }
 
 
