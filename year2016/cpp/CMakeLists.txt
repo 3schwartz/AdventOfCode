@@ -55,6 +55,10 @@ add_executable(day17
 target_include_directories(day17 PRIVATE ${OPENSSL_INCLUDE_DIR})
 target_link_libraries(day17 PRIVATE OpenSSL::Crypto)
 
+add_executable(day18
+        day18/day18.cpp
+        common/common.cpp
+)
 # ----------------------------------------------------------------------------
 # GoogleTest Setup
 # ----------------------------------------------------------------------------
