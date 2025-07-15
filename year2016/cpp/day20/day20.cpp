@@ -9,49 +9,19 @@ using std::pair;
 using std::max;
 using std::min;
 
-set<pair<int, int> > get_edges(const vector<string> &data) {
-    set<pair<int, int> > edges;
+set<pair<unsigned long, unsigned long> > get_edges(const vector<string> &data) {
+    set<pair<unsigned long, unsigned long> > edges;
     for (const auto &line: data) {
         std::istringstream iss(line);
         char seperator;
-        int from, to;
+        unsigned long from, to;
         iss >> from >> seperator >> to;
-
-        bool insert = true;
-        for (auto &[fst, snd]: edges) {
-            // within from below or above
-            if (fst <= to + 1 && to <= snd || fst <= from && from - 1 <= snd) {
-                int new_fst = min(fst, from);
-                int new_snd = max(snd, to);
-
-                edges.erase({fst, snd});
-                edges.insert({new_fst, new_snd});
-
-                insert = false;
-                break;
-            }
-            // new within
-            if (fst <= from && to <= snd) {
-                insert = false;
-                break;
-            }
-            // old within
-            if (from <= fst && snd <= to) {
-                edges.erase({fst, snd});
-                edges.insert({from, to});
-                insert = false;
-                break;
-            }
-        }
-
-        if (insert) {
-            edges.insert({from, to});
-        }
+        edges.insert({from, to});
     }
     return edges;
 }
 
-int get_lowest_valued(const vector<string> &data) {
+unsigned long get_lowest_valued(const vector<string> &data) {
     const auto edges = get_edges(data);
 
     auto it = edges.begin();
@@ -65,18 +35,35 @@ int get_lowest_valued(const vector<string> &data) {
     return proposed;
 }
 
+unsigned long get_all_ips(const vector<string> &data, unsigned long max_ip = 4294967295) {
+    const auto edges = get_edges(data);
+
+    auto it = edges.begin();
+    unsigned long ips = it->first;
+    auto last = it->second;
+    while (++it != edges.end()) {
+        if (last < it->first) {
+            ips += it->first - last - 1;
+        }
+        last = max(it->second, last);
+    }
+
+    return ips + max_ip - last;
+}
+
 int main() {
     const auto data_test = read_lines("../../data/day20_data_test.txt");
-    const int part_1_test = get_lowest_valued(data_test);
+    const unsigned long part_1_test = get_lowest_valued(data_test);
     if (part_1_test != 3) {
         std::cerr << part_1_test;
         exit(1);
     }
 
     const auto data = read_lines("../../data/day20_data.txt");
-    const int part_1 = get_lowest_valued(data);
+    const unsigned long part_1 = get_lowest_valued(data);
 
     cout << "Part 1: " << part_1 << endl;
 
+    cout << "Part 2: " << get_all_ips(data) << endl;
     return 0;
 }
