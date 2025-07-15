@@ -4,8 +4,13 @@
 
 #include "../common/common.h"
 
-int get_lowest_valued(const vector<string> &data) {
-    std::set<std::pair<int, int> > edges;
+using std::set;
+using std::pair;
+using std::max;
+using std::min;
+
+set<pair<int, int> > get_edges(const vector<string> &data) {
+    set<pair<int, int> > edges;
     for (const auto &line: data) {
         std::istringstream iss(line);
         char seperator;
@@ -16,8 +21,8 @@ int get_lowest_valued(const vector<string> &data) {
         for (auto &[fst, snd]: edges) {
             // within from below or above
             if (fst <= to + 1 && to <= snd || fst <= from && from - 1 <= snd) {
-                int new_fst = std::min(fst, from);
-                int new_snd = std::max(snd, to);
+                int new_fst = min(fst, from);
+                int new_snd = max(snd, to);
 
                 edges.erase({fst, snd});
                 edges.insert({new_fst, new_snd});
@@ -43,6 +48,11 @@ int get_lowest_valued(const vector<string> &data) {
             edges.insert({from, to});
         }
     }
+    return edges;
+}
+
+int get_lowest_valued(const vector<string> &data) {
+    const auto edges = get_edges(data);
 
     auto it = edges.begin();
     auto proposed = it->second + 1;
@@ -50,7 +60,7 @@ int get_lowest_valued(const vector<string> &data) {
         if (proposed < it->first) {
             return proposed;
         }
-        proposed = std::max(it->second + 1, proposed);
+        proposed = max(it->second + 1, proposed);
     }
     return proposed;
 }
