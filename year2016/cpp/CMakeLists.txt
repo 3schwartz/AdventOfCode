@@ -70,6 +70,13 @@ add_executable(day20
         day20/day20.cpp
         common/common.cpp
 )
+
+add_executable(day21
+        day21/day21_exec.cpp
+        day21/day21.cpp
+        common/common.cpp
+)
+
 # ----------------------------------------------------------------------------
 # GoogleTest Setup
 # ----------------------------------------------------------------------------
@@ -109,14 +116,21 @@ add_executable(day19_test
         day19/day19_test.cpp
         day19/day19.cpp
 )
+
+add_executable(day21_test
+        day21/day21_test.cpp
+        day21/day21.cpp
+)
 # Link GoogleTest to test targets
 target_link_libraries(day11_test GTest::gtest_main)
 target_link_libraries(day14_test PRIVATE GTest::gtest_main OpenSSL::Crypto)
 target_link_libraries(day17_test PRIVATE GTest::gtest_main OpenSSL::Crypto)
 target_link_libraries(day19_test GTest::gtest_main)
+target_link_libraries(day21_test GTest::gtest_main)
 
 include(GoogleTest)
 gtest_discover_tests(day11_test)
 gtest_discover_tests(day14_test)
 gtest_discover_tests(day17_test)
 gtest_discover_tests(day19_test)
+gtest_discover_tests(day21_test)
