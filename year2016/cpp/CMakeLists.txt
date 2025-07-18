@@ -77,6 +77,11 @@ add_executable(day21
         common/common.cpp
 )
 
+add_executable(day22
+        day22/day22.cpp
+        common/common.cpp
+)
+
 # ----------------------------------------------------------------------------
 # GoogleTest Setup
 # ----------------------------------------------------------------------------
