@@ -83,20 +83,6 @@ int valid_pairs(const vector<File> &files) {
     return valid_pairs;
 }
 
-struct FileState {
-    int used;
-    int size;
-
-    [[nodiscard]] pair<int, int> cache() const {
-        return make_pair(used, size);
-    }
-};
-
-
-constexpr std::array<pair<int, int>, 4> moves = {{{0, -1}, {0, 1}, {-1, 0}, {1, 0}}};
-
-using StateCache = pair<pair<int, int>, map<pair<int, int>, pair<int, int> > >;
-
 /// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  G
 /// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
 /// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
@@ -133,9 +119,9 @@ using StateCache = pair<pair<int, int>, map<pair<int, int>, pair<int, int> > >;
 /// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
 /// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  _  .
 ///
-/// One see that
+/// One can see that
 /// - there is only 1 with 0 used
-/// - one need to go left around big files, since these can never fit into free
+/// - one needs to go left around big files, since these can never fit into the free space
 void print_overview(const vector<File> &files) {
     int x_max = 0;
     int y_max = 0;
@@ -164,24 +150,24 @@ void print_overview(const vector<File> &files) {
 }
 
 /// Go left until free of big files
-/// #_x min - _x - 1 +
+/// #_x_min - _x - 1 +
 ///
-/// Go to y = 0 from empty
+/// Move to y = 0 from the empty position
 /// _y +
 ///
-/// Go to just before Goal
-/// (x_max - 1) - (#_x min - 1) +
+/// Move to just before the Goal
+/// (x_max - 1) - (#_x_min - 1) +
 ///
-/// Goal needs to move from end to start
+/// The Goal needs to move from the end to the start
 /// x_max +
 ///
-/// and for every steps left, empty needs to "go around" which is 4 steps
+/// For every step left, the empty slot needs to "go around," which costs 4 steps
 /// (x_max - 1) * 4
 int min_steps_calculated(const vector<File> &files) {
-    int x_max = 0;
-    int big_x_min = 10000;
-    int empty_x = 0;
-    int empty_y = 0;
+    int x_max = INT_MIN;
+    int big_x_min = INT_MAX;
+    int empty_x = INT_MIN;
+    int empty_y = INT_MIN;
     for (const auto &file: files) {
         if (file.size > 100) {
             big_x_min = std::min(big_x_min, file.x);
@@ -200,7 +186,24 @@ int min_steps_calculated(const vector<File> &files) {
     return result;
 }
 
-struct State {
+struct [[deprecated("Use min_steps_calculated instead")]] FileState {
+    int used;
+    int size;
+
+    [[nodiscard]] pair<int, int> cache() const {
+        return make_pair(used, size);
+    }
+};
+
+[[deprecated("Use min_steps_calculated instead")]] constexpr std::array<pair<int, int>, 4> moves = {
+    {{0, -1}, {0, 1}, {-1, 0}, {1, 0}}
+};
+
+using StateCache [[deprecated("Use min_steps_calculated instead")]] = pair<pair<int, int>, map<pair<int, int>, pair<int,
+    int> > >;
+
+
+struct [[deprecated("Use min_steps_calculated instead")]] State {
     int steps;
     int x_goal;
     int y_goal;
@@ -230,20 +233,16 @@ struct State {
     }
 
 
-    int min_steps(bool print = false) {
+    int min_steps() {
         queue<State> q;
         q.emplace(*this);
         set<StateCache> visited;
-        set<int> printed;
 
         while (!q.empty()) {
             const auto state = q.front();
             q.pop();
             if (!visited.insert(state.cache()).second) {
                 continue;
-            }
-            if (state.steps % 100 == 0 && printed.insert(state.steps).second) {
-                cout << "Steps: " << state.steps << endl;
             }
             if (state.x_goal == 0 && state.y_goal == 0) {
                 return state.steps;
@@ -297,19 +296,7 @@ int main() {
         std::cerr << min_steps_test;
         exit(1);
     }
-    // const int min_steps_calc = min_steps_calculated(files_test);
-    // if (min_steps_calc != 7) {
-    //     std::cerr << min_steps_test;
-    //     exit(1);
-    // }
-
 
     print_overview(files);
-
     cout << "Part 2: " << min_steps_calculated(files) << endl;
-    // 175 to low
-
-    State state(files);
-    const int min_steps = state.min_steps();
-    cout << "Part 2: " << min_steps << endl;
 }
