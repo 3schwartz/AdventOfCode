@@ -1,9 +1,17 @@
+#include <map>
 #include <sstream>
+#include <set>
 
 #include "../common/common.h"
 
 using std::string;
 using std::stoi;
+using std::pair;
+using std::vector;
+using std::queue;
+using std::map;
+using std::set;
+using std::make_pair;
 
 vector<string> split_by(const string &s, char delim) {
     vector<string> elems;
@@ -75,6 +83,101 @@ int valid_pairs(const vector<File> &files) {
     return valid_pairs;
 }
 
+struct FileState {
+    int used;
+    int size;
+
+    [[nodiscard]] pair<int, int> cache() const {
+        return make_pair(used, size);
+    }
+};
+
+
+constexpr std::array<pair<int, int>, 4> moves = {{{0, -1}, {0, 1}, {-1, 0}, {1, 0}}};
+
+using StateCache = pair<pair<int, int>, map<pair<int, int>, pair<int, int> > >;
+
+struct State {
+    int steps;
+    int x_goal;
+    int y_goal;
+    map<pair<int, int>, FileState> files;
+    set<pair<int, int> > zeros;
+
+    explicit State(const vector<File> &files) {
+        int x_max = 0;
+        for (const auto &file: files) {
+            x_max = std::max(x_max, file.x);
+            this->files.insert({{file.x, file.y}, {file.used, file.size}});
+            if (file.used == 0) {
+                zeros.insert({file.x, file.y});
+            }
+        }
+        x_goal = x_max;
+        y_goal = 0;
+        steps = 0;
+    }
+
+    [[nodiscard]] StateCache cache() const {
+        map<pair<int, int>, pair<int, int> > cache_map;
+        for (auto &[k, v]: files) {
+            cache_map.insert({k, v.cache()});
+        }
+        return make_pair(make_pair(x_goal, y_goal), cache_map);
+    }
+
+
+    int min_steps(bool print = false) {
+        queue<State> q;
+        q.emplace(*this);
+        set<StateCache> visited;
+        set<int> printed;
+
+        while (!q.empty()) {
+            const auto state = q.front();
+            q.pop();
+            if (!visited.insert(state.cache()).second) {
+                continue;
+            }
+            if (state.steps % 100 == 0 && printed.insert(state.steps).second) {
+                cout << "Steps: " << state.steps << endl;
+            }
+            if (state.x_goal == 0 && state.y_goal == 0) {
+                return state.steps;
+            }
+            for (const auto &[x, y]: state.zeros) {
+                const auto &file_state = state.files.at({x, y});
+
+                for (const auto &[dx, dy]: moves) {
+                    const int nx = x + dx;
+                    const int ny = y + dy;
+                    if (!state.files.contains({nx, ny})) {
+                        continue;
+                    }
+                    const auto &neighbour = state.files.at({nx, ny});
+                    if (file_state.size < neighbour.used) {
+                        continue;
+                    }
+                    auto state_copy = state;
+
+                    state_copy.files.at({x, y}).used = neighbour.used;
+                    state_copy.files.at({nx, ny}).used = 0;
+                    if (nx == state.x_goal && ny == state.y_goal) {
+                        state_copy.x_goal = x;
+                        state_copy.y_goal = y;
+                    }
+                    state_copy.zeros.erase({x, y});
+                    state_copy.zeros.insert({nx, ny});
+                    state_copy.steps++;
+                    q.emplace(state_copy);
+                }
+            }
+        }
+
+        return -1;
+    }
+};
+
 
 int main() {
     const auto data = read_lines("../../data/day22_data.txt");
@@ -82,4 +185,17 @@ int main() {
     const int pairs = valid_pairs(files);
 
     cout << "Part 1: " << pairs << endl;
+
+    const auto data_test = read_lines("../../data/day22_data_test.txt");
+    const auto files_test = parse_files(data_test);
+    State state_test(files_test);
+    const int min_steps_test = state_test.min_steps();
+    if (min_steps_test != 7) {
+        std::cerr << min_steps_test;
+        exit(1);
+    }
+
+    State state(files);
+    const int min_steps = state.min_steps();
+    cout << "Part 2: " << min_steps << endl;
 }
