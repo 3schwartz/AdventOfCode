@@ -97,6 +97,109 @@ constexpr std::array<pair<int, int>, 4> moves = {{{0, -1}, {0, 1}, {-1, 0}, {1, 
 
 using StateCache = pair<pair<int, int>, map<pair<int, int>, pair<int, int> > >;
 
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  G
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  #  #  #  #  #  #
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+/// .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  _  .
+///
+/// One see that
+/// - there is only 1 with 0 used
+/// - one need to go left around big files, since these can never fit into free
+void print_overview(const vector<File> &files) {
+    int x_max = 0;
+    int y_max = 0;
+    map<pair<int, int>, pair<int, int> > files_map;
+    for (const auto &file: files) {
+        x_max = std::max(x_max, file.x);
+        y_max = std::max(y_max, file.y);
+        files_map[make_pair(file.x, file.y)] = make_pair(file.size, file.used);
+    }
+
+    for (int y = 0; y <= y_max; y++) {
+        for (int x = 0; x <= x_max; x++) {
+            const auto &[size, used] = files_map[make_pair(x, y)];
+            if (size > 100) {
+                cout << " # ";
+            } else if (used == 0) {
+                cout << " _ ";
+            } else if (y == 0 && x == x_max) {
+                cout << " G ";
+            } else {
+                cout << " . ";
+            }
+        }
+        cout << endl;
+    }
+}
+
+/// Go left until free of big files
+/// #_x min - _x - 1 +
+///
+/// Go to y = 0 from empty
+/// _y +
+///
+/// Go to just before Goal
+/// (x_max - 1) - (#_x min - 1) +
+///
+/// Goal needs to move from end to start
+/// x_max +
+///
+/// and for every steps left, empty needs to "go around" which is 4 steps
+/// (x_max - 1) * 4
+int min_steps_calculated(const vector<File> &files) {
+    int x_max = 0;
+    int big_x_min = 10000;
+    int empty_x = 0;
+    int empty_y = 0;
+    for (const auto &file: files) {
+        if (file.size > 100) {
+            big_x_min = std::min(big_x_min, file.x);
+        }
+        if (file.used == 0) {
+            empty_x = file.x;
+            empty_y = file.y;
+        }
+        x_max = std::max(x_max, file.x);
+    }
+    int result = empty_x - big_x_min + 1;
+    result += empty_y;
+    result += (x_max - 1) - (big_x_min - 1);
+    result += x_max;
+    result += (x_max - 1) * 4;;
+    return result;
+}
+
 struct State {
     int steps;
     int x_goal;
@@ -194,6 +297,17 @@ int main() {
         std::cerr << min_steps_test;
         exit(1);
     }
+    // const int min_steps_calc = min_steps_calculated(files_test);
+    // if (min_steps_calc != 7) {
+    //     std::cerr << min_steps_test;
+    //     exit(1);
+    // }
+
+
+    print_overview(files);
+
+    cout << "Part 2: " << min_steps_calculated(files) << endl;
+    // 175 to low
 
     State state(files);
     const int min_steps = state.min_steps();
