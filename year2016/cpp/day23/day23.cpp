@@ -104,16 +104,53 @@ int run(map<string, int> registers, vector<string> data) {
     return registers["a"];
 }
 
+/*
+ * The first instructions down to tgl consist of four loops.
+ *
+ * The first two increase a.
+ * d holds the state of a.
+ *
+ * The first jnz increases by a - x, where x is the loop count.
+ * The second jnz repeats the above d times, which ends up giving, e.g., in the first round:
+ * a * (a - 1)
+ *
+ * The third loop changes the tgl pointer, such that
+ * every second instruction after tgl is modified.
+ *
+ * One then jumps back before the first loop, controlled by b,
+ * which is decreased for every times the fourth loop is executed.
+ * Since b is assigned a - 1 as the second instruction, the three loops end up giving
+ * the factorial of a:
+ * a * (a - 1) * (a - 2) * (a - 3) * ... * 1
+ *
+ * The fourth loop 'breaks' when b = 1, since then b => c => d
+ * and when d-- and c++, then tgl changes jnz 1 c to cpy 1 c.
+ *
+ * tgl has now modified every second instruction, and two small loops are created.
+ * The first increases a by 74 (controlled by d), and the second does this 87 times
+ * (controlled by c).
+ *
+ * Hence, we end up with:
+ * a! + 87 * 74
+ */
+unsigned long long short_circuit(const unsigned long long a) {
+    unsigned long long result = 1;
+    for (unsigned long long i = 2; i <= a; i++) {
+        result *= i;
+    }
+    return result + 87 * 74;
+}
+
 int main() {
     const auto data = read_lines("../../data/day23_data.txt");
     const map<string, int> registers = {{"a", 7}};
 
-    const int part_1 = run(registers, data);
+    // const int part_1 = run(registers, data);
+    const auto part_1 = short_circuit(7);
     cout << "Part 1: " << part_1 << endl;
 
-    // registers["c"] = 1;
-    // int part_2 = run(registers, data);
-    // cout << "Part 2: " << part_2 << endl;
+    const auto part_2 = short_circuit(12);
+    cout << "Part 2: " << part_2 << endl;
 
     return 0;
 }
