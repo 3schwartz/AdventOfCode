@@ -10,27 +10,26 @@ using std::make_pair;
 using std::tuple;
 using std::queue;
 
+using MinStepCache = tuple<int, int, set<int> >;
+
 struct MinStepState {
     int x;
     int y;
     int steps;
-    set<pair<int, int> > visited;
     set<int> numbers;
 
-    MinStepState(int x, int y, int steps, set<pair<int, int> > visited, set<int> numbers) {
+    MinStepState(int x, int y, int steps, set<int> numbers) {
         this->x = x;
         this->y = y;
         this->steps = steps;
-        this->visited = std::move(visited);
         this->numbers = std::move(numbers);
     }
 
-    tuple<int, int, int, set<pair<int, int> >, set<int> > cache() {
-        return tuple(x, y, steps, visited, numbers);
+    MinStepCache cache() {
+        return {x, y, numbers};
     }
 };
 
-using MinStepCache = tuple<int, int, int, set<pair<int, int> >, set<int> >;
 
 constexpr std::array<pair<int, int>, 4> moves = {
     {{0, -1}, {0, 1}, {-1, 0}, {1, 0}}
@@ -62,9 +61,9 @@ struct InitialState {
         }
     }
 
-    int min_steps() const {
+    [[nodiscard]] int min_steps(const bool return_to_start = false) const {
         queue<MinStepState> q;
-        q.emplace(x_start, y_start, 0, set<pair<int, int> >{{x_start, y_start}}, set<int>{});
+        q.emplace(x_start, y_start, 0, set<int>{});
         set<MinStepCache> cache;
 
         while (!q.empty()) {
@@ -73,7 +72,8 @@ struct InitialState {
             if (!cache.insert(state.cache()).second) {
                 continue;
             }
-            if (state.numbers.size() == numbers.size()) {
+            if (state.numbers.size() == numbers.size() && (
+                    !return_to_start || state.x == x_start && state.y == y_start)) {
                 return state.steps;
             }
 
@@ -84,12 +84,10 @@ struct InitialState {
                     continue;
                 }
                 auto n_numbers = state.numbers;
-                auto n_visited = state.visited;
-                n_visited.insert({nx, ny});
                 if (numbers.contains({nx, ny})) {
                     n_numbers.insert(numbers.at({nx, ny}));
                 }
-                q.emplace(nx, ny, state.steps + 1, std::move(n_visited), std::move(n_numbers));
+                q.emplace(nx, ny, state.steps + 1, std::move(n_numbers));
             }
         };
 
@@ -109,5 +107,8 @@ int main() {
     const auto data = read_lines("../../data/day24_data.txt");
     const auto state = InitialState{data};
     const int min_steps = state.min_steps();
-    cout << "Part 1: " << min_steps_test << endl;
+    cout << "Part 1: " << min_steps << endl;
+
+    const int min_steps_return_to_start = state.min_steps(true);
+    cout << "Part 2: " << min_steps_return_to_start << endl;
 }
