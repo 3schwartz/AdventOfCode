@@ -14,11 +14,18 @@ add_executable(day1
 add_executable(test_day1
     day1/test_aoc.cpp
     day1/aoc.cpp
+    common/common.cpp
 )
     
 add_test(
     NAME test_day1
     COMMAND test_day1
+)
+
+add_executable(day2
+    day2/main.cpp
+    day2/aoc.cpp
+    common/common.cpp
 )
 
 # add_executable(day0 

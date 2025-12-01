@@ -1,20 +1,26 @@
 #include "aoc.h"
 #include <cassert>
+#include "../common/common.h"
 
-void test_answer_42()
+void test_mod()
 {
-    assert(answer() == 42);
+    int m = -204;
+    m += 100;
+    m %= 100;
+    assert(m == -4);
 }
 
-void test_answer_not_0()
+void test_mod_common()
 {
-    assert(answer() != 0);
+    int m = -204;
+    m = mod(m, 100);
+    assert(m == 96);
 }
 
 int main()
 {
-    test_answer_42();
-    test_answer_not_0();
+    test_mod();
+    test_mod_common();
 
     return 0;
 }
