@@ -28,6 +28,12 @@ add_executable(day2
     common/common.cpp
 )
 
+add_executable(day3
+    day3/main.cpp
+    day3/aoc.cpp
+    common/common.cpp
+)
+
 # add_executable(day0 
 #     day0/main.cpp
 #     day0/aoc.cpp
