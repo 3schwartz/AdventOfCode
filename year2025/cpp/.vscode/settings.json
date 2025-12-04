@@ -1,5 +1,11 @@
 {
     "files.associations": {
         "iostream": "cpp"
+    },
+    "cmake.debugConfig": {
+        "type": "lldb", // Use CodeLLDB
+        "request": "launch",
+        "program": "${command:cmake.launchTargetPath}",
+        "args": []
     }
 }
