@@ -7,6 +7,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(CTest)
 enable_testing()
 
+add_executable(test_day0
+    day0/test_aoc.cpp
+    day0/aoc.cpp
+    common/common.cpp
+)
+    
+add_test(
+    NAME test_day0
+    COMMAND test_day0
+)
+
 add_executable(day1
     day1/main.cpp
     day1/aoc.cpp
@@ -42,6 +53,40 @@ add_executable(day4
     common/common.cpp
 )
 
+add_executable(day5
+    day5/main.cpp
+    day5/aoc.cpp
+    common/common.cpp
+)
+
+add_executable(test_day5
+    day5/test_aoc.cpp
+    day5/aoc.cpp
+    common/common.cpp
+)
+    
+add_test(
+    NAME test_day5
+    COMMAND test_day5
+)
+
+add_executable(day6
+    day6/main.cpp
+    day6/aoc.cpp
+    common/common.cpp
+)
+
+add_executable(test_day6
+    day6/test_aoc.cpp
+    day6/aoc.cpp
+    common/common.cpp
+)
+    
+add_test(
+    NAME test_day6
+    COMMAND test_day6
+)
+
 # add_executable(day0 
 #     day0/main.cpp
 #     day0/aoc.cpp
@@ -51,6 +96,7 @@ add_executable(day4
 # add_executable(test_day0
 #     day0/test_aoc.cpp
 #     day0/aoc.cpp
+#     common/common.cpp
 # )
     
 # add_test(
