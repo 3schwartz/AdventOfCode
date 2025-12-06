@@ -75,17 +75,16 @@ add_executable(day6
     day6/aoc.cpp
     common/common.cpp
 )
-
 add_executable(test_day6
     day6/test_aoc.cpp
     day6/aoc.cpp
     common/common.cpp
 )
-    
-add_test(
-    NAME test_day6
-    COMMAND test_day6
-)
+add_test(NAME test_day6 COMMAND test_day6)
+
+add_executable(day7 day7/main.cpp day7/aoc.cpp common/common.cpp)
+add_executable(test_day7 day7/test_aoc.cpp day7/aoc.cpp common/common.cpp)
+add_test(NAME test_day7 COMMAND test_day7)
 
 # add_executable(day0 
 #     day0/main.cpp

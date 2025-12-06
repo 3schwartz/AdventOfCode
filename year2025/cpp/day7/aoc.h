@@ -6,5 +6,5 @@ using std::vector;
 
 #pragma once
 
-long long part1(vector<string> lines);
-long long part2(vector<string> lines);
+int part1(vector<string> lines);
+int part2(vector<string> lines);

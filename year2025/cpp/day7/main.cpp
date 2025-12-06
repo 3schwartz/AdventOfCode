@@ -3,10 +3,10 @@
 
 int main()
 {
-    const vector<string> lines = read_lines("../../../../data/day6_data.txt");
+    const vector<string> lines = read_lines("../../../../data/day7_data.txt");
 
-    long long result_part1 = part1(lines);
-    long long result_part2 = part2(lines);
+    int result_part1 = part1(lines);
+    int result_part2 = part2(lines);
 
     cout << "Part 1: " << result_part1 << "\n";
     cout << "Part 2: " << result_part2 << "\n";
