@@ -12,8 +12,8 @@ void test_part1()
 void test_part2()
 {
     vector<string> lines = read_lines("../../../../data/day7_data_test.txt");
-    int result = part2(lines);
-    assert(result == -1);
+    long long result = part2(lines);
+    assert(result == 40);
 }
 
 int main()
