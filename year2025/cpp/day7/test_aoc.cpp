@@ -6,7 +6,7 @@ void test_part1()
 {
     vector<string> lines = read_lines("../../../../data/day7_data_test.txt");
     int result = part1(lines);
-    assert(result == -1);
+    assert(result == 21);
 }
 
 void test_part2()
