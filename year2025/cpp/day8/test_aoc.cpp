@@ -4,16 +4,16 @@
 
 void test_part1()
 {
-    vector<string> lines = read_lines("../../../../data/day0_data_test.txt");
-    long long result = part1(lines);
-    assert(result == -1);
+    vector<string> lines = read_lines("../../../../data/day8_data_test.txt");
+    long long result = part1(lines, 10);
+    assert(result == 40);
 }
 
 void test_part2()
 {
-    vector<string> lines = read_lines("../../../../data/day0_data_test.txt");
+    vector<string> lines = read_lines("../../../../data/day8_data_test.txt");
     long long result = part2(lines);
-    assert(result == -1);
+    assert(result == 25272);
 }
 
 int main()
