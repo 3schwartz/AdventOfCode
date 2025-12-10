@@ -9,12 +9,12 @@ using std::set;
 using std::stoll;
 using std::vector;
 
-long long part1(vector<string> lines)
+long long part1(const vector<string> &lines)
 {
     return -1;
 }
 
-long long part2(vector<string> lines)
+long long part2(const vector<string> &lines)
 {
     return -1;
 }

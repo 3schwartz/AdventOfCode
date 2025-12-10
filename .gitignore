@@ -609,3 +609,5 @@ graph.png
 *.exe
 *.out
 *.app
+
+.aoc_env
