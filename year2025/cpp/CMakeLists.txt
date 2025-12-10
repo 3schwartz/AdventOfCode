@@ -91,7 +91,7 @@ add_executable(test_day8 day8/test_aoc.cpp day8/aoc.cpp common/common.cpp)
 add_test(NAME test_day8 COMMAND test_day8)
 
 add_executable(day9 day9/main.cpp day9/aoc.cpp common/common.cpp)
-add_executable(test_day9 day9/test_aoc.cpp day8/aoc.cpp common/common.cpp)
+add_executable(test_day9 day9/test_aoc.cpp day9/aoc.cpp common/common.cpp)
 add_test(NAME test_day9 COMMAND test_day9)
 
 # add_executable(day0 
