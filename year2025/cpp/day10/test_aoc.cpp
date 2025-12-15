@@ -28,8 +28,16 @@ void test_machineFewestPresses()
     assert(presses == 10);
 }
 
+void test_solveJoltage()
+{
+    Machine machine("[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}");
+    long long presses = machine.solveJoltage();
+    assert(presses == 10);
+}
+
 int main()
 {
+    test_solveJoltage();
     test_machineFewestSteps();
     test_machineFewestPresses();
     const vector<string> lines = read_lines("../../../../data/day10_data_test.txt");
