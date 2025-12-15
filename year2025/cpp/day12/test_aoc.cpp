@@ -5,20 +5,19 @@
 void test_part1(const vector<string> &lines)
 {
     long long result = part1(lines);
-    assert(result == 5);
+    assert(result == 2);
 }
 
 void test_part2(const vector<string> &lines)
 {
     long long result = part2(lines);
-    assert(result == 2);
+    assert(result == -1);
 }
 
 int main()
 {
-    vector<string> lines = read_lines("../../../../data/day11_data_test_1.txt");
+    const vector<string> lines = read_lines("../../../../data/day12_data_test.txt");
     test_part1(lines);
-    lines = read_lines("../../../../data/day11_data_test_2.txt");
     test_part2(lines);
 
     return 0;
